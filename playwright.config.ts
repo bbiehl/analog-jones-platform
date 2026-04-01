@@ -67,4 +67,18 @@ export default defineConfig({
     //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     // },
   ],
+
+  /* Start Firebase emulators and dev server before running tests */
+  webServer: [
+    {
+      command: 'firebase emulators:start',
+      port: 4000,
+      reuseExistingServer: !process.env['CI'],
+    },
+    {
+      command: 'ng serve public-app',
+      port: 4200,
+      reuseExistingServer: !process.env['CI'],
+    },
+  ],
 });
