@@ -1,0 +1,2 @@
+- [Analog Jones platform overview](project_analog_jones.md) — multi-app Angular workspace with public site and admin dashboard
+- [Keep plans focused](feedback_plan_scope.md) — only include what's explicitly asked for, don't bundle deferred work

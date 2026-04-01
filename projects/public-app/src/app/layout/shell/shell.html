@@ -1,0 +1,48 @@
+<mat-toolbar color="primary">
+  @if (isMobile()) {
+    <button mat-icon-button aria-label="Toggle navigation menu" (click)="sidenav()?.toggle()">
+      <mat-icon>menu</mat-icon>
+    </button>
+  }
+  <a routerLink="/" class="toolbar-brand">Analog Jones</a>
+  @if (!isMobile()) {
+    <nav aria-label="Main navigation" class="toolbar-nav">
+      @for (link of navLinks; track link.path) {
+        <a
+          mat-button
+          [routerLink]="link.path"
+          routerLinkActive="active-link"
+          [routerLinkActiveOptions]="{ exact: link.exact }"
+        >
+          {{ link.label }}
+        </a>
+      }
+    </nav>
+  }
+</mat-toolbar>
+
+<mat-sidenav-container class="sidenav-container">
+  @if (isMobile()) {
+    <mat-sidenav #sidenav mode="over" role="navigation" aria-label="Side navigation">
+      <mat-nav-list>
+        @for (link of navLinks; track link.path) {
+          <a
+            mat-list-item
+            [routerLink]="link.path"
+            routerLinkActive="active-link"
+            [routerLinkActiveOptions]="{ exact: link.exact }"
+            (click)="closeSidenav()"
+          >
+            {{ link.label }}
+          </a>
+        }
+      </mat-nav-list>
+    </mat-sidenav>
+  }
+
+  <mat-sidenav-content>
+    <main>
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>
