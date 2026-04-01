@@ -34,11 +34,22 @@ export class Shell {
     { path: '/tags', label: 'Tags', exact: false },
   ];
 
+  protected readonly footerLinks = [
+    { path: '/', label: 'Home' },
+    { path: '/episodes', label: 'Episodes' },
+    { path: '/tags', label: 'Tags' },
+    { path: '/contact', label: 'Contact' },
+    { path: '/terms', label: 'Terms of Use' },
+    { path: '/privacy', label: 'Privacy Policy' },
+  ];
+
   constructor() {
     this.breakpointObserver.observe([Breakpoints.Handset]).subscribe((result) => {
       this.isMobile.set(result.matches);
     });
   }
+
+  protected readonly currentYear = new Date().getFullYear();
 
   protected closeSidenav(): void {
     this.sidenav()?.close();
