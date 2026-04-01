@@ -14,6 +14,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `ng test public-app` / `ng test admin-app` — run tests for a specific project
 - `ng e2e` — run Playwright e2e tests (starts emulators + dev server automatically)
 - `firebase emulators:start` — start Firebase emulators standalone
+- `pnpm run dev:all` — start Firebase emulators + both public-app (4200) and admin-app (4300) dev servers
+- `pnpm run emulators:stop` — kill emulator processes by port
 - `pnpm run deploy:rules` — deploy Firestore & Storage rules to production
 
 ## Architecture
@@ -38,13 +40,28 @@ This is an **Angular v21 multi-project workspace** managed by Angular CLI with *
 - **Playwright** for e2e testing (Chromium, Firefox, WebKit)
 - **Prettier** for formatting (single quotes, 100 char width)
 
+### Shell Layout Pattern
+
+Both apps use a root shell component (`layout/shell/`) that wraps all page routes:
+- `mat-toolbar` for top navigation (shows nav links on desktop)
+- `mat-sidenav` with `position="end"` for mobile navigation (hamburger icon at right end of toolbar)
+- `BreakpointObserver` (CDK `Breakpoints.Handset`) drives the `isMobile` signal to toggle between toolbar links and sidenav
+- All page routes are lazy-loaded children of the shell route
+- Public-app shell includes a sticky footer with all nav links
+
+### Routing
+
+Routes are defined in `app.routes.ts` per app. All feature components use `loadComponent` for lazy loading. The root `App` component in both apps is just an inline `<router-outlet />`.
+
+**Public-app SSR**: `app.routes.server.ts` sets `RenderMode.Client` for parameterized routes (`episodes/:id`, `tags/:id`) and `RenderMode.Prerender` for all static routes. New parameterized routes must be added here to avoid prerender build failures.
+
 ### Component selector prefix
 
 All components use the `app` prefix (e.g., `selector: 'app-feature-name'`).
 
 ### Firebase & Emulators
 
-Each app has a `firebase.ts` initialization file (`projects/<app>/src/app/firebase.ts`) that connects to local emulators when `environment.useEmulators` is true.
+Each app has a `firebase.ts` initialization file (`projects/<app>/src/app/firebase.ts`) that exports `auth`, `firestore`, and `storage` instances directly. Uses the Firebase modular SDK (`firebase/app`, `firebase/auth`, etc.) — NOT `@angular/fire`. Import these instances directly in services. Connects to local emulators when `environment.useEmulators` is true.
 
 - **Emulator ports**: Auth (9099), Firestore (8080), Storage (9199), UI (4000)
 - **Firestore rules** (`firestore.rules`): public read, admin-only write (checked via `isAdmin` field on user doc)

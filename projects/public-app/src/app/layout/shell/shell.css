@@ -1,0 +1,9 @@
+mat-sidenav-content {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 64px);
+}
+
+main {
+  flex: 1;
+}

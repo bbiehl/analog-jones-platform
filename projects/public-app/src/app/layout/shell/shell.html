@@ -1,0 +1,59 @@
+<mat-toolbar color="primary">
+  <a routerLink="/" class="toolbar-brand">Analog Jones</a>
+  @if (!isMobile()) {
+    <nav aria-label="Main navigation" class="toolbar-nav">
+      @for (link of navLinks; track link.path) {
+        <a
+          mat-button
+          [routerLink]="link.path"
+          routerLinkActive="active-link"
+          [routerLinkActiveOptions]="{ exact: link.exact }"
+        >
+          {{ link.label }}
+        </a>
+      }
+    </nav>
+  }
+  <span class="flex-auto"></span>
+  @if (isMobile()) {
+    <button mat-icon-button aria-label="Toggle navigation menu" (click)="sidenav()?.toggle()">
+      <mat-icon>menu</mat-icon>
+    </button>
+  }
+</mat-toolbar>
+
+<mat-sidenav-container class="sidenav-container">
+  @if (isMobile()) {
+    <mat-sidenav #sidenav mode="over" position="end" role="navigation" aria-label="Side navigation">
+      <mat-nav-list>
+        @for (link of navLinks; track link.path) {
+          <a
+            mat-list-item
+            [routerLink]="link.path"
+            routerLinkActive="active-link"
+            [routerLinkActiveOptions]="{ exact: link.exact }"
+            (click)="closeSidenav()"
+          >
+            {{ link.label }}
+          </a>
+        }
+      </mat-nav-list>
+    </mat-sidenav>
+  }
+
+  <mat-sidenav-content>
+    <main>
+      <router-outlet />
+    </main>
+    <footer class="border-t border-gray-200 bg-gray-50 px-6 py-8" role="contentinfo">
+      <nav aria-label="Footer navigation" class="flex flex-wrap justify-center gap-4 mb-4">
+        @for (link of footerLinks; track link.path) {
+          <a [routerLink]="link.path" class="text-sm text-gray-600 hover:text-gray-900">
+            {{ link.label }}
+          </a>
+        }
+      </nav>
+      <p class="text-center text-xs text-gray-500">&copy; {{ currentYear }} Analog Jones</p>
+    </footer>
+  </mat-sidenav-content>
+</mat-sidenav-container>
