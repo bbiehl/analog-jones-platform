@@ -12,7 +12,8 @@
     "emulators:start": "firebase emulators:start",
     "emulators:stop": "lsof -ti:4000,4400,8080,9099,9150,9199 | xargs kill -9 2>/dev/null || true",
     "dev:public": "concurrently --names emulators,app --prefix-colors blue,green \"firebase emulators:start\" \"ng serve public-app\"",
-    "dev:admin": "concurrently --names emulators,app --prefix-colors blue,green \"firebase emulators:start\" \"ng serve admin-app\""
+    "dev:admin": "concurrently --names emulators,app --prefix-colors blue,green \"firebase emulators:start\" \"ng serve admin-app\"",
+    "deploy:rules": "firebase deploy --only firestore:rules,storage"
   },
   "private": true,
   "packageManager": "pnpm@10.28.2",
