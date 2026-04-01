@@ -21,6 +21,7 @@ import { inject } from '@angular/core';
     MatButtonModule,
   ],
   templateUrl: './shell.html',
+  styleUrl: './shell.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Shell {
