@@ -8,7 +8,12 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:public-app": "node dist/public-app/server/server.mjs",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "emulators:start": "firebase emulators:start",
+    "emulators:stop": "lsof -ti:4000,4400,8080,9099,9150,9199 | xargs kill -9 2>/dev/null || true",
+    "dev:public": "concurrently --names emulators,app --prefix-colors blue,green \"firebase emulators:start\" \"ng serve public-app\"",
+    "dev:admin": "concurrently --names emulators,app --prefix-colors blue,green \"firebase emulators:start\" \"ng serve admin-app\"",
+    "deploy:rules": "firebase deploy --only firestore:rules,storage"
   },
   "private": true,
   "packageManager": "pnpm@10.28.2",
@@ -37,6 +42,8 @@
     "@tailwindcss/postcss": "^4.1.12",
     "@types/express": "^5.0.1",
     "@types/node": "^20.17.19",
+    "concurrently": "^9.2.1",
+    "firebase-tools": "^15.12.0",
     "jsdom": "^28.0.0",
     "playwright-ng-schematics": "^21.0.9",
     "postcss": "^8.5.3",
