@@ -2,7 +2,8 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "cli": {
-    "packageManager": "pnpm"
+    "packageManager": "pnpm",
+    "schematicCollections": ["@schematics/angular", "playwright-ng-schematics"]
   },
   "newProjectRoot": "projects",
   "projects": {
@@ -72,6 +73,17 @@
         },
         "test": {
           "builder": "@angular/build:unit-test"
+        },
+        "e2e": {
+          "builder": "playwright-ng-schematics:playwright",
+          "options": {
+            "devServerTarget": "public-app:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "public-app:serve:production"
+            }
+          }
         }
       }
     },
@@ -133,6 +145,17 @@
         },
         "test": {
           "builder": "@angular/build:unit-test"
+        },
+        "e2e": {
+          "builder": "playwright-ng-schematics:playwright",
+          "options": {
+            "devServerTarget": "admin-app:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "admin-app:serve:production"
+            }
+          }
         }
       }
     }
