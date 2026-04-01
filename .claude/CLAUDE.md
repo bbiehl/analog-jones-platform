@@ -1,5 +1,40 @@
+# CLAUDE.md
 
-You are an expert in TypeScript, Angular, and scalable web application development. You write functional, maintainable, performant, and accessible code following Angular and TypeScript best practices.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Build & Development Commands
+
+- `pnpm start` / `ng serve` — serve the default project (public-app) on localhost
+- `ng serve admin-app` — serve the admin app
+- `pnpm build` / `ng build` — production build (output: `dist/`)
+- `pnpm run serve:ssr:public-app` — run SSR server after build (`node dist/public-app/server/server.mjs`)
+- `pnpm test` / `ng test` — run unit tests (Vitest)
+- `ng test public-app` / `ng test admin-app` — run tests for a specific project
+
+## Architecture
+
+This is an **Angular v21 multi-project workspace** managed by Angular CLI with **pnpm**.
+
+### Projects
+
+| Project | Path | SSR | Purpose |
+|---|---|---|---|
+| `public-app` | `projects/public-app/` | Yes (Express + `@angular/ssr`) | Public-facing site |
+| `admin-app` | `projects/admin-app/` | No | Admin dashboard |
+
+### Key Stack
+
+- **Angular 21** with strict TypeScript (ES2022 target, TS ~5.9)
+- **Tailwind CSS v4** via PostCSS (per-project `.postcssrc.json`)
+- **Angular Material + CDK** for UI components
+- **@ngrx/signals** for state management
+- **Vitest** for unit testing (with `jsdom`)
+- **Firebase** (installed, integration in progress)
+- **Prettier** for formatting (single quotes, 100 char width)
+
+### Component selector prefix
+
+All components use the `app` prefix (e.g., `selector: 'app-feature-name'`).
 
 ## TypeScript Best Practices
 
