@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -35,9 +36,12 @@ export class Shell {
   ];
 
   constructor() {
-    this.breakpointObserver.observe([Breakpoints.Handset]).subscribe((result) => {
-      this.isMobile.set(result.matches);
-    });
+    this.breakpointObserver
+      .observe([Breakpoints.Handset])
+      .pipe(takeUntilDestroyed())
+      .subscribe((result) => {
+        this.isMobile.set(result.matches);
+      });
   }
 
   protected closeSidenav(): void {
