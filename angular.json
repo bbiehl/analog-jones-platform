@@ -57,6 +57,17 @@
               ],
               "outputHashing": "all"
             },
+            "staging": {
+              "fileReplacements": [
+                {
+                  "replace": "projects/public-app/src/environments/environment.ts",
+                  "with": "projects/public-app/src/environments/environment.staging.ts"
+                }
+              ],
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            },
             "development": {
               "optimization": false,
               "extractLicenses": false,
@@ -70,6 +81,9 @@
           "configurations": {
             "production": {
               "buildTarget": "public-app:build:production"
+            },
+            "staging": {
+              "buildTarget": "public-app:build:staging"
             },
             "development": {
               "buildTarget": "public-app:build:development"
@@ -111,7 +125,8 @@
                 "input": "projects/admin-app/public"
               }
             ],
-            "styles": ["projects/admin-app/src/styles.css"]
+            "styles": ["projects/admin-app/src/styles.css"],
+            "outputMode": "static"
           },
           "configurations": {
             "production": {
@@ -135,6 +150,17 @@
               ],
               "outputHashing": "all"
             },
+            "staging": {
+              "fileReplacements": [
+                {
+                  "replace": "projects/admin-app/src/environments/environment.ts",
+                  "with": "projects/admin-app/src/environments/environment.staging.ts"
+                }
+              ],
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            },
             "development": {
               "optimization": false,
               "extractLicenses": false,
@@ -148,6 +174,9 @@
           "configurations": {
             "production": {
               "buildTarget": "admin-app:build:production"
+            },
+            "staging": {
+              "buildTarget": "admin-app:build:staging"
             },
             "development": {
               "buildTarget": "admin-app:build:development"

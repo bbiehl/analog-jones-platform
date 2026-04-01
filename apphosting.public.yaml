@@ -1,0 +1,3 @@
+runConfig:
+  runtime: nodejs22
+  concurrency: 80
