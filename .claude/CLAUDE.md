@@ -4,12 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build & Development Commands
 
-- `pnpm start` / `ng serve` — serve the default project (public-app) on localhost
-- `ng serve admin-app` — serve the admin app
+- `pnpm run dev:public` — start Firebase emulators + public-app dev server concurrently
+- `pnpm run dev:admin` — start Firebase emulators + admin-app dev server concurrently
+- `pnpm start` / `ng serve` — serve public-app only (no emulators)
+- `ng serve admin-app` — serve admin-app only (no emulators)
 - `pnpm build` / `ng build` — production build (output: `dist/`)
 - `pnpm run serve:ssr:public-app` — run SSR server after build (`node dist/public-app/server/server.mjs`)
 - `pnpm test` / `ng test` — run unit tests (Vitest)
 - `ng test public-app` / `ng test admin-app` — run tests for a specific project
+- `ng e2e` — run Playwright e2e tests (starts emulators + dev server automatically)
+- `firebase emulators:start` — start Firebase emulators standalone
+- `pnpm run deploy:rules` — deploy Firestore & Storage rules to production
 
 ## Architecture
 
@@ -29,12 +34,33 @@ This is an **Angular v21 multi-project workspace** managed by Angular CLI with *
 - **Angular Material + CDK** for UI components
 - **@ngrx/signals** for state management
 - **Vitest** for unit testing (with `jsdom`)
-- **Firebase** (installed, integration in progress)
+- **Firebase** — Auth, Firestore, Storage (project: `analog-jones-v2`)
+- **Playwright** for e2e testing (Chromium, Firefox, WebKit)
 - **Prettier** for formatting (single quotes, 100 char width)
 
 ### Component selector prefix
 
 All components use the `app` prefix (e.g., `selector: 'app-feature-name'`).
+
+### Firebase & Emulators
+
+Each app has a `firebase.ts` initialization file (`projects/<app>/src/app/firebase.ts`) that connects to local emulators when `environment.useEmulators` is true.
+
+- **Emulator ports**: Auth (9099), Firestore (8080), Storage (9199), UI (4000)
+- **Firestore rules** (`firestore.rules`): public read, admin-only write (checked via `isAdmin` field on user doc)
+- **Storage rules** (`storage.rules`): public read, admin-only write
+
+### Environment Configuration
+
+Each app has two environment files:
+- `environments/environment.ts` — dev (`production: false`, `useEmulators: true`)
+- `environments/environment.prod.ts` — prod (`production: true`, `useEmulators: false`)
+
+Angular CLI handles file replacement for production builds via `angular.json` `fileReplacements`.
+
+### E2E Testing
+
+Playwright config is at root `playwright.config.ts`. Tests live in `e2e/`. The config auto-starts Firebase emulators and the dev server. Base URL: `http://localhost:4200`.
 
 ## TypeScript Best Practices
 
