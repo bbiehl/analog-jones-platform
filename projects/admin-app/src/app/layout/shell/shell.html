@@ -20,7 +20,7 @@
 
 <mat-sidenav-container class="sidenav-container">
   @if (isMobile()) {
-    <mat-sidenav #sidenav mode="over" position="end" role="navigation" aria-label="Side navigation">
+    <mat-sidenav #sidenav mode="over" position="end" role="navigation" aria-label="Side navigation" autoFocus="false">
       <mat-nav-list>
         @for (link of navLinks; track link.path) {
           <a mat-list-item [routerLink]="link.path" routerLinkActive="active-link" (click)="closeSidenav()">
