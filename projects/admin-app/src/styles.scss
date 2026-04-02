@@ -1,0 +1,8 @@
+@use 'theme';
+@import 'tailwindcss';
+
+body {
+  margin: 0;
+  background: var(--mat-app-background-color);
+  color: var(--mat-app-text-color);
+}
