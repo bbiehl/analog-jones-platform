@@ -29,6 +29,13 @@ html {
   --mat-sidenav-container-background-color: #111827;
 }
 
+// Sticky toolbar
+mat-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
 // Apply Orbitron to headings and brand elements
 h1, h2, h3, h4, h5, h6,
 .toolbar-brand {
