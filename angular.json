@@ -111,7 +111,12 @@
                 "input": "projects/admin-app/public"
               }
             ],
-            "styles": ["projects/admin-app/src/styles.css"]
+            "styles": ["projects/admin-app/src/styles.css"],
+            "server": "projects/admin-app/src/main.server.ts",
+            "outputMode": "server",
+            "ssr": {
+              "entry": "projects/admin-app/src/server.ts"
+            }
           },
           "configurations": {
             "production": {
