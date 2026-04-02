@@ -36,6 +36,21 @@ mat-toolbar {
   z-index: 1000;
 }
 
+// Active navigation link highlight
+.active-link {
+  color: #d5baff !important;
+}
+
+// Toolbar active link: bottom border accent
+mat-toolbar .active-link {
+  border-bottom: 2px solid #d5baff;
+}
+
+// Sidenav active link: subtle background
+mat-sidenav .active-link {
+  background: rgba(213, 186, 255, 0.12);
+}
+
 // Apply Orbitron to headings and brand elements
 h1, h2, h3, h4, h5, h6,
 .toolbar-brand {

@@ -50,7 +50,12 @@
     <footer class="border-t border-gray-700 px-6 py-8" style="background: var(--mat-sys-surface-variant);" role="contentinfo">
       <nav aria-label="Footer navigation" class="flex flex-wrap justify-center gap-4 mb-4">
         @for (link of footerLinks; track link.path) {
-          <a [routerLink]="link.path" class="text-sm text-gray-400 hover:text-gray-200">
+          <a
+            [routerLink]="link.path"
+            routerLinkActive="active-link"
+            [routerLinkActiveOptions]="{ exact: link.path === '/' }"
+            class="text-sm text-gray-400 hover:text-gray-200"
+          >
             {{ link.label }}
           </a>
         }
