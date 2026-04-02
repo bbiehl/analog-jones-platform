@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "ng build $ANGULAR_PROJECT_NAME",
     "build:public": "ng build public-app",
     "build:admin": "ng build admin-app",
     "watch": "ng build --watch --configuration development",

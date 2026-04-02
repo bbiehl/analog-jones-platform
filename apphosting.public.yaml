@@ -5,10 +5,6 @@ runConfig:
   cpu: 1
   memoryMiB: 512
 
-buildConfig:
-  rootDir: /
-  buildCommand: pnpm run build:public
-
 env:
   - variable: ANGULAR_PROJECT_NAME
     value: public-app
