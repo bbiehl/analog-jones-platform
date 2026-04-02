@@ -1,0 +1,12 @@
+runConfig:
+  minInstances: 0
+  maxInstances: 10
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+env:
+  - variable: ANGULAR_PROJECT_NAME
+    value: public-app
+    availability:
+      - BUILD
