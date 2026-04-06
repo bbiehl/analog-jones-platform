@@ -25,7 +25,10 @@
                 "input": "projects/public-app/public"
               }
             ],
-            "styles": ["projects/public-app/src/styles.css"],
+            "styles": ["projects/public-app/src/styles.scss"],
+            "stylePreprocessorOptions": {
+              "includePaths": ["src"]
+            },
             "server": "projects/public-app/src/main.server.ts",
             "outputMode": "server",
             "security": {
@@ -111,7 +114,10 @@
                 "input": "projects/admin-app/public"
               }
             ],
-            "styles": ["projects/admin-app/src/styles.css"],
+            "styles": ["projects/admin-app/src/styles.scss"],
+            "stylePreprocessorOptions": {
+              "includePaths": ["src"]
+            },
             "server": "projects/admin-app/src/main.server.ts",
             "outputMode": "server",
             "ssr": {

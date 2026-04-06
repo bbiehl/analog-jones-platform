@@ -7,6 +7,7 @@ import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { NgOptimizedImage } from '@angular/common';
 
 @Component({
   selector: 'app-shell',
@@ -19,6 +20,7 @@ import { MatButtonModule } from '@angular/material/button';
     MatListModule,
     MatIconModule,
     MatButtonModule,
+    NgOptimizedImage,
   ],
   templateUrl: './shell.html',
   styleUrl: './shell.css',
