@@ -9,7 +9,12 @@
   "projects": {
     "public-app": {
       "projectType": "application",
-      "schematics": {},
+      "schematics": {
+          "@schematics/angular:component": {
+          "changeDetection": "OnPush",
+          "style": "scss"
+        }
+      },
       "root": "projects/public-app",
       "sourceRoot": "projects/public-app/src",
       "prefix": "app",
@@ -98,7 +103,12 @@
     },
     "admin-app": {
       "projectType": "application",
-      "schematics": {},
+      "schematics": {
+          "@schematics/angular:component": {
+          "changeDetection": "OnPush",
+          "style": "scss"
+        }
+      },
       "root": "projects/admin-app",
       "sourceRoot": "projects/admin-app/src",
       "prefix": "app",
