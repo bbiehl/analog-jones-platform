@@ -63,6 +63,14 @@ export const routes: Routes = [
         path: 'tags',
         loadComponent: () => import('./pages/tags/tags').then((c) => c.Tags),
       },
+      {
+        path: 'tags/add',
+        loadComponent: () => import('./pages/tags/tag-add/tag-add').then((c) => c.TagAdd),
+      },
+      {
+        path: 'tags/edit/:id',
+        loadComponent: () => import('./pages/tags/tag-edit/tag-edit').then((c) => c.TagEdit),
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
