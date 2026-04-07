@@ -3,23 +3,36 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./layout/shell/shell').then((m) => m.Shell),
+    loadComponent: () => import('./layout/shell/shell').then((c) => c.Shell),
     children: [
       {
         path: 'dashboard',
-        loadComponent: () => import('./pages/dashboard/dashboard').then((m) => m.Dashboard),
+        loadComponent: () => import('./pages/dashboard/dashboard').then((c) => c.Dashboard),
+      },
+      {
+        path: 'access-denied',
+        loadComponent: () =>
+          import('./pages/access-denied/access-denied').then((c) => c.AccessDenied),
       },
       {
         path: 'users',
-        loadComponent: () => import('./pages/users/users').then((m) => m.Users),
+        loadComponent: () => import('./pages/users/users').then((c) => c.Users),
       },
       {
         path: 'episodes',
-        loadComponent: () => import('./pages/episodes/episodes').then((m) => m.Episodes),
+        loadComponent: () => import('./pages/episodes/episodes').then((c) => c.Episodes),
+      },
+      {
+        path: 'categories',
+        loadComponent: () => import('./pages/categories/categories').then((c) => c.Categories),
+      },
+      {
+        path: 'genres',
+        loadComponent: () => import('./pages/genres/genres').then((c) => c.Genres),
       },
       {
         path: 'tags',
-        loadComponent: () => import('./pages/tags/tags').then((m) => m.Tags),
+        loadComponent: () => import('./pages/tags/tags').then((c) => c.Tags),
       },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
