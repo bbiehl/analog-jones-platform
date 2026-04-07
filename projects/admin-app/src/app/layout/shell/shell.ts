@@ -21,6 +21,7 @@ import { MatButtonModule } from '@angular/material/button';
     MatButtonModule,
   ],
   templateUrl: './shell.html',
+  styleUrl: './shell.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Shell {
