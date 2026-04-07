@@ -7,6 +7,17 @@ export const routes: Routes = [
     children: [
       { path: '', loadComponent: () => import('./pages/home/home').then((m) => m.Home) },
       {
+        path: 'categories',
+        loadComponent: () => import('./pages/categories/categories').then((m) => m.Categories),
+      },
+      {
+        path: 'categories/:slug',
+        loadComponent: () =>
+          import('./pages/categories/category-detail/category-detail').then(
+            (m) => m.CategoryDetail,
+          ),
+      },
+      {
         path: 'contact',
         loadComponent: () => import('./pages/contact/contact').then((m) => m.Contact),
       },
@@ -18,6 +29,15 @@ export const routes: Routes = [
         path: 'episodes/:id',
         loadComponent: () =>
           import('./pages/episodes/episode-detail/episode-detail').then((m) => m.EpisodeDetail),
+      },
+      {
+        path: 'genres',
+        loadComponent: () => import('./pages/genres/genres').then((m) => m.Genres),
+      },
+      {
+        path: 'genres/:slug',
+        loadComponent: () =>
+          import('./pages/genres/genre-detail/genre-detail').then((m) => m.GenreDetail),
       },
       {
         path: 'privacy',
