@@ -51,6 +51,15 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/genres/genres').then((c) => c.Genres),
       },
       {
+        path: 'genres/add',
+        loadComponent: () => import('./pages/genres/genre-add/genre-add').then((c) => c.GenreAdd),
+      },
+      {
+        path: 'genres/edit/:id',
+        loadComponent: () =>
+          import('./pages/genres/genre-edit/genre-edit').then((c) => c.GenreEdit),
+      },
+      {
         path: 'tags',
         loadComponent: () => import('./pages/tags/tags').then((c) => c.Tags),
       },
