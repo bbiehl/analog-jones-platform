@@ -23,6 +23,16 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/episodes/episodes').then((c) => c.Episodes),
       },
       {
+        path: 'episodes/add',
+        loadComponent: () =>
+          import('./pages/episodes/episode-add/episode-add').then((c) => c.EpisodeAdd),
+      },
+      {
+        path: 'episodes/edit/:id',
+        loadComponent: () =>
+          import('./pages/episodes/episode-edit/episode-edit').then((c) => c.EpisodeEdit),
+      },
+      {
         path: 'categories',
         loadComponent: () => import('./pages/categories/categories').then((c) => c.Categories),
       },
