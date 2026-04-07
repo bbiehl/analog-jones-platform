@@ -33,6 +33,8 @@ export class Shell {
     { path: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
     { path: '/users', label: 'Users', icon: 'people' },
     { path: '/episodes', label: 'Episodes', icon: 'podcasts' },
+    { path: '/categories', label: 'Categories', icon: 'category' },
+    { path: '/genres', label: 'Genres', icon: 'books_movies_and_music' },
     { path: '/tags', label: 'Tags', icon: 'label' },
   ];
 

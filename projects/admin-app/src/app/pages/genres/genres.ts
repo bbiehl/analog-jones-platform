@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
-  selector: 'app-episodes',
+  selector: 'app-genres',
   imports: [],
-  templateUrl: './episodes.html',
-  styleUrl: './episodes.scss',
+  templateUrl: './genres.html',
+  styleUrl: './genres.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Episodes {}
+export class Genres {}
