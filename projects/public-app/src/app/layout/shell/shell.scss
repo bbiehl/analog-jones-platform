@@ -1,0 +1,17 @@
+/* .toolbar-logo img {
+  height: 40px;
+  width: auto;
+} */
+
+mat-sidenav-content {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 64px);
+  @media (max-width: 600px) {
+    min-height: calc(100vh - 56px);
+  }
+}
+
+main {
+  flex: 1;
+}

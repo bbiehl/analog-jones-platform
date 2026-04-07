@@ -23,7 +23,7 @@ import { NgOptimizedImage } from '@angular/common';
     NgOptimizedImage,
   ],
   templateUrl: './shell.html',
-  styleUrl: './shell.css',
+  styleUrl: './shell.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Shell {
