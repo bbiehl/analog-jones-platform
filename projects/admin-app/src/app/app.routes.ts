@@ -27,6 +27,16 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/categories/categories').then((c) => c.Categories),
       },
       {
+        path: 'categories/add',
+        loadComponent: () =>
+          import('./pages/categories/category-add/category-add').then((c) => c.CategoryAdd),
+      },
+      {
+        path: 'categories/edit/:id',
+        loadComponent: () =>
+          import('./pages/categories/category-edit/category-edit').then((c) => c.CategoryEdit),
+      },
+      {
         path: 'genres',
         loadComponent: () => import('./pages/genres/genres').then((c) => c.Genres),
       },
