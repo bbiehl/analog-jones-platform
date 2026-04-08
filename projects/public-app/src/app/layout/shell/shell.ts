@@ -34,17 +34,13 @@ export class Shell {
   protected readonly navLinks = [
     { path: '/', label: 'Home', exact: true },
     { path: '/episodes', label: 'Episodes', exact: false },
-    { path: '/categories', label: 'Categories', exact: false },
-    { path: '/genres', label: 'Genres', exact: false },
-    { path: '/tags', label: 'Tags', exact: false },
+    { path: '/explorer', label: 'Explorer', exact: false },
   ];
 
   protected readonly footerLinks = [
     { path: '/', label: 'Home' },
     { path: '/episodes', label: 'Episodes' },
-    { path: '/categories', label: 'Categories' },
-    { path: '/genres', label: 'Genres' },
-    { path: '/tags', label: 'Tags' },
+    { path: '/explorer', label: 'Explorer' },
     { path: '/contact', label: 'Contact' },
     { path: '/terms', label: 'Terms of Use' },
     { path: '/privacy', label: 'Privacy Policy' },
