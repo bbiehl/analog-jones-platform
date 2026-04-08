@@ -6,7 +6,7 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client,
   },
   {
-    path: 'explorer/tags/:id',
+    path: 'explorer/tags/:slug',
     renderMode: RenderMode.Client,
   },
   {

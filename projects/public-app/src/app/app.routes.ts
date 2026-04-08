@@ -64,7 +64,10 @@ export const routes: Routes = [
       },
 
       { path: 'terms', loadComponent: () => import('./pages/terms/terms').then((c) => c.Terms) },
+      {
+        path: '**',
+        loadComponent: () => import('./pages/not-found/not-found').then((c) => c.NotFound),
+      },
     ],
   },
-  { path: '**', redirectTo: '' },
 ];
