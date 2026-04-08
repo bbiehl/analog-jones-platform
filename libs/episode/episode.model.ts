@@ -1,15 +1,23 @@
 export interface Episode {
   id: string;
   about: string;
-  keyTakeaways: string[];
-  theMuseum: string[];
-  quotes: string[];
-  title: string;
   description: string;
-  genre: string;
-//   category: EpisodeCategory;
-//   tags: EpisodeTag[];
-  releaseDate: Date;
-  duration: number; // Duration in minutes
+  episodeDate: Date;
+  episodeDuration: number; // Duration in minutes
   isVisible: boolean;
+  keyTakeaways: string[];
+  links: {
+    spotify?: string;
+    youtube?: string;
+  }
+  quotes: string[];
+  museum: MuseumItem[];
+  thumbnailUrl: string | null;
+  title: string;
+  year: number;
+}
+
+export interface MuseumItem {
+  name: string;
+  explanation: string;
 }
