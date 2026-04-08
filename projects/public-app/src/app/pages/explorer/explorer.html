@@ -1,0 +1,34 @@
+<section class="explorer">
+  <h1>Explorer</h1>
+  <p>Browse episodes by category, genre, or tag.</p>
+
+  <nav class="explorer-nav" aria-label="Explorer sections">
+    <a routerLink="categories" class="explorer-card">
+      <mat-card>
+        <mat-card-content>
+          <mat-icon>folder</mat-icon>
+          <span>Categories</span>
+        </mat-card-content>
+      </mat-card>
+    </a>
+
+    <a routerLink="genres" class="explorer-card">
+      <mat-card>
+        <mat-card-content>
+          <mat-icon>library_music</mat-icon>
+          <span>Genres</span>
+        </mat-card-content>
+      </mat-card>
+    </a>
+
+    <a routerLink="tags" class="explorer-card">
+      <mat-card>
+        <mat-card-content>
+          <mat-icon>label</mat-icon>
+          <span>Tags</span>
+        </mat-card-content>
+      </mat-card>
+    </a>
+  </nav>
+
+  <router-outlet /></section>

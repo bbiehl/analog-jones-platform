@@ -3,52 +3,67 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./layout/shell/shell').then((m) => m.Shell),
+    loadComponent: () => import('./layout/shell/shell').then((c) => c.Shell),
     children: [
-      { path: '', loadComponent: () => import('./pages/home/home').then((m) => m.Home) },
-      {
-        path: 'categories',
-        loadComponent: () => import('./pages/categories/categories').then((m) => m.Categories),
-      },
-      {
-        path: 'categories/:slug',
-        loadComponent: () =>
-          import('./pages/categories/category-detail/category-detail').then(
-            (m) => m.CategoryDetail,
-          ),
-      },
+      { path: '', loadComponent: () => import('./pages/home/home').then((c) => c.Home) },
       {
         path: 'contact',
-        loadComponent: () => import('./pages/contact/contact').then((m) => m.Contact),
+        loadComponent: () => import('./pages/contact/contact').then((c) => c.Contact),
       },
       {
         path: 'episodes',
-        loadComponent: () => import('./pages/episodes/episodes').then((m) => m.Episodes),
+        loadComponent: () => import('./pages/episodes/episodes').then((c) => c.Episodes),
       },
       {
         path: 'episodes/:id',
         loadComponent: () =>
-          import('./pages/episodes/episode-detail/episode-detail').then((m) => m.EpisodeDetail),
+          import('./pages/episodes/episode-detail/episode-detail').then((c) => c.EpisodeDetail),
       },
       {
-        path: 'genres',
-        loadComponent: () => import('./pages/genres/genres').then((m) => m.Genres),
+        path: 'explorer',
+        loadComponent: () => import('./pages/explorer/explorer').then((c) => c.Explorer),
+        children: [
+          {
+            path: 'categories',
+            loadComponent: () =>
+              import('./pages/explorer/categories/categories').then((c) => c.Categories),
+          },
+          {
+            path: 'categories/:slug',
+            loadComponent: () =>
+              import('./pages/explorer/categories/category-detail/category-detail').then(
+                (c) => c.CategoryDetail,
+              ),
+          },
+          {
+            path: 'genres',
+            loadComponent: () => import('./pages/explorer/genres/genres').then((c) => c.Genres),
+          },
+          {
+            path: 'genres/:slug',
+            loadComponent: () =>
+              import('./pages/explorer/genres/genre-detail/genre-detail').then(
+                (c) => c.GenreDetail,
+              ),
+          },
+          {
+            path: 'tags',
+            loadComponent: () => import('./pages/explorer/tags/tags').then((c) => c.Tags),
+          },
+          {
+            path: 'tags/:slug',
+            loadComponent: () =>
+              import('./pages/explorer/tags/tag-detail/tag-detail').then((c) => c.TagDetail),
+          },
+        ],
       },
-      {
-        path: 'genres/:slug',
-        loadComponent: () =>
-          import('./pages/genres/genre-detail/genre-detail').then((m) => m.GenreDetail),
-      },
+
       {
         path: 'privacy',
-        loadComponent: () => import('./pages/privacy/privacy').then((m) => m.Privacy),
+        loadComponent: () => import('./pages/privacy/privacy').then((c) => c.Privacy),
       },
-      { path: 'tags', loadComponent: () => import('./pages/tags/tags').then((m) => m.Tags) },
-      {
-        path: 'tags/:slug',
-        loadComponent: () => import('./pages/tags/tag-detail/tag-detail').then((m) => m.TagDetail),
-      },
-      { path: 'terms', loadComponent: () => import('./pages/terms/terms').then((m) => m.Terms) },
+
+      { path: 'terms', loadComponent: () => import('./pages/terms/terms').then((c) => c.Terms) },
     ],
   },
   { path: '**', redirectTo: '' },
