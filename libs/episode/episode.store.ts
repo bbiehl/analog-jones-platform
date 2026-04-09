@@ -1,13 +1,15 @@
-import { Episode } from './episode.model';
+import { Episode, EpisodeWithRelations } from './episode.model';
 
 interface EpisodeState {
   episodes: Episode[];
+  selectedEpisode: EpisodeWithRelations | null;
   loading: boolean;
   error: string | null;
 }
 
-const initalState: EpisodeState = {
+const initialState: EpisodeState = {
   episodes: [],
+  selectedEpisode: null,
   loading: false,
   error: null,
 };
