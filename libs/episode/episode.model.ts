@@ -1,15 +1,18 @@
+import { Timestamp } from 'firebase/firestore';
+
 export interface Episode {
   id: string;
   about: string;
+  createdAt: Timestamp;
   description: string;
-  episodeDate: Date;
+  episodeDate: Timestamp;
   episodeDuration: number; // Duration in minutes
   isVisible: boolean;
   keyTakeaways: string[];
   links: {
     spotify?: string;
     youtube?: string;
-  }
+  };
   quotes: string[];
   museum: MuseumItem[];
   thumbnailUrl: string | null;

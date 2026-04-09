@@ -1,10 +1,16 @@
 import { Timestamp } from 'firebase/firestore';
 
-export interface User {
+export interface AppUser {
   id: string;
   avatarUrl: string | null;
   createdAt: Timestamp;
   email: string;
-  isAdmin: boolean;
   name: string;
+  role: UserRole;
+}
+
+export enum UserRole {
+  ADMIN = 'admin',
+  MEMBER = 'member',
+  FREE = 'free'
 }
