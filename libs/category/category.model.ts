@@ -8,7 +8,7 @@ export interface Category {
 }
 
 export interface CategoryWithRelations extends Category {
-  episodes: Episode[]; // episodes associated with this category
+  episodes: Episode[]; // Array of episodes associated with this category
 }
 
 export interface CategoryForm {

@@ -8,7 +8,7 @@ export interface Tag {
 }
 
 export interface TagWithRelations extends Tag {
-  episodes: Episode[]; // Array of episode titles
+  episodes: Episode[]; // Array of episodes associated with this tag
 }
 
 export interface TagForm {

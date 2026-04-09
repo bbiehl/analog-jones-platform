@@ -8,7 +8,7 @@ export interface Genre {
 }
 
 export interface GenreWithRelations extends Genre {
-  episodes: Episode[];
+  episodes: Episode[]; // Array of episodes associated with this genre
 }
 
 export interface GenreForm {
