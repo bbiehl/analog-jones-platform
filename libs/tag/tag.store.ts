@@ -1,5 +1,7 @@
+import { Tag } from './tag.model';
+
 interface TagState {
-  tags: string[];
+  tags: Tag[];
   loading: boolean;
   error: string | null;
 }
