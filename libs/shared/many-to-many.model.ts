@@ -1,14 +1,14 @@
 export interface EpisodeCategory {
-  episodeId: number;
-  categoryId: number;
+  episodeId: string;
+  categoryId: string;
 }
 
 export interface EpisodeGenre {
-  episodeId: number;
-  genreId: number;
+  episodeId: string;
+  genreId: string;
 }
 
 export interface EpisodeTag {
-  episodeId: number;
-  tagId: number;
+  episodeId: string;
+  tagId: string;
 }

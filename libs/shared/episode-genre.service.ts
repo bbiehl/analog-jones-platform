@@ -1,20 +1,95 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  writeBatch,
+} from 'firebase/firestore';
+import { Episode } from '../episode/episode.model';
+import { Genre } from '../genre/genre.model';
+import { FIRESTORE } from './firebase.token';
 
 @Injectable({ providedIn: 'root' })
 export class EpisodeGenreService {
-    // createEpisodeGenre
-    // this is never called directly, but is used by EpisodeService and GenreService when creating/updating episodes and genres
+  private firestore = inject(FIRESTORE);
 
-    // deleteEpisodeGenre
-    // this is never called directly, but is used by EpisodeService and GenreService when updating/deleting episodes and genres
+  async createEpisodeGenre(episodeId: string, genreId: string): Promise<void> {
+    await addDoc(collection(this.firestore, 'episodeGenres'), { episodeId, genreId });
+  }
 
-    // getEpisodeGenresByEpisodeId
-    // this is never called directly, but is used by EpisodeService when getting an episode by ID to include the genres of the episode
-    // for listing the genres of an episode on the episode page and for editing an episode
-    // Returns an array of Genre objects, which include the genre data but not the associated episodes
+  async deleteEpisodeGenre(episodeId: string, genreId: string): Promise<void> {
+    const q = query(
+      collection(this.firestore, 'episodeGenres'),
+      where('episodeId', '==', episodeId),
+      where('genreId', '==', genreId)
+    );
+    const snapshot = await getDocs(q);
+    const batch = writeBatch(this.firestore);
+    snapshot.docs.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
 
-    // getEpisodesByGenreSlug
-    // this is never called directly, but is used by GenreService when getting a genre by slug to include the episodes of the genre
-    // for listing the episodes of a genre on the genre page
-    // Returns an array of Episode objects, which include the episode data but not the associated categories, genres, or tags
+  async deleteEpisodeGenresByGenreId(genreId: string): Promise<void> {
+    const q = query(
+      collection(this.firestore, 'episodeGenres'),
+      where('genreId', '==', genreId)
+    );
+    const snapshot = await getDocs(q);
+    const batch = writeBatch(this.firestore);
+    snapshot.docs.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
+
+  async getEpisodeGenresByEpisodeId(episodeId: string): Promise<Genre[]> {
+    const q = query(
+      collection(this.firestore, 'episodeGenres'),
+      where('episodeId', '==', episodeId)
+    );
+    const snapshot = await getDocs(q);
+    const genres: Genre[] = [];
+
+    for (const junction of snapshot.docs) {
+      const genreId = junction.data()['genreId'];
+      const genreSnap = await getDoc(doc(this.firestore, 'genres', genreId));
+      if (genreSnap.exists()) {
+        genres.push({ id: genreSnap.id, ...genreSnap.data() } as Genre);
+      }
+    }
+
+    return genres;
+  }
+
+  async getEpisodesByGenreSlug(slug: string): Promise<Episode[]> {
+    const genreQuery = query(
+      collection(this.firestore, 'genres'),
+      where('slug', '==', slug)
+    );
+    const genreSnapshot = await getDocs(genreQuery);
+    if (genreSnapshot.empty) {
+      return [];
+    }
+
+    const genreId = genreSnapshot.docs[0].id;
+    const junctionQuery = query(
+      collection(this.firestore, 'episodeGenres'),
+      where('genreId', '==', genreId)
+    );
+    const junctionSnapshot = await getDocs(junctionQuery);
+    const episodes: Episode[] = [];
+
+    for (const junction of junctionSnapshot.docs) {
+      const episodeId = junction.data()['episodeId'];
+      const episodeSnap = await getDoc(doc(this.firestore, 'episodes', episodeId));
+      if (episodeSnap.exists()) {
+        episodes.push({ id: episodeSnap.id, ...episodeSnap.data() } as Episode);
+      }
+    }
+
+    return episodes;
+  }
 }
