@@ -34,6 +34,17 @@ export class EpisodeGenreService {
     await batch.commit();
   }
 
+  async deleteEpisodeGenresByEpisodeId(episodeId: string): Promise<void> {
+    const q = query(
+      collection(this.firestore, 'episodeGenres'),
+      where('episodeId', '==', episodeId)
+    );
+    const snapshot = await getDocs(q);
+    const batch = writeBatch(this.firestore);
+    snapshot.docs.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
+
   async deleteEpisodeGenresByGenreId(genreId: string): Promise<void> {
     const q = query(
       collection(this.firestore, 'episodeGenres'),

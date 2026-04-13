@@ -1,36 +1,178 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  Timestamp,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
+import { FIRESTORE } from '../shared/firebase.token';
+import { EpisodeCategoryService } from '../shared/episode-category.service';
+import { EpisodeGenreService } from '../shared/episode-genre.service';
+import { EpisodeTagService } from '../shared/episode-tag.service';
+import { Episode, EpisodeWithRelations } from './episode.model';
 
 @Injectable({ providedIn: 'root' })
 export class EpisodeService {
-    // getAllEpisodes, for admin listing
-    // Returns an array of Episode objects, which include the episode data but not the associated categories, genres, or tags
+  private firestore = inject(FIRESTORE);
+  private episodeCategoryService = inject(EpisodeCategoryService);
+  private episodeGenreService = inject(EpisodeGenreService);
+  private episodeTagService = inject(EpisodeTagService);
 
-    // toggleEpisodeVisibility, for admin listing
-    // this is used by the admin listing to toggle the visibility of an episode on the episodes page
+  async getAllEpisodes(): Promise<Episode[]> {
+    const q = query(collection(this.firestore, 'episodes'), orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Episode);
+  }
 
-    // getCurrentEpisode, for listing on the home page
-    // Returns an Episode object, which include the episode data but not the associated categories, genres, or tags
-    // This should return the most recent episode that is visible on the episodes page, or null if there are no visible episodes
+  async toggleEpisodeVisibility(id: string, isVisible: boolean): Promise<void> {
+    await updateDoc(doc(this.firestore, 'episodes', id), { isVisible });
+  }
 
-    // getRecentEpisodes, for listing on the home page
-    // Returns an array of Episode objects, which include the episode data but not the associated categories, genres, or tags
-    // Episodes should be ordered by createdAt, with the most recent episode first, and limited to 5 episodes
-    // Episodes should only be returned if they are visible on the episodes page
+  async getCurrentEpisode(): Promise<Episode | null> {
+    const q = query(
+      collection(this.firestore, 'episodes'),
+      where('isVisible', '==', true),
+      orderBy('createdAt', 'desc'),
+      limit(1)
+    );
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      return null;
+    }
+    return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Episode;
+  }
 
-    // getVisibleEpisodes, for listing on the episodes page
-    // Returns an array of Episode objects, which include the episode data but not the associated categories, genres, or tags
-    // This should be paginated, and filtered by a search term if provided
+  async getRecentEpisodes(): Promise<Episode[]> {
+    const q = query(
+      collection(this.firestore, 'episodes'),
+      where('isVisible', '==', true),
+      orderBy('createdAt', 'desc'),
+      limit(5)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Episode);
+  }
 
-    // getEpisodeById, for editing and for episode page
-    // Returns an EpisodeWithRelations, which includes the episode data along with the associated categories, genres, and tags
+  async getVisibleEpisodes(searchTerm?: string): Promise<Episode[]> {
+    const q = query(
+      collection(this.firestore, 'episodes'),
+      where('isVisible', '==', true),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    let episodes = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Episode);
 
-    // createEpisode
-    // must recursively create any episodeCategory, episodeGenre, episodeTag after the episode is created and has an episodeId
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      episodes = episodes.filter((e) => e.title.toLowerCase().includes(term));
+    }
 
-    // updateEpisode
-    // must recursively create/delete any episodeCategory, episodeGenre, episodeTag associated with the episodeId if any of those fields are updated
+    return episodes;
+  }
 
-    // deleteEpisode
-    // must recursively delete any episodeCategory, episodeGenre, episodeTag with the episodeId
+  async getEpisodeById(id: string): Promise<EpisodeWithRelations> {
+    const snap = await getDoc(doc(this.firestore, 'episodes', id));
+    if (!snap.exists()) {
+      throw new Error(`Episode with id "${id}" not found`);
+    }
 
+    const episode = { id: snap.id, ...snap.data() } as Episode;
+    const [categories, genres, tags] = await Promise.all([
+      this.episodeCategoryService.getEpisodeCategoriesByEpisodeId(id),
+      this.episodeGenreService.getEpisodeGenresByEpisodeId(id),
+      this.episodeTagService.getEpisodeTagsByEpisodeId(id),
+    ]);
+
+    return { ...episode, categories, genres, tags };
+  }
+
+  async createEpisode(
+    episode: Omit<Episode, 'id'>,
+    categoryIds: string[],
+    genreIds: string[],
+    tagIds: string[]
+  ): Promise<string> {
+    const docRef = await addDoc(collection(this.firestore, 'episodes'), {
+      createdAt: episode.createdAt,
+      episodeDate: episode.episodeDate,
+      episodeDuration: episode.episodeDuration,
+      intelligence: episode.intelligence,
+      isVisible: episode.isVisible,
+      links: episode.links,
+      posterUrl: episode.posterUrl,
+      title: episode.title,
+      year: episode.year,
+    });
+
+    const episodeId = docRef.id;
+    await Promise.all([
+      ...categoryIds.map((cId) => this.episodeCategoryService.createEpisodeCategory(episodeId, cId)),
+      ...genreIds.map((gId) => this.episodeGenreService.createEpisodeGenre(episodeId, gId)),
+      ...tagIds.map((tId) => this.episodeTagService.createEpisodeTag(episodeId, tId)),
+    ]);
+
+    return episodeId;
+  }
+
+  async updateEpisode(
+    id: string,
+    episode: Partial<Episode>,
+    categoryIds?: string[],
+    genreIds?: string[],
+    tagIds?: string[]
+  ): Promise<void> {
+    const { id: _id, ...data } = episode as Episode;
+    await updateDoc(doc(this.firestore, 'episodes', id), data);
+
+    const updates: Promise<void>[] = [];
+
+    if (categoryIds) {
+      updates.push(
+        this.episodeCategoryService.deleteEpisodeCategoriesByEpisodeId(id).then(() =>
+          Promise.all(
+            categoryIds.map((cId) => this.episodeCategoryService.createEpisodeCategory(id, cId))
+          ).then(() => undefined)
+        )
+      );
+    }
+
+    if (genreIds) {
+      updates.push(
+        this.episodeGenreService.deleteEpisodeGenresByEpisodeId(id).then(() =>
+          Promise.all(
+            genreIds.map((gId) => this.episodeGenreService.createEpisodeGenre(id, gId))
+          ).then(() => undefined)
+        )
+      );
+    }
+
+    if (tagIds) {
+      updates.push(
+        this.episodeTagService.deleteEpisodeTagsByEpisodeId(id).then(() =>
+          Promise.all(
+            tagIds.map((tId) => this.episodeTagService.createEpisodeTag(id, tId))
+          ).then(() => undefined)
+        )
+      );
+    }
+
+    await Promise.all(updates);
+  }
+
+  async deleteEpisode(id: string): Promise<void> {
+    await Promise.all([
+      this.episodeCategoryService.deleteEpisodeCategoriesByEpisodeId(id),
+      this.episodeGenreService.deleteEpisodeGenresByEpisodeId(id),
+      this.episodeTagService.deleteEpisodeTagsByEpisodeId(id),
+    ]);
+    await deleteDoc(doc(this.firestore, 'episodes', id));
+  }
 }

@@ -1,20 +1,106 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  writeBatch,
+} from 'firebase/firestore';
+import { Category } from '../category/category.model';
+import { Episode } from '../episode/episode.model';
+import { FIRESTORE } from './firebase.token';
 
 @Injectable({ providedIn: 'root' })
 export class EpisodeCategoryService {
-    // createEpisodeCategory
-    // this is never called directly, but is used by EpisodeService and CategoryService when creating/updating episodes and categories
+  private firestore = inject(FIRESTORE);
 
-    // deleteEpisodeCategory
-    // this is never called directly, but is used by EpisodeService and CategoryService when updating/deleting episodes and categories
+  async createEpisodeCategory(episodeId: string, categoryId: string): Promise<void> {
+    await addDoc(collection(this.firestore, 'episodeCategories'), { episodeId, categoryId });
+  }
 
-    // getEpisodeCategoriesByEpisodeId
-    // this is never called directly, but is used by EpisodeService when getting an episode by ID to include the categories of the episode
-    // for listing the categories of an episode on the episode page and for editing an episode
-    // Returns an array of Category objects, which include the category data but not the associated episodes
+  async deleteEpisodeCategory(episodeId: string, categoryId: string): Promise<void> {
+    const q = query(
+      collection(this.firestore, 'episodeCategories'),
+      where('episodeId', '==', episodeId),
+      where('categoryId', '==', categoryId)
+    );
+    const snapshot = await getDocs(q);
+    const batch = writeBatch(this.firestore);
+    snapshot.docs.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
 
-    // getEpisodesByCategorySlug
-    // this is never called directly, but is used by CategoryService when getting a category by slug to include the episodes of the category
-    // for listing the episodes of a category on the category page
-    // Returns an array of Episode objects, which include the episode data but not the associated categories, genres, or tags
+  async deleteEpisodeCategoriesByCategoryId(categoryId: string): Promise<void> {
+    const q = query(
+      collection(this.firestore, 'episodeCategories'),
+      where('categoryId', '==', categoryId)
+    );
+    const snapshot = await getDocs(q);
+    const batch = writeBatch(this.firestore);
+    snapshot.docs.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
+
+  async deleteEpisodeCategoriesByEpisodeId(episodeId: string): Promise<void> {
+    const q = query(
+      collection(this.firestore, 'episodeCategories'),
+      where('episodeId', '==', episodeId)
+    );
+    const snapshot = await getDocs(q);
+    const batch = writeBatch(this.firestore);
+    snapshot.docs.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
+
+  async getEpisodeCategoriesByEpisodeId(episodeId: string): Promise<Category[]> {
+    const q = query(
+      collection(this.firestore, 'episodeCategories'),
+      where('episodeId', '==', episodeId)
+    );
+    const snapshot = await getDocs(q);
+    const categories: Category[] = [];
+
+    for (const junction of snapshot.docs) {
+      const categoryId = junction.data()['categoryId'];
+      const categorySnap = await getDoc(doc(this.firestore, 'categories', categoryId));
+      if (categorySnap.exists()) {
+        categories.push({ id: categorySnap.id, ...categorySnap.data() } as Category);
+      }
+    }
+
+    return categories;
+  }
+
+  async getEpisodesByCategorySlug(slug: string): Promise<Episode[]> {
+    const categoryQuery = query(
+      collection(this.firestore, 'categories'),
+      where('slug', '==', slug)
+    );
+    const categorySnapshot = await getDocs(categoryQuery);
+    if (categorySnapshot.empty) {
+      return [];
+    }
+
+    const categoryId = categorySnapshot.docs[0].id;
+    const junctionQuery = query(
+      collection(this.firestore, 'episodeCategories'),
+      where('categoryId', '==', categoryId)
+    );
+    const junctionSnapshot = await getDocs(junctionQuery);
+    const episodes: Episode[] = [];
+
+    for (const junction of junctionSnapshot.docs) {
+      const episodeId = junction.data()['episodeId'];
+      const episodeSnap = await getDoc(doc(this.firestore, 'episodes', episodeId));
+      if (episodeSnap.exists()) {
+        episodes.push({ id: episodeSnap.id, ...episodeSnap.data() } as Episode);
+      }
+    }
+
+    return episodes;
+  }
 }
