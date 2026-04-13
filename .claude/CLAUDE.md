@@ -64,7 +64,7 @@ All components use the `app` prefix (e.g., `selector: 'app-feature-name'`).
 Each app has a `firebase.ts` initialization file (`projects/<app>/src/app/firebase.ts`) that exports `auth`, `firestore`, and `storage` instances directly. Uses the Firebase modular SDK (`firebase/app`, `firebase/auth`, etc.) — NOT `@angular/fire`. Import these instances directly in services. Connects to local emulators when `environment.useEmulators` is true.
 
 - **Emulator ports**: Auth (9099), Firestore (8080), Storage (9199), UI (4000)
-- **Firestore rules** (`firestore.rules`): public read, admin-only write (checked via `isAdmin` field on user doc)
+- **Firestore rules** (`firestore.rules`): public read, admin-only write (checked via `role` field on user doc)
 - **Storage rules** (`storage.rules`): public read, admin-only write
 
 ### Environment Configuration
