@@ -1,13 +1,15 @@
-import { Category } from "./category.model";
+import { Category, CategoryWithRelations } from './category.model';
 
 interface CategoryState {
-    categories: Category[];
-    loading: boolean;
-    error: string | null;
+  categories: Category[];
+  selectedCategory: CategoryWithRelations | null;
+  loading: boolean;
+  error: string | null;
 }
 
-const initalState: CategoryState = {
-    categories: [],
-    loading: false,
-    error: null
+const initialState: CategoryState = {
+  categories: [],
+  selectedCategory: null,
+  loading: false,
+  error: null,
 };
