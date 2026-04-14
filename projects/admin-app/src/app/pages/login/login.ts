@@ -24,8 +24,10 @@ export class Login {
       await new Promise((resolve) => setTimeout(resolve, 50));
     }
 
-    if (this.userStore.user()) {
+    if (this.userStore.isAdmin()) {
       this.router.navigate(['/dashboard']);
+    } else {
+      this.router.navigate(['/access-denied']);
     }
   }
 }

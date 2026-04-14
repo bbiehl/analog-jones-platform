@@ -29,11 +29,20 @@ export const UserStore = signalStore(
     return {
       init() {
         userService.listenToAuthState(async (firebaseUser) => {
-          if (firebaseUser) {
-            const appUser = await userService.getUserDoc(firebaseUser.uid);
-            patchState(store, { user: appUser, authReady: true, loading: false });
-          } else {
-            patchState(store, { user: null, authReady: true, loading: false });
+          try {
+            if (firebaseUser) {
+              const appUser = await userService.getUserDoc(firebaseUser.uid);
+              patchState(store, { user: appUser, authReady: true, loading: false });
+            } else {
+              patchState(store, { user: null, authReady: true, loading: false });
+            }
+          } catch (e) {
+            patchState(store, {
+              user: null,
+              authReady: true,
+              loading: false,
+              error: (e as Error).message,
+            });
           }
         });
       },

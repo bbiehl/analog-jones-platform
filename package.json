@@ -14,9 +14,9 @@
     "e2e": "ng e2e",
     "emulators:start": "firebase emulators:start",
     "emulators:stop": "lsof -ti:4000,4200,4300,4400,8080,9099,9150,9199 | xargs kill -9 2>/dev/null || true",
-    "dev:public": "concurrently --names emulators,app --prefix-colors blue,green \"firebase emulators:start\" \"ng serve public-app\"",
-    "dev:admin": "concurrently --names emulators,app --prefix-colors blue,green \"firebase emulators:start\" \"ng serve admin-app\"",
-    "dev:all": "concurrently --names emulators,public,admin --prefix-colors blue,green,magenta \"firebase emulators:start\" \"ng serve public-app --port 4200\" \"ng serve admin-app --port 4300\"",
+    "dev:public": "concurrently --names emulators,app --prefix-colors blue,green \"firebase emulators:start --import=./seed-data\" \"ng serve public-app\"",
+    "dev:admin": "concurrently --names emulators,app --prefix-colors blue,green \"firebase emulators:start --import=./seed-data\" \"ng serve admin-app\"",
+    "dev:all": "concurrently --names emulators,public,admin --prefix-colors blue,green,magenta \"firebase emulators:start --import=./seed-data\" \"ng serve public-app --port 4200\" \"ng serve admin-app --port 4300\"",
     "deploy:rules": "firebase deploy --only firestore:rules,storage"
   },
   "private": true,
