@@ -1,1 +1,12 @@
-<p>access-denied works!</p>
+<div class="flex items-center justify-center min-h-screen">
+  <div class="flex flex-col items-center gap-6 p-8 rounded-lg max-w-sm w-full text-center"
+       style="background: var(--mat-sys-surface);">
+    <mat-icon class="text-red-400" style="font-size: 48px; width: 48px; height: 48px;">block</mat-icon>
+    <h1 class="text-2xl">Access Denied</h1>
+    <p class="text-gray-400">Your account does not have admin access.</p>
+    <button mat-stroked-button (click)="onSignOut()">
+      <mat-icon>logout</mat-icon>
+      Sign out and try another account
+    </button>
+  </div>
+</div>

@@ -11,6 +11,14 @@
     </nav>
   }
   <span class="flex-auto"></span>
+  @if (userStore.user(); as user) {
+    @if (!isMobile()) {
+      <span class="text-sm text-gray-400 mr-2">{{ user.email }}</span>
+    }
+    <button mat-icon-button aria-label="Sign out" (click)="onSignOut()">
+      <mat-icon>logout</mat-icon>
+    </button>
+  }
   @if (isMobile()) {
     <button mat-icon-button aria-label="Toggle navigation menu" (click)="sidenav()?.toggle()">
       <mat-icon>menu</mat-icon>
@@ -28,6 +36,11 @@
             {{ link.label }}
           </a>
         }
+        <mat-divider />
+        <a mat-list-item (click)="onSignOut()">
+          <mat-icon matListItemIcon>logout</mat-icon>
+          Sign out
+        </a>
       </mat-nav-list>
     </mat-sidenav>
   }

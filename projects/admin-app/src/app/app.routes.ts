@@ -1,18 +1,24 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   {
+    path: 'login',
+    loadComponent: () => import('./pages/login/login').then((c) => c.Login),
+  },
+  {
+    path: 'access-denied',
+    loadComponent: () =>
+      import('./pages/access-denied/access-denied').then((c) => c.AccessDenied),
+  },
+  {
     path: '',
     loadComponent: () => import('./layout/shell/shell').then((c) => c.Shell),
+    canActivate: [authGuard],
     children: [
       {
         path: 'dashboard',
         loadComponent: () => import('./pages/dashboard/dashboard').then((c) => c.Dashboard),
-      },
-      {
-        path: 'access-denied',
-        loadComponent: () =>
-          import('./pages/access-denied/access-denied').then((c) => c.AccessDenied),
       },
       {
         path: 'users',
@@ -74,5 +80,5 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
-  { path: '**', redirectTo: 'dashboard' },
+  { path: '**', redirectTo: 'login' },
 ];

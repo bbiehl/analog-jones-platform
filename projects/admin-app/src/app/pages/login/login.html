@@ -1,1 +1,20 @@
-<p>login works!</p>
+<div class="flex items-center justify-center min-h-screen">
+  <div class="flex flex-col items-center gap-6 p-8 rounded-lg max-w-sm w-full"
+       style="background: var(--mat-sys-surface);">
+    <h1 class="text-3xl">Admin</h1>
+    <p class="text-gray-400 text-center">Sign in to manage content</p>
+
+    @if (userStore.error()) {
+      <p class="text-red-400 text-sm">{{ userStore.error() }}</p>
+    }
+
+    @if (userStore.loading()) {
+      <mat-spinner diameter="36" />
+    } @else {
+      <button mat-flat-button color="primary" (click)="onSignIn()" class="w-full">
+        <mat-icon>login</mat-icon>
+        Sign in with Google
+      </button>
+    }
+  </div>
+</div>
