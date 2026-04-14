@@ -17,6 +17,7 @@ import { FIRESTORE } from '../shared/firebase.token';
 import { EpisodeCategoryService } from '../shared/episode-category.service';
 import { EpisodeGenreService } from '../shared/episode-genre.service';
 import { EpisodeTagService } from '../shared/episode-tag.service';
+import { ImageUploadService } from '../shared/image-upload.service';
 import { Episode, EpisodeWithRelations } from './episode.model';
 
 @Injectable({ providedIn: 'root' })
@@ -25,6 +26,7 @@ export class EpisodeService {
   private episodeCategoryService = inject(EpisodeCategoryService);
   private episodeGenreService = inject(EpisodeGenreService);
   private episodeTagService = inject(EpisodeTagService);
+  private imageUploadService = inject(ImageUploadService);
 
   async getAllEpisodes(): Promise<Episode[]> {
     const q = query(collection(this.firestore, 'episodes'), orderBy('createdAt', 'desc'));
@@ -98,7 +100,8 @@ export class EpisodeService {
     episode: Omit<Episode, 'id'>,
     categoryIds: string[],
     genreIds: string[],
-    tagIds: string[]
+    tagIds: string[],
+    posterFile?: File
   ): Promise<string> {
     const docRef = await addDoc(collection(this.firestore, 'episodes'), {
       createdAt: episode.createdAt,
@@ -107,12 +110,18 @@ export class EpisodeService {
       intelligence: episode.intelligence,
       isVisible: episode.isVisible,
       links: episode.links,
-      posterUrl: episode.posterUrl,
+      posterUrl: null,
       title: episode.title,
       year: episode.year,
     });
 
     const episodeId = docRef.id;
+
+    if (posterFile) {
+      const posterUrl = await this.imageUploadService.uploadPoster(episodeId, posterFile);
+      await updateDoc(doc(this.firestore, 'episodes', episodeId), { posterUrl });
+    }
+
     await Promise.all([
       ...categoryIds.map((cId) => this.episodeCategoryService.createEpisodeCategory(episodeId, cId)),
       ...genreIds.map((gId) => this.episodeGenreService.createEpisodeGenre(episodeId, gId)),
@@ -127,9 +136,16 @@ export class EpisodeService {
     episode: Partial<Episode>,
     categoryIds?: string[],
     genreIds?: string[],
-    tagIds?: string[]
+    tagIds?: string[],
+    posterFile?: File
   ): Promise<void> {
     const { id: _id, ...data } = episode as Episode;
+
+    if (posterFile) {
+      const posterUrl = await this.imageUploadService.uploadPoster(id, posterFile);
+      data.posterUrl = posterUrl;
+    }
+
     await updateDoc(doc(this.firestore, 'episodes', id), data);
 
     const updates: Promise<void>[] = [];
@@ -172,6 +188,7 @@ export class EpisodeService {
       this.episodeCategoryService.deleteEpisodeCategoriesByEpisodeId(id),
       this.episodeGenreService.deleteEpisodeGenresByEpisodeId(id),
       this.episodeTagService.deleteEpisodeTagsByEpisodeId(id),
+      this.imageUploadService.deletePoster(id),
     ]);
     await deleteDoc(doc(this.firestore, 'episodes', id));
   }

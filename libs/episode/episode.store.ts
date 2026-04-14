@@ -93,11 +93,12 @@ export const EpisodeStore = signalStore(
         episode: Omit<Episode, 'id'>,
         categoryIds: string[],
         genreIds: string[],
-        tagIds: string[]
+        tagIds: string[],
+        posterFile?: File
       ) {
         patchState(store, { loading: true, error: null });
         try {
-          await episodeService.createEpisode(episode, categoryIds, genreIds, tagIds);
+          await episodeService.createEpisode(episode, categoryIds, genreIds, tagIds, posterFile);
           const episodes = await episodeService.getAllEpisodes();
           patchState(store, { episodes, loading: false });
         } catch (e) {
@@ -110,11 +111,12 @@ export const EpisodeStore = signalStore(
         episode: Partial<Episode>,
         categoryIds?: string[],
         genreIds?: string[],
-        tagIds?: string[]
+        tagIds?: string[],
+        posterFile?: File
       ) {
         patchState(store, { loading: true, error: null });
         try {
-          await episodeService.updateEpisode(id, episode, categoryIds, genreIds, tagIds);
+          await episodeService.updateEpisode(id, episode, categoryIds, genreIds, tagIds, posterFile);
           const episodes = await episodeService.getAllEpisodes();
           patchState(store, { episodes, loading: false });
         } catch (e) {
