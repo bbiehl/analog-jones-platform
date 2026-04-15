@@ -1,24 +1,24 @@
 import { inject, Injectable } from '@angular/core';
-import { deleteObject, getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { STORAGE } from './firebase.token';
+import { STORAGE, STORAGE_OPS } from './firebase.token';
 
 const MAX_SIZE_BYTES = 1_000_000; // 1 MB
 
 @Injectable({ providedIn: 'root' })
 export class ImageUploadService {
   private storage = inject(STORAGE);
+  private ops = inject(STORAGE_OPS);
 
   async uploadPoster(episodeId: string, file: File): Promise<string> {
     const compressed = await this.compressImage(file);
-    const storageRef = ref(this.storage, `poster/${episodeId}`);
-    await uploadBytes(storageRef, compressed, { contentType: 'image/jpeg' });
-    return getDownloadURL(storageRef);
+    const storageRef = this.ops.ref(this.storage, `poster/${episodeId}`);
+    await this.ops.uploadBytes(storageRef, compressed, { contentType: 'image/jpeg' });
+    return this.ops.getDownloadURL(storageRef);
   }
 
   async deletePoster(episodeId: string): Promise<void> {
-    const storageRef = ref(this.storage, `poster/${episodeId}`);
+    const storageRef = this.ops.ref(this.storage, `poster/${episodeId}`);
     try {
-      await deleteObject(storageRef);
+      await this.ops.deleteObject(storageRef);
     } catch (e: unknown) {
       if ((e as { code?: string }).code === 'storage/object-not-found') {
         return;
