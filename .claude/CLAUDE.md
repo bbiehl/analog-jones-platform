@@ -10,8 +10,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `ng serve admin-app` — serve admin-app only (no emulators)
 - `pnpm build` / `ng build` — production build (output: `dist/`)
 - `pnpm run serve:ssr:public-app` — run SSR server after build (`node dist/public-app/server/server.mjs`)
-- `pnpm test` / `ng test` — run unit tests (Vitest)
+- `pnpm test` / `ng test` — run all unit tests (Vitest) across both apps and libs concurrently
 - `ng test public-app` / `ng test admin-app` — run tests for a specific project
+- `ng test admin-app --include '**/image-upload*'` — run a single test file (glob pattern)
 - `ng e2e` — run Playwright e2e tests (starts emulators + dev server automatically)
 - `firebase emulators:start` — start Firebase emulators standalone
 - `pnpm run dev:all` — start Firebase emulators + both public-app (4200) and admin-app (4300) dev servers
@@ -55,6 +56,35 @@ Routes are defined in `app.routes.ts` per app. All feature components use `loadC
 
 **Public-app SSR**: `app.routes.server.ts` sets `RenderMode.Client` for parameterized routes (`episodes/:id`, `tags/:id`) and `RenderMode.Prerender` for all static routes. New parameterized routes must be added here to avoid prerender build failures.
 
+### Shared Libraries (`libs/`)
+
+Domain libraries live in `libs/` — one per domain: `category/`, `episode/`, `genre/`, `tag/`, `user/`, plus `shared/` for cross-cutting concerns and `styles/` for shared CSS.
+
+Each domain lib follows the pattern:
+- `<domain>.store.ts` — `@ngrx/signals` signal store (`signalStore` with `withState`, `withComputed`, `withMethods`)
+- `<domain>.service.ts` — Firebase data access service
+
+The `libs/shared/` directory contains:
+- `firebase.token.ts` — Injection tokens (`AUTH`, `FIRESTORE`, `STORAGE`, `STORAGE_OPS`) for Firebase services
+- Junction services for many-to-many relationships (`episode-category`, `episode-genre`, `episode-tag`)
+- `image-upload.service.ts` — Image compression and Firebase Storage upload
+
+**Lib tests run under admin-app**: The `admin-app` test target includes `libs/**/*.spec.ts` via its `angular.json` config. Public-app does not run lib tests.
+
+### Signal Stores (@ngrx/signals)
+
+All domain stores use the same pattern:
+```typescript
+signalStore(
+  { providedIn: 'root' },
+  withState(initialState),
+  withComputed((store) => ({ /* derived signals */ })),
+  withMethods((store) => ({ /* async methods using patchState(store, {...}) */ }))
+)
+```
+
+Stores manage loading/error state manually. Use `patchState()` for mutations — never `mutate`.
+
 ### Component selector prefix
 
 All components use the `app` prefix (e.g., `selector: 'app-feature-name'`).
@@ -62,6 +92,10 @@ All components use the `app` prefix (e.g., `selector: 'app-feature-name'`).
 ### Firebase & Emulators
 
 Each app has a `firebase.ts` initialization file (`projects/<app>/src/app/firebase.ts`) that exports `auth`, `firestore`, and `storage` instances directly. Uses the Firebase modular SDK (`firebase/app`, `firebase/auth`, etc.) — NOT `@angular/fire`. Import these instances directly in services. Connects to local emulators when `environment.useEmulators` is true.
+
+Firebase instances are provided via injection tokens defined in `libs/shared/firebase.token.ts` and registered in each app's `app.config.ts`:
+- **admin-app** provides `AUTH`, `FIRESTORE`, `STORAGE` (full read/write access)
+- **public-app** provides only `FIRESTORE` and `STORAGE` (read-only, no auth)
 
 - **Emulator ports**: Auth (9099), Firestore (8080), Storage (9199), UI (4000)
 - **Firestore rules** (`firestore.rules`): public read, admin-only write (checked via `role` field on user doc)
@@ -78,6 +112,13 @@ Angular CLI handles file replacement for production builds via `angular.json` `f
 ### E2E Testing
 
 Playwright config is at root `playwright.config.ts`. Tests live in `e2e/`. The config auto-starts Firebase emulators and the dev server. Base URL: `http://localhost:4200`.
+
+## Testing
+
+- Do NOT use `vi.mock()` — it conflicts with `@angular/build`'s vitest-mock-patch and causes flaky failures. Instead, mock dependencies via TestBed injection tokens.
+- Mock Firebase services by providing fake values for `AUTH`, `FIRESTORE`, `STORAGE`, or `STORAGE_OPS` tokens in `TestBed.configureTestingModule({ providers: [...] })`
+- Use `vi.stubGlobal()` for browser APIs not available in jsdom (e.g., `OffscreenCanvas`, `createImageBitmap`)
+- Test files use `/// <reference types="vitest/globals" />` for global `vi`, `describe`, `expect`, etc.
 
 ## TypeScript Best Practices
 
