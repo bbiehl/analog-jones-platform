@@ -71,6 +71,7 @@ export class EpisodeEdit implements OnInit, OnDestroy {
 
   protected readonly posterFile = signal<File | null>(null);
   protected readonly posterPreview = signal<string | null>(null);
+  protected readonly posterRemoved = signal(false);
   protected readonly showMarkdownPreview = signal(false);
 
   protected readonly markdownHtml = computed(() => {
@@ -122,6 +123,7 @@ export class EpisodeEdit implements OnInit, OnDestroy {
     const file = input.files?.[0];
     if (file) {
       this.posterFile.set(file);
+      this.posterRemoved.set(false);
       const reader = new FileReader();
       reader.onload = () => this.posterPreview.set(reader.result as string);
       reader.readAsDataURL(file);
@@ -131,6 +133,7 @@ export class EpisodeEdit implements OnInit, OnDestroy {
   protected removePoster(): void {
     this.posterFile.set(null);
     this.posterPreview.set(null);
+    this.posterRemoved.set(true);
   }
 
   protected togglePreview(): void {
@@ -158,7 +161,8 @@ export class EpisodeEdit implements OnInit, OnDestroy {
       v.categoryIds,
       v.genreIds,
       v.tagIds,
-      this.posterFile() ?? undefined
+      this.posterFile() ?? undefined,
+      this.posterRemoved()
     );
     if (!this.episodeStore.error()) {
       this.router.navigate(['/episodes']);

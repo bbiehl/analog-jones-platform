@@ -317,6 +317,7 @@ describe('EpisodeStore', () => {
         ['c1'],
         ['g1'],
         ['t1'],
+        undefined,
         undefined
       );
       expect(mockEpisodeService.getAllEpisodes).toHaveBeenCalled();
@@ -335,7 +336,8 @@ describe('EpisodeStore', () => {
         undefined,
         undefined,
         undefined,
-        posterFile
+        posterFile,
+        undefined
       );
     });
 
