@@ -67,7 +67,9 @@ export class CategoryEdit implements OnInit, OnDestroy {
 
     const { name, slug } = this.form.getRawValue();
     await this.categoryStore.updateCategory(this.categoryId, { name, slug });
-    this.router.navigate(['/categories']);
+    if (!this.categoryStore.error()) {
+      this.router.navigate(['/categories']);
+    }
   }
 
   protected onCancel(): void {

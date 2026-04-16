@@ -67,7 +67,9 @@ export class TagEdit implements OnInit, OnDestroy {
 
     const { name, slug } = this.form.getRawValue();
     await this.tagStore.updateTag(this.tagId, { name, slug });
-    this.router.navigate(['/tags']);
+    if (!this.tagStore.error()) {
+      this.router.navigate(['/tags']);
+    }
   }
 
   protected onCancel(): void {

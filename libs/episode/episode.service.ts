@@ -137,13 +137,17 @@ export class EpisodeService {
     categoryIds?: string[],
     genreIds?: string[],
     tagIds?: string[],
-    posterFile?: File
+    posterFile?: File,
+    removePoster?: boolean
   ): Promise<void> {
     const { id: _id, ...data } = episode as Episode;
 
     if (posterFile) {
       const posterUrl = await this.imageUploadService.uploadPoster(id, posterFile);
       data.posterUrl = posterUrl;
+    } else if (removePoster) {
+      await this.imageUploadService.deletePoster(id);
+      data.posterUrl = null;
     }
 
     await updateDoc(doc(this.firestore, 'episodes', id), data);

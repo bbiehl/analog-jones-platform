@@ -38,7 +38,9 @@ export class CategoryAdd {
 
     const { name, slug } = this.form.getRawValue();
     await this.categoryStore.createCategory({ name, slug });
-    this.router.navigate(['/categories']);
+    if (!this.categoryStore.error()) {
+      this.router.navigate(['/categories']);
+    }
   }
 
   protected onCancel(): void {
