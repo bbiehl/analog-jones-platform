@@ -11,7 +11,7 @@ export class ImageUploadService {
   async uploadPoster(episodeId: string, file: File): Promise<string> {
     const compressed = await this.compressImage(file);
     const storageRef = this.ops.ref(this.storage, `poster/${episodeId}`);
-    await this.ops.uploadBytes(storageRef, compressed, { contentType: 'image/jpeg' });
+    await this.ops.uploadBytes(storageRef, compressed, { contentType: 'image/webp' });
     return this.ops.getDownloadURL(storageRef);
   }
 
@@ -37,11 +37,11 @@ export class ImageUploadService {
     bitmap.close();
 
     let quality = 0.9;
-    let blob = await canvas.convertToBlob({ type: 'image/jpeg', quality });
+    let blob = await canvas.convertToBlob({ type: 'image/webp', quality });
 
     while (blob.size > MAX_SIZE_BYTES && quality > 0.1) {
       quality -= 0.1;
-      blob = await canvas.convertToBlob({ type: 'image/jpeg', quality });
+      blob = await canvas.convertToBlob({ type: 'image/webp', quality });
     }
 
     if (blob.size > MAX_SIZE_BYTES) {
@@ -52,7 +52,7 @@ export class ImageUploadService {
       );
       const scaledCtx = scaledCanvas.getContext('2d')!;
       scaledCtx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
-      blob = await scaledCanvas.convertToBlob({ type: 'image/jpeg', quality: 0.8 });
+      blob = await scaledCanvas.convertToBlob({ type: 'image/webp', quality: 0.8 });
     }
 
     return blob;
