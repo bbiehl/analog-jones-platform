@@ -6,6 +6,17 @@ Angular v21 multi-project workspace with pnpm. Two apps:
 - `public-app` (`projects/public-app/`) — SSR via Express + `@angular/ssr`
 - `admin-app` (`projects/admin-app/`) — SSR via Express + `@angular/ssr`
 
+### Key Stack
+
+- **Angular 21** with strict TypeScript (ES2022 target, TS ~5.9)
+- **Tailwind CSS v4** via PostCSS (per-project `.postcssrc.json`)
+- **Angular Material + CDK** for UI components
+- **@ngrx/signals** for state management
+- **Vitest** for unit testing (with `jsdom`)
+- **Firebase** — Auth, Firestore, Storage (project: `analog-jones-v2`)
+- **Playwright** for e2e testing (Chromium, Firefox, WebKit)
+- **Prettier** for formatting (single quotes, 100 char width)
+
 ### Shared Libraries (`libs/`)
 
 One lib per domain: `category/`, `episode/`, `genre/`, `tag/`, `user/`, `shared/`, `styles/`.
