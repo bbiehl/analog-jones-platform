@@ -8,6 +8,7 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -74,8 +75,12 @@ export class EpisodeEdit implements OnInit, OnDestroy {
   protected readonly posterRemoved = signal(false);
   protected readonly showMarkdownPreview = signal(false);
 
+  private readonly intelligenceValue = toSignal(this.form.controls.intelligence.valueChanges, {
+    initialValue: '',
+  });
+
   protected readonly markdownHtml = computed(() => {
-    const raw = this.form.controls.intelligence.value;
+    const raw = this.intelligenceValue();
     if (!raw) return '';
     return marked(raw) as string;
   });

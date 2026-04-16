@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -61,8 +62,12 @@ export class EpisodeAdd implements OnInit {
   protected readonly posterPreview = signal<string | null>(null);
   protected readonly showMarkdownPreview = signal(false);
 
+  private readonly intelligenceValue = toSignal(this.form.controls.intelligence.valueChanges, {
+    initialValue: '',
+  });
+
   protected readonly markdownHtml = computed(() => {
-    const raw = this.form.controls.intelligence.value;
+    const raw = this.intelligenceValue();
     if (!raw) return '';
     return marked(raw) as string;
   });
