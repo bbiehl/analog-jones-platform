@@ -38,7 +38,9 @@ export class GenreAdd {
 
     const { name, slug } = this.form.getRawValue();
     await this.genreStore.createGenre({ name, slug });
-    this.router.navigate(['/genres']);
+    if (!this.genreStore.error()) {
+      this.router.navigate(['/genres']);
+    }
   }
 
   protected onCancel(): void {

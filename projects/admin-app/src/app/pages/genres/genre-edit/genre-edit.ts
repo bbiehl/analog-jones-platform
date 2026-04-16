@@ -67,7 +67,9 @@ export class GenreEdit implements OnInit, OnDestroy {
 
     const { name, slug } = this.form.getRawValue();
     await this.genreStore.updateGenre(this.genreId, { name, slug });
-    this.router.navigate(['/genres']);
+    if (!this.genreStore.error()) {
+      this.router.navigate(['/genres']);
+    }
   }
 
   protected onCancel(): void {

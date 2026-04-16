@@ -160,7 +160,9 @@ export class EpisodeEdit implements OnInit, OnDestroy {
       v.tagIds,
       this.posterFile() ?? undefined
     );
-    this.router.navigate(['/episodes']);
+    if (!this.episodeStore.error()) {
+      this.router.navigate(['/episodes']);
+    }
   }
 
   protected onCancel(): void {
