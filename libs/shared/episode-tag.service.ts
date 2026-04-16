@@ -96,7 +96,7 @@ export class EpisodeTagService {
     for (const junction of junctionSnapshot.docs) {
       const episodeId = junction.data()['episodeId'];
       const episodeSnap = await getDoc(doc(this.firestore, 'episodes', episodeId));
-      if (episodeSnap.exists()) {
+      if (episodeSnap.exists() && episodeSnap.data()['isVisible']) {
         episodes.push({ id: episodeSnap.id, ...episodeSnap.data() } as Episode);
       }
     }

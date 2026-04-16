@@ -146,36 +146,50 @@ describe('EpisodeTagService', () => {
         { data: () => ({ episodeId: 'ep2' }) },
       ];
       const episodeSnaps = [
-        { exists: () => true, id: 'ep1', data: () => ({ title: 'Episode 1' }) },
-        { exists: () => true, id: 'ep2', data: () => ({ title: 'Episode 2' }) },
+        { exists: () => true, id: 'ep1', data: () => ({ title: 'Episode 1', isVisible: true }) },
+        { exists: () => true, id: 'ep2', data: () => ({ title: 'Episode 2', isVisible: true }) },
       ];
 
       expect(tagSnapshot.empty).toBe(false);
       expect(tagSnapshot.docs[0].id).toBe('t1');
 
       const episodes = episodeSnaps
-        .filter((s) => s.exists())
+        .filter((s) => s.exists() && s.data()['isVisible'])
         .map((s) => ({ id: s.id, ...s.data() }));
 
       expect(episodes).toEqual([
-        { id: 'ep1', title: 'Episode 1' },
-        { id: 'ep2', title: 'Episode 2' },
+        { id: 'ep1', title: 'Episode 1', isVisible: true },
+        { id: 'ep2', title: 'Episode 2', isVisible: true },
       ]);
       expect(junctionDocs[0].data()['episodeId']).toBe('ep1');
     });
 
     it('should skip episodes that do not exist', () => {
       const episodeSnaps = [
-        { exists: () => true, id: 'ep1', data: () => ({ title: 'Episode 1' }) },
-        { exists: () => false, id: 'ep2', data: () => ({}) },
+        { exists: () => true, id: 'ep1', data: () => ({ title: 'Episode 1', isVisible: true }) },
+        { exists: () => false, id: 'ep2', data: () => ({ title: 'Episode 2', isVisible: true }) },
       ];
 
       const episodes = episodeSnaps
-        .filter((s) => s.exists())
+        .filter((s) => s.exists() && s.data()['isVisible'])
         .map((s) => ({ id: s.id, ...s.data() }));
 
       expect(episodes).toHaveLength(1);
-      expect(episodes[0]).toEqual({ id: 'ep1', title: 'Episode 1' });
+      expect(episodes[0]).toEqual({ id: 'ep1', title: 'Episode 1', isVisible: true });
+    });
+
+    it('should exclude hidden episodes', () => {
+      const episodeSnaps = [
+        { exists: () => true, id: 'ep1', data: () => ({ title: 'Episode 1', isVisible: true }) },
+        { exists: () => true, id: 'ep2', data: () => ({ title: 'Episode 2', isVisible: false }) },
+      ];
+
+      const episodes = episodeSnaps
+        .filter((s) => s.exists() && s.data()['isVisible'])
+        .map((s) => ({ id: s.id, ...s.data() }));
+
+      expect(episodes).toHaveLength(1);
+      expect(episodes[0]).toEqual({ id: 'ep1', title: 'Episode 1', isVisible: true });
     });
   });
 });
