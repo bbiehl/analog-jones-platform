@@ -2,7 +2,6 @@ import { inject, Injectable } from '@angular/core';
 import {
   addDoc,
   collection,
-  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -10,6 +9,7 @@ import {
   query,
   updateDoc,
   where,
+  writeBatch,
 } from 'firebase/firestore';
 import { FIRESTORE } from '../shared/firebase.token';
 import { EpisodeTagService } from '../shared/episode-tag.service';
@@ -60,7 +60,15 @@ export class TagService {
   }
 
   async deleteTag(id: string): Promise<void> {
-    await this.episodeTagService.deleteEpisodeTagsByTagId(id);
-    await deleteDoc(doc(this.firestore, 'tags', id));
+    const q = query(
+      collection(this.firestore, 'episodeTags'),
+      where('tagId', '==', id)
+    );
+    const snapshot = await getDocs(q);
+
+    const batch = writeBatch(this.firestore);
+    snapshot.docs.forEach((d) => batch.delete(d.ref));
+    batch.delete(doc(this.firestore, 'tags', id));
+    await batch.commit();
   }
 }
