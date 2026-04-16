@@ -97,7 +97,7 @@ describe('ImageUploadService', () => {
       expect(mockOps.ref).toHaveBeenCalledWith(expect.anything(), 'poster/ep1');
     });
 
-    it('should upload with image/jpeg content type', async () => {
+    it('should upload with image/webp content type', async () => {
       setupCanvasMocks();
       const file = createFakeFile();
 
@@ -106,7 +106,7 @@ describe('ImageUploadService', () => {
       expect(mockOps.uploadBytes).toHaveBeenCalledWith(
         expect.anything(),
         expect.any(Blob),
-        { contentType: 'image/jpeg' }
+        { contentType: 'image/webp' }
       );
     });
   });
