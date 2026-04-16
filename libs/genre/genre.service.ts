@@ -1,20 +1,74 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  updateDoc,
+  where,
+  writeBatch,
+} from 'firebase/firestore';
+import { FIRESTORE } from '../shared/firebase.token';
+import { EpisodeGenreService } from '../shared/episode-genre.service';
+import { Genre, GenreWithRelations } from './genre.model';
 
 @Injectable({ providedIn: 'root' })
 export class GenreService {
-    // getAllGenres, for admin listing and for genres page
-    // Returns an array of Genre objects, which include the genre data but not the associated episodes
-    
-    // getGenreById, for editing a genre in the admin panel
-    // Returns a Genre object, which includes the genre data but not the associated episodes
+  private firestore = inject(FIRESTORE);
+  private episodeGenreService = inject(EpisodeGenreService);
 
-    // getGenreBySlug, for listing the episodes of a genre on the genre page
-    // Returns an array of GenreWithRelations objects, which includes the genre data along with the associated episodes
+  async getAllGenres(): Promise<Genre[]> {
+    const q = query(collection(this.firestore, 'genres'), orderBy('name'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Genre);
+  }
 
-    // createGenre
+  async getGenreById(id: string): Promise<Genre> {
+    const snap = await getDoc(doc(this.firestore, 'genres', id));
+    if (!snap.exists()) {
+      throw new Error(`Genre with id "${id}" not found`);
+    }
+    return { id: snap.id, ...snap.data() } as Genre;
+  }
 
-    // updateGenre
+  async getGenreBySlug(slug: string): Promise<GenreWithRelations> {
+    const q = query(collection(this.firestore, 'genres'), where('slug', '==', slug));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      throw new Error(`Genre with slug "${slug}" not found`);
+    }
 
-    // deleteGenre
-    // must recursively delete any episodeGenre with the genreId
+    const genreDoc = snapshot.docs[0];
+    const episodes = await this.episodeGenreService.getEpisodesByGenreSlug(slug);
+    return { id: genreDoc.id, ...genreDoc.data(), episodes } as GenreWithRelations;
+  }
+
+  async createGenre(genre: Omit<Genre, 'id'>): Promise<string> {
+    const docRef = await addDoc(collection(this.firestore, 'genres'), {
+      name: genre.name,
+      slug: genre.slug,
+    });
+    return docRef.id;
+  }
+
+  async updateGenre(id: string, genre: Partial<Genre>): Promise<void> {
+    const { id: _id, ...data } = genre as Genre;
+    await updateDoc(doc(this.firestore, 'genres', id), data);
+  }
+
+  async deleteGenre(id: string): Promise<void> {
+    const q = query(
+      collection(this.firestore, 'episodeGenres'),
+      where('genreId', '==', id)
+    );
+    const snapshot = await getDocs(q);
+
+    const batch = writeBatch(this.firestore);
+    snapshot.docs.forEach((d) => batch.delete(d.ref));
+    batch.delete(doc(this.firestore, 'genres', id));
+    await batch.commit();
+  }
 }

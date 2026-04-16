@@ -1,36 +1,263 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  updateDoc,
+  where,
+  writeBatch,
+} from 'firebase/firestore';
+import { FIRESTORE } from '../shared/firebase.token';
+import { EpisodeCategoryService } from '../shared/episode-category.service';
+import { EpisodeGenreService } from '../shared/episode-genre.service';
+import { EpisodeTagService } from '../shared/episode-tag.service';
+import { ImageUploadService } from '../shared/image-upload.service';
+import { Episode, EpisodeWithRelations } from './episode.model';
 
 @Injectable({ providedIn: 'root' })
 export class EpisodeService {
-    // getAllEpisodes, for admin listing
-    // Returns an array of Episode objects, which include the episode data but not the associated categories, genres, or tags
+  private firestore = inject(FIRESTORE);
+  private episodeCategoryService = inject(EpisodeCategoryService);
+  private episodeGenreService = inject(EpisodeGenreService);
+  private episodeTagService = inject(EpisodeTagService);
+  private imageUploadService = inject(ImageUploadService);
 
-    // toggleEpisodeVisibility, for admin listing
-    // this is used by the admin listing to toggle the visibility of an episode on the episodes page
+  async getAllEpisodes(): Promise<Episode[]> {
+    const q = query(collection(this.firestore, 'episodes'), orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Episode);
+  }
 
-    // getCurrentEpisode, for listing on the home page
-    // Returns an Episode object, which include the episode data but not the associated categories, genres, or tags
-    // This should return the most recent episode that is visible on the episodes page, or null if there are no visible episodes
+  async toggleEpisodeVisibility(id: string, isVisible: boolean): Promise<void> {
+    await updateDoc(doc(this.firestore, 'episodes', id), { isVisible });
+  }
 
-    // getRecentEpisodes, for listing on the home page
-    // Returns an array of Episode objects, which include the episode data but not the associated categories, genres, or tags
-    // Episodes should be ordered by createdAt, with the most recent episode first, and limited to 5 episodes
-    // Episodes should only be returned if they are visible on the episodes page
+  async getCurrentEpisode(): Promise<Episode | null> {
+    const q = query(
+      collection(this.firestore, 'episodes'),
+      where('isVisible', '==', true),
+      orderBy('createdAt', 'desc'),
+      limit(1)
+    );
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      return null;
+    }
+    return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Episode;
+  }
 
-    // getVisibleEpisodes, for listing on the episodes page
-    // Returns an array of Episode objects, which include the episode data but not the associated categories, genres, or tags
-    // This should be paginated, and filtered by a search term if provided
+  async getRecentEpisodes(): Promise<Episode[]> {
+    const q = query(
+      collection(this.firestore, 'episodes'),
+      where('isVisible', '==', true),
+      orderBy('createdAt', 'desc'),
+      limit(5)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Episode);
+  }
 
-    // getEpisodeById, for editing and for episode page
-    // Returns an EpisodeWithRelations, which includes the episode data along with the associated categories, genres, and tags
+  async getVisibleEpisodes(searchTerm?: string): Promise<Episode[]> {
+    const q = query(
+      collection(this.firestore, 'episodes'),
+      where('isVisible', '==', true),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    let episodes = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Episode);
 
-    // createEpisode
-    // must recursively create any episodeCategory, episodeGenre, episodeTag after the episode is created and has an episodeId
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      episodes = episodes.filter((e) => e.title.toLowerCase().includes(term));
+    }
 
-    // updateEpisode
-    // must recursively create/delete any episodeCategory, episodeGenre, episodeTag associated with the episodeId if any of those fields are updated
+    return episodes;
+  }
 
-    // deleteEpisode
-    // must recursively delete any episodeCategory, episodeGenre, episodeTag with the episodeId
+  async getEpisodeById(id: string): Promise<EpisodeWithRelations> {
+    const snap = await getDoc(doc(this.firestore, 'episodes', id));
+    if (!snap.exists()) {
+      throw new Error(`Episode with id "${id}" not found`);
+    }
 
+    const episode = { id: snap.id, ...snap.data() } as Episode;
+    const [categories, genres, tags] = await Promise.all([
+      this.episodeCategoryService.getEpisodeCategoriesByEpisodeId(id),
+      this.episodeGenreService.getEpisodeGenresByEpisodeId(id),
+      this.episodeTagService.getEpisodeTagsByEpisodeId(id),
+    ]);
+
+    return { ...episode, categories, genres, tags };
+  }
+
+  async createEpisode(
+    episode: Omit<Episode, 'id'>,
+    categoryIds: string[],
+    genreIds: string[],
+    tagIds: string[],
+    posterFile?: File
+  ): Promise<string> {
+    const episodeRef = doc(collection(this.firestore, 'episodes'));
+    const episodeId = episodeRef.id;
+
+    // Upload poster before batch — Storage can't participate in Firestore batches
+    let posterUrl: string | null = null;
+    if (posterFile) {
+      posterUrl = await this.imageUploadService.uploadPoster(episodeId, posterFile);
+    }
+
+    try {
+      // Batch episode doc + all junction docs in a single atomic write
+      const batch = writeBatch(this.firestore);
+
+      batch.set(episodeRef, {
+        createdAt: episode.createdAt,
+        episodeDate: episode.episodeDate,
+        episodeDuration: episode.episodeDuration,
+        intelligence: episode.intelligence,
+        isVisible: episode.isVisible,
+        links: episode.links,
+        posterUrl,
+        title: episode.title,
+        year: episode.year,
+      });
+
+      for (const cId of categoryIds) {
+        batch.set(doc(collection(this.firestore, 'episodeCategories')), {
+          episodeId,
+          categoryId: cId,
+        });
+      }
+      for (const gId of genreIds) {
+        batch.set(doc(collection(this.firestore, 'episodeGenres')), {
+          episodeId,
+          genreId: gId,
+        });
+      }
+      for (const tId of tagIds) {
+        batch.set(doc(collection(this.firestore, 'episodeTags')), {
+          episodeId,
+          tagId: tId,
+        });
+      }
+
+      await batch.commit();
+      return episodeId;
+    } catch (e) {
+      // Rollback poster upload if batch fails
+      if (posterUrl) {
+        await this.imageUploadService.deletePoster(episodeId).catch(() => {});
+      }
+      throw e;
+    }
+  }
+
+  async updateEpisode(
+    id: string,
+    episode: Partial<Episode>,
+    categoryIds?: string[],
+    genreIds?: string[],
+    tagIds?: string[],
+    posterFile?: File,
+    removePoster?: boolean
+  ): Promise<void> {
+    const { id: _id, ...data } = episode as Episode;
+
+    // Handle poster outside batch — Storage can't participate in Firestore batches
+    if (posterFile) {
+      data.posterUrl = await this.imageUploadService.uploadPoster(id, posterFile);
+    } else if (removePoster) {
+      await this.imageUploadService.deletePoster(id);
+      data.posterUrl = null;
+    }
+
+    // Query existing junctions that need replacement (reads before batch)
+    const [existingCategories, existingGenres, existingTags] = await Promise.all([
+      categoryIds
+        ? getDocs(
+            query(
+              collection(this.firestore, 'episodeCategories'),
+              where('episodeId', '==', id)
+            )
+          )
+        : null,
+      genreIds
+        ? getDocs(
+            query(collection(this.firestore, 'episodeGenres'), where('episodeId', '==', id))
+          )
+        : null,
+      tagIds
+        ? getDocs(
+            query(collection(this.firestore, 'episodeTags'), where('episodeId', '==', id))
+          )
+        : null,
+    ]);
+
+    // Batch episode update + junction delete/recreate atomically
+    const batch = writeBatch(this.firestore);
+
+    batch.update(doc(this.firestore, 'episodes', id), data);
+
+    if (categoryIds && existingCategories) {
+      existingCategories.docs.forEach((d) => batch.delete(d.ref));
+      for (const cId of categoryIds) {
+        batch.set(doc(collection(this.firestore, 'episodeCategories')), {
+          episodeId: id,
+          categoryId: cId,
+        });
+      }
+    }
+
+    if (genreIds && existingGenres) {
+      existingGenres.docs.forEach((d) => batch.delete(d.ref));
+      for (const gId of genreIds) {
+        batch.set(doc(collection(this.firestore, 'episodeGenres')), {
+          episodeId: id,
+          genreId: gId,
+        });
+      }
+    }
+
+    if (tagIds && existingTags) {
+      existingTags.docs.forEach((d) => batch.delete(d.ref));
+      for (const tId of tagIds) {
+        batch.set(doc(collection(this.firestore, 'episodeTags')), {
+          episodeId: id,
+          tagId: tId,
+        });
+      }
+    }
+
+    await batch.commit();
+  }
+
+  async deleteEpisode(id: string): Promise<void> {
+    // Query all junctions first (reads before batch)
+    const [categories, genres, tags] = await Promise.all([
+      getDocs(
+        query(collection(this.firestore, 'episodeCategories'), where('episodeId', '==', id))
+      ),
+      getDocs(
+        query(collection(this.firestore, 'episodeGenres'), where('episodeId', '==', id))
+      ),
+      getDocs(
+        query(collection(this.firestore, 'episodeTags'), where('episodeId', '==', id))
+      ),
+    ]);
+
+    // Batch all Firestore deletes atomically
+    const batch = writeBatch(this.firestore);
+    categories.docs.forEach((d) => batch.delete(d.ref));
+    genres.docs.forEach((d) => batch.delete(d.ref));
+    tags.docs.forEach((d) => batch.delete(d.ref));
+    batch.delete(doc(this.firestore, 'episodes', id));
+    await batch.commit();
+
+    // Best-effort poster cleanup after Firestore state is consistent
+    await this.imageUploadService.deletePoster(id).catch(() => {});
+  }
 }

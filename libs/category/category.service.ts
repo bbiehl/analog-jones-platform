@@ -1,20 +1,74 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  updateDoc,
+  where,
+  writeBatch,
+} from 'firebase/firestore';
+import { FIRESTORE } from '../shared/firebase.token';
+import { EpisodeCategoryService } from '../shared/episode-category.service';
+import { Category, CategoryWithRelations } from './category.model';
 
 @Injectable({ providedIn: 'root' })
 export class CategoryService {
-    // getAllCategories, for admin listing and for categories page
-    // Returns an array of Category objects, which include the category data but not the associated episodes
+  private firestore = inject(FIRESTORE);
+  private episodeCategoryService = inject(EpisodeCategoryService);
 
-    // getCategoryById, for editing a category in the admin panel
-    // Returns a Category object, which includes the category data but not the associated episodes
+  async getAllCategories(): Promise<Category[]> {
+    const q = query(collection(this.firestore, 'categories'), orderBy('name'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Category);
+  }
 
-    // getCategoryBySlug, for listing the episodes of a category on the category page
-    // Returns an array of CategoryWithRelations objects, which includes the category data along with the associated episodes
+  async getCategoryById(id: string): Promise<Category> {
+    const snap = await getDoc(doc(this.firestore, 'categories', id));
+    if (!snap.exists()) {
+      throw new Error(`Category with id "${id}" not found`);
+    }
+    return { id: snap.id, ...snap.data() } as Category;
+  }
 
-    // createCategory
+  async getCategoryBySlug(slug: string): Promise<CategoryWithRelations> {
+    const q = query(collection(this.firestore, 'categories'), where('slug', '==', slug));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      throw new Error(`Category with slug "${slug}" not found`);
+    }
 
-    // updateCategory
+    const categoryDoc = snapshot.docs[0];
+    const episodes = await this.episodeCategoryService.getEpisodesByCategorySlug(slug);
+    return { id: categoryDoc.id, ...categoryDoc.data(), episodes } as CategoryWithRelations;
+  }
 
-    // deleteCategory
-    // must recursively delete any episodeCategory with the categoryId
+  async createCategory(category: Omit<Category, 'id'>): Promise<string> {
+    const docRef = await addDoc(collection(this.firestore, 'categories'), {
+      name: category.name,
+      slug: category.slug,
+    });
+    return docRef.id;
+  }
+
+  async updateCategory(id: string, category: Partial<Category>): Promise<void> {
+    const { id: _id, ...data } = category as Category;
+    await updateDoc(doc(this.firestore, 'categories', id), data);
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    const q = query(
+      collection(this.firestore, 'episodeCategories'),
+      where('categoryId', '==', id)
+    );
+    const snapshot = await getDocs(q);
+
+    const batch = writeBatch(this.firestore);
+    snapshot.docs.forEach((d) => batch.delete(d.ref));
+    batch.delete(doc(this.firestore, 'categories', id));
+    await batch.commit();
+  }
 }

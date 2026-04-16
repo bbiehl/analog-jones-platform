@@ -1,20 +1,74 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  updateDoc,
+  where,
+  writeBatch,
+} from 'firebase/firestore';
+import { FIRESTORE } from '../shared/firebase.token';
+import { EpisodeTagService } from '../shared/episode-tag.service';
+import { Tag, TagWithRelations } from './tag.model';
 
 @Injectable({ providedIn: 'root' })
 export class TagService {
-    // getAllTags, for admin listing and for tags page
-    // Returns an array of Tag objects, which include the tag data but not the associated episodes
-    
-    // getTagById, for editing
-    // Returns a Tag object, which includes the tag data but not the associated episodes
+  private firestore = inject(FIRESTORE);
+  private episodeTagService = inject(EpisodeTagService);
 
-    // getTagBySlug, for listing the episodes of a tag on the tag page
-    // Returns a TagWithRelations, which includes the tag data along with the associated episodes
+  async getAllTags(): Promise<Tag[]> {
+    const q = query(collection(this.firestore, 'tags'), orderBy('name'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Tag);
+  }
 
-    // createTag
+  async getTagById(id: string): Promise<Tag> {
+    const snap = await getDoc(doc(this.firestore, 'tags', id));
+    if (!snap.exists()) {
+      throw new Error(`Tag with id "${id}" not found`);
+    }
+    return { id: snap.id, ...snap.data() } as Tag;
+  }
 
-    // updateTag
+  async getTagBySlug(slug: string): Promise<TagWithRelations> {
+    const q = query(collection(this.firestore, 'tags'), where('slug', '==', slug));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      throw new Error(`Tag with slug "${slug}" not found`);
+    }
 
-    // deleteTag
-    // must recursively delete any episodeTag with the tagId
+    const tagDoc = snapshot.docs[0];
+    const episodes = await this.episodeTagService.getEpisodesByTagSlug(slug);
+    return { id: tagDoc.id, ...tagDoc.data(), episodes } as TagWithRelations;
+  }
+
+  async createTag(tag: Omit<Tag, 'id'>): Promise<string> {
+    const docRef = await addDoc(collection(this.firestore, 'tags'), {
+      name: tag.name,
+      slug: tag.slug,
+    });
+    return docRef.id;
+  }
+
+  async updateTag(id: string, tag: Partial<Tag>): Promise<void> {
+    const { id: _id, ...data } = tag as Tag;
+    await updateDoc(doc(this.firestore, 'tags', id), data);
+  }
+
+  async deleteTag(id: string): Promise<void> {
+    const q = query(
+      collection(this.firestore, 'episodeTags'),
+      where('tagId', '==', id)
+    );
+    const snapshot = await getDocs(q);
+
+    const batch = writeBatch(this.firestore);
+    snapshot.docs.forEach((d) => batch.delete(d.ref));
+    batch.delete(doc(this.firestore, 'tags', id));
+    await batch.commit();
+  }
 }

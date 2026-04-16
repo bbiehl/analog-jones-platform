@@ -1,1 +1,39 @@
-<p>tag-edit works!</p>
+<div class="page-container p-6 max-w-lg">
+  <div class="flex items-center gap-2 mb-6">
+    <button mat-icon-button aria-label="Back to tags" (click)="onCancel()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1 class="text-2xl">Edit Tag</h1>
+  </div>
+
+  @if (tagStore.loading()) {
+    <div class="flex justify-center py-12">
+      <mat-spinner diameter="48" />
+    </div>
+  } @else if (tagStore.error()) {
+    <p class="text-red-400">{{ tagStore.error() }}</p>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
+      <mat-form-field>
+        <mat-label>Name</mat-label>
+        <input matInput formControlName="name" (input)="onNameInput()" />
+        @if (form.controls.name.hasError('required')) {
+          <mat-error>Name is required</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Slug</mat-label>
+        <input matInput formControlName="slug" />
+        @if (form.controls.slug.hasError('required')) {
+          <mat-error>Slug is required</mat-error>
+        }
+      </mat-form-field>
+
+      <div class="flex gap-3">
+        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Save</button>
+        <button mat-stroked-button type="button" (click)="onCancel()">Cancel</button>
+      </div>
+    </form>
+  }
+</div>
