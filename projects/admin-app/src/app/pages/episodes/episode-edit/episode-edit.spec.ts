@@ -125,6 +125,25 @@ describe('EpisodeEdit', () => {
     expect(c.submitting()).toBe(false);
   });
 
+  it('should render an inline error when updateEpisode fails after the episode is loaded', async () => {
+    mockEpisodeStore.selectedEpisode.mockReturnValue({ id: 'ep1' });
+    mockEpisodeStore.updateEpisode.mockImplementationOnce(async () => {
+      mockEpisodeStore.error.mockReturnValue('Update failed');
+    });
+    fixture.detectChanges();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.patchValue({ title: 'Updated', episodeDuration: 60 });
+
+    await c.onSubmit();
+    fixture.detectChanges();
+
+    const alert = fixture.nativeElement.querySelector('[role="alert"]');
+    expect(alert).not.toBeNull();
+    expect(alert?.textContent).toContain('Update failed');
+  });
+
   it('should not submit twice if already submitting', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = component as any;

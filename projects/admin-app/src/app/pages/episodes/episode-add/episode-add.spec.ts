@@ -108,6 +108,23 @@ describe('EpisodeAdd', () => {
     expect(c.submitting()).toBe(false);
   });
 
+  it('should render an inline error when createEpisode fails', async () => {
+    mockEpisodeStore.createEpisode.mockImplementationOnce(async () => {
+      mockEpisodeStore.error.mockReturnValue('Create failed');
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.patchValue({ title: 'New', episodeDuration: 60 });
+
+    await c.onSubmit();
+    fixture.detectChanges();
+
+    const alert = fixture.nativeElement.querySelector('[role="alert"]');
+    expect(alert).not.toBeNull();
+    expect(alert?.textContent).toContain('Create failed');
+  });
+
   it('should not submit twice if already submitting', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = component as any;

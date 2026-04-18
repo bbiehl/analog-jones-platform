@@ -39,7 +39,7 @@ import { TagStore } from '../../../../../../../libs/tag/tag.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EpisodeAdd implements OnInit {
-  private readonly episodeStore = inject(EpisodeStore);
+  protected readonly episodeStore = inject(EpisodeStore);
   protected readonly categoryStore = inject(CategoryStore);
   protected readonly genreStore = inject(GenreStore);
   protected readonly tagStore = inject(TagStore);
