@@ -125,6 +125,35 @@ describe('EpisodeAdd', () => {
     expect(alert?.textContent).toContain('Create failed');
   });
 
+  it('should disable the header back button while submitting', async () => {
+    let resolveCreate!: () => void;
+    mockEpisodeStore.createEpisode.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveCreate = resolve;
+      })
+    );
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.patchValue({ title: 'Test', episodeDuration: 60 });
+
+    const backButton = await loader.getHarness(
+      MatButtonHarness.with({ selector: '[aria-label="Back to episodes"]' })
+    );
+    expect(await backButton.isDisabled()).toBe(false);
+
+    const submitPromise = c.onSubmit();
+    fixture.detectChanges();
+    expect(await backButton.isDisabled()).toBe(true);
+
+    resolveCreate();
+    await submitPromise;
+    fixture.detectChanges();
+    expect(await backButton.isDisabled()).toBe(false);
+  });
+
   it('should not submit twice if already submitting', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = component as any;

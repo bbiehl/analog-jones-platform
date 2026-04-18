@@ -1,6 +1,6 @@
 <div class="page-container p-6 max-w-2xl">
   <div class="flex items-center gap-2 mb-6">
-    <button mat-icon-button aria-label="Back to episodes" (click)="onCancel()">
+    <button mat-icon-button aria-label="Back to episodes" [disabled]="submitting()" (click)="onCancel()">
       <mat-icon>arrow_back</mat-icon>
     </button>
     <h1 class="text-2xl">Add Episode</h1>

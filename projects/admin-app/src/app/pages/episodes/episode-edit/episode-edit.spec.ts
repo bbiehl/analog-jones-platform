@@ -144,6 +144,38 @@ describe('EpisodeEdit', () => {
     expect(alert?.textContent).toContain('Update failed');
   });
 
+  it('should disable the header back button while submitting', async () => {
+    mockEpisodeStore.selectedEpisode.mockReturnValue({ id: 'ep1' });
+    fixture.detectChanges();
+
+    let resolveUpdate!: () => void;
+    mockEpisodeStore.updateEpisode.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveUpdate = resolve;
+      })
+    );
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.patchValue({ title: 'Test', episodeDuration: 60 });
+
+    const backButton = await loader.getHarness(
+      MatButtonHarness.with({ selector: '[aria-label="Back to episodes"]' })
+    );
+    expect(await backButton.isDisabled()).toBe(false);
+
+    const submitPromise = c.onSubmit();
+    fixture.detectChanges();
+    expect(await backButton.isDisabled()).toBe(true);
+
+    resolveUpdate();
+    await submitPromise;
+    fixture.detectChanges();
+    expect(await backButton.isDisabled()).toBe(false);
+  });
+
   it('should not submit twice if already submitting', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = component as any;
