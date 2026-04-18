@@ -121,8 +121,18 @@
     <mat-slide-toggle formControlName="isVisible">Visible to public</mat-slide-toggle>
 
     <div class="flex gap-3 mt-4">
-      <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Save</button>
-      <button mat-stroked-button type="button" (click)="onCancel()">Cancel</button>
+      <button mat-flat-button color="primary" type="submit"
+              [disabled]="form.invalid || submitting()">
+        @if (submitting()) {
+          <mat-spinner diameter="18" class="inline-block align-middle mr-2" />
+          Saving…
+        } @else {
+          Save
+        }
+      </button>
+      <button mat-stroked-button type="button" [disabled]="submitting()" (click)="onCancel()">
+        Cancel
+      </button>
     </div>
   </form>
 </div>
