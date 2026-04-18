@@ -125,6 +125,47 @@ describe('EpisodeAdd', () => {
     expect(alert?.textContent).toContain('Create failed');
   });
 
+  it('should not render a stale store error on entry before submission', () => {
+    mockEpisodeStore.error.mockReturnValue('Stale failure from list page');
+    fixture.detectChanges();
+
+    const alert = fixture.nativeElement.querySelector('[role="alert"]');
+    expect(alert).toBeNull();
+  });
+
+  it('should clear a previous submit error when starting a new submission', async () => {
+    // First submission fails and renders the banner
+    mockEpisodeStore.createEpisode.mockImplementationOnce(async () => {
+      mockEpisodeStore.error.mockReturnValue('Create failed');
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.patchValue({ title: 'New', episodeDuration: 60 });
+
+    await c.onSubmit();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).not.toBeNull();
+
+    // Second submission is in flight — banner should be cleared while pending
+    let resolveCreate!: () => void;
+    mockEpisodeStore.createEpisode.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveCreate = resolve;
+      })
+    );
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const submitPromise = c.onSubmit();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+
+    mockEpisodeStore.error.mockReturnValue(null);
+    resolveCreate();
+    await submitPromise;
+  });
+
   it('should disable the header back button while submitting', async () => {
     let resolveCreate!: () => void;
     mockEpisodeStore.createEpisode.mockReturnValueOnce(

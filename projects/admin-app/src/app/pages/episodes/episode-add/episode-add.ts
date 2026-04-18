@@ -64,6 +64,7 @@ export class EpisodeAdd implements OnInit {
   protected readonly posterPreview = signal<string | null>(null);
   protected readonly showMarkdownPreview = signal(false);
   protected readonly submitting = signal(false);
+  protected readonly submitError = signal<string | null>(null);
 
   private readonly intelligenceValue = toSignal(this.form.controls.intelligence.valueChanges, {
     initialValue: '',
@@ -105,6 +106,7 @@ export class EpisodeAdd implements OnInit {
     if (this.form.invalid || this.submitting()) return;
 
     this.submitting.set(true);
+    this.submitError.set(null);
     try {
       const v = this.form.getRawValue();
       await this.episodeStore.createEpisode(
@@ -127,7 +129,10 @@ export class EpisodeAdd implements OnInit {
         v.tagIds,
         this.posterFile() ?? undefined
       );
-      if (!this.episodeStore.error()) {
+      const error = this.episodeStore.error();
+      if (error) {
+        this.submitError.set(error);
+      } else {
         this.router.navigate(['/episodes']);
       }
     } finally {

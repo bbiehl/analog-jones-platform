@@ -127,8 +127,8 @@
       <!-- Visibility -->
       <mat-slide-toggle formControlName="isVisible">Visible to public</mat-slide-toggle>
 
-      @if (episodeStore.error()) {
-        <p class="text-red-400" role="alert">{{ episodeStore.error() }}</p>
+      @if (submitError()) {
+        <p class="text-red-400" role="alert">{{ submitError() }}</p>
       }
 
       <div class="flex gap-3 mt-4">

@@ -144,6 +144,61 @@ describe('EpisodeEdit', () => {
     expect(alert?.textContent).toContain('Update failed');
   });
 
+  it('should not render a stale store error on entry before submission', () => {
+    mockEpisodeStore.selectedEpisode.mockReturnValue({
+      id: 'ep1',
+      title: 'Loaded',
+      episodeDate: { toDate: () => new Date() },
+      episodeDuration: 60,
+      year: 2026,
+      intelligence: null,
+      isVisible: false,
+      links: {},
+      posterUrl: null,
+      categories: [],
+      genres: [],
+      tags: [],
+    });
+    mockEpisodeStore.error.mockReturnValue('Stale failure from list page');
+    fixture.detectChanges();
+
+    const alert = fixture.nativeElement.querySelector('[role="alert"]');
+    expect(alert).toBeNull();
+  });
+
+  it('should clear a previous submit error when starting a new submission', async () => {
+    mockEpisodeStore.selectedEpisode.mockReturnValue({ id: 'ep1' });
+    mockEpisodeStore.updateEpisode.mockImplementationOnce(async () => {
+      mockEpisodeStore.error.mockReturnValue('Update failed');
+    });
+    fixture.detectChanges();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.patchValue({ title: 'Updated', episodeDuration: 60 });
+
+    await c.onSubmit();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).not.toBeNull();
+
+    let resolveUpdate!: () => void;
+    mockEpisodeStore.updateEpisode.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveUpdate = resolve;
+      })
+    );
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const submitPromise = c.onSubmit();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+
+    mockEpisodeStore.error.mockReturnValue(null);
+    resolveUpdate();
+    await submitPromise;
+  });
+
   it('should disable the header back button while submitting', async () => {
     mockEpisodeStore.selectedEpisode.mockReturnValue({ id: 'ep1' });
     fixture.detectChanges();
