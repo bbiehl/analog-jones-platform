@@ -26,6 +26,7 @@ describe('EpisodeAdd', () => {
   beforeEach(async () => {
     mockEpisodeStore = {
       createEpisode: vi.fn().mockResolvedValue(undefined),
+      error: vi.fn(() => null),
     };
     mockCategoryStore = {
       categories: vi.fn(() => []),
@@ -81,5 +82,52 @@ describe('EpisodeAdd', () => {
     await cancelButton.click();
 
     expect(navigateSpy).toHaveBeenCalledWith(['/episodes']);
+  });
+
+  it('should toggle submitting while the create call is in flight', async () => {
+    let resolveCreate!: () => void;
+    mockEpisodeStore.createEpisode.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveCreate = resolve;
+      })
+    );
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.patchValue({ title: 'Test', episodeDuration: 60 });
+
+    expect(c.submitting()).toBe(false);
+
+    const submitPromise = c.onSubmit();
+    expect(c.submitting()).toBe(true);
+
+    resolveCreate();
+    await submitPromise;
+    expect(c.submitting()).toBe(false);
+  });
+
+  it('should not submit twice if already submitting', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.patchValue({ title: 'Test', episodeDuration: 60 });
+
+    let resolveCreate!: () => void;
+    mockEpisodeStore.createEpisode.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveCreate = resolve;
+      })
+    );
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const firstSubmit = c.onSubmit();
+    await c.onSubmit(); // second call should no-op
+
+    expect(mockEpisodeStore.createEpisode).toHaveBeenCalledTimes(1);
+
+    resolveCreate();
+    await firstSubmit;
   });
 });

@@ -100,4 +100,51 @@ describe('EpisodeEdit', () => {
     fixture.destroy();
     expect(mockEpisodeStore.clearSelectedEpisode).toHaveBeenCalled();
   });
+
+  it('should toggle submitting while the update call is in flight', async () => {
+    let resolveUpdate!: () => void;
+    mockEpisodeStore.updateEpisode.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveUpdate = resolve;
+      })
+    );
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.patchValue({ title: 'Test', episodeDuration: 60 });
+
+    expect(c.submitting()).toBe(false);
+
+    const submitPromise = c.onSubmit();
+    expect(c.submitting()).toBe(true);
+
+    resolveUpdate();
+    await submitPromise;
+    expect(c.submitting()).toBe(false);
+  });
+
+  it('should not submit twice if already submitting', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.patchValue({ title: 'Test', episodeDuration: 60 });
+
+    let resolveUpdate!: () => void;
+    mockEpisodeStore.updateEpisode.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveUpdate = resolve;
+      })
+    );
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const firstSubmit = c.onSubmit();
+    await c.onSubmit(); // second call should no-op
+
+    expect(mockEpisodeStore.updateEpisode).toHaveBeenCalledTimes(1);
+
+    resolveUpdate();
+    await firstSubmit;
+  });
 });
