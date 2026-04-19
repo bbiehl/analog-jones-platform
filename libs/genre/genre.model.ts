@@ -1,4 +1,3 @@
-import { FormControl } from '@angular/forms';
 import { Episode } from '../episode/episode.model';
 
 export interface Genre {
@@ -9,9 +8,4 @@ export interface Genre {
 
 export interface GenreWithRelations extends Genre {
   episodes: Episode[]; // Array of episodes associated with this genre
-}
-
-export interface GenreForm {
-  name: FormControl<string>;
-  slug: FormControl<string>;
 }
