@@ -26,6 +26,7 @@ describe('EpisodeAdd', () => {
   beforeEach(async () => {
     mockEpisodeStore = {
       createEpisode: vi.fn().mockResolvedValue(undefined),
+      error: vi.fn(() => null),
     };
     mockCategoryStore = {
       categories: vi.fn(() => []),
@@ -81,5 +82,139 @@ describe('EpisodeAdd', () => {
     await cancelButton.click();
 
     expect(navigateSpy).toHaveBeenCalledWith(['/episodes']);
+  });
+
+  it('should toggle submitting while the create call is in flight', async () => {
+    let resolveCreate!: () => void;
+    mockEpisodeStore.createEpisode.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveCreate = resolve;
+      })
+    );
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.patchValue({ title: 'Test', episodeDuration: 60 });
+
+    expect(c.submitting()).toBe(false);
+
+    const submitPromise = c.onSubmit();
+    expect(c.submitting()).toBe(true);
+
+    resolveCreate();
+    await submitPromise;
+    expect(c.submitting()).toBe(false);
+  });
+
+  it('should render an inline error when createEpisode fails', async () => {
+    mockEpisodeStore.createEpisode.mockImplementationOnce(async () => {
+      mockEpisodeStore.error.mockReturnValue('Create failed');
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.patchValue({ title: 'New', episodeDuration: 60 });
+
+    await c.onSubmit();
+    fixture.detectChanges();
+
+    const alert = fixture.nativeElement.querySelector('[role="alert"]');
+    expect(alert).not.toBeNull();
+    expect(alert?.textContent).toContain('Create failed');
+  });
+
+  it('should not render a stale store error on entry before submission', () => {
+    mockEpisodeStore.error.mockReturnValue('Stale failure from list page');
+    fixture.detectChanges();
+
+    const alert = fixture.nativeElement.querySelector('[role="alert"]');
+    expect(alert).toBeNull();
+  });
+
+  it('should clear a previous submit error when starting a new submission', async () => {
+    // First submission fails and renders the banner
+    mockEpisodeStore.createEpisode.mockImplementationOnce(async () => {
+      mockEpisodeStore.error.mockReturnValue('Create failed');
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.patchValue({ title: 'New', episodeDuration: 60 });
+
+    await c.onSubmit();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).not.toBeNull();
+
+    // Second submission is in flight — banner should be cleared while pending
+    let resolveCreate!: () => void;
+    mockEpisodeStore.createEpisode.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveCreate = resolve;
+      })
+    );
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const submitPromise = c.onSubmit();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+
+    mockEpisodeStore.error.mockReturnValue(null);
+    resolveCreate();
+    await submitPromise;
+  });
+
+  it('should disable the header back button while submitting', async () => {
+    let resolveCreate!: () => void;
+    mockEpisodeStore.createEpisode.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveCreate = resolve;
+      })
+    );
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.patchValue({ title: 'Test', episodeDuration: 60 });
+
+    const backButton = await loader.getHarness(
+      MatButtonHarness.with({ selector: '[aria-label="Back to episodes"]' })
+    );
+    expect(await backButton.isDisabled()).toBe(false);
+
+    const submitPromise = c.onSubmit();
+    fixture.detectChanges();
+    expect(await backButton.isDisabled()).toBe(true);
+
+    resolveCreate();
+    await submitPromise;
+    fixture.detectChanges();
+    expect(await backButton.isDisabled()).toBe(false);
+  });
+
+  it('should not submit twice if already submitting', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.patchValue({ title: 'Test', episodeDuration: 60 });
+
+    let resolveCreate!: () => void;
+    mockEpisodeStore.createEpisode.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        resolveCreate = resolve;
+      })
+    );
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const firstSubmit = c.onSubmit();
+    await c.onSubmit(); // second call should no-op
+
+    expect(mockEpisodeStore.createEpisode).toHaveBeenCalledTimes(1);
+
+    resolveCreate();
+    await firstSubmit;
   });
 });

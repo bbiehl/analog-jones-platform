@@ -1,6 +1,6 @@
 <div class="page-container p-6 max-w-2xl">
   <div class="flex items-center gap-2 mb-6">
-    <button mat-icon-button aria-label="Back to episodes" (click)="onCancel()">
+    <button mat-icon-button aria-label="Back to episodes" [disabled]="submitting()" (click)="onCancel()">
       <mat-icon>arrow_back</mat-icon>
     </button>
     <h1 class="text-2xl">Add Episode</h1>
@@ -120,9 +120,23 @@
     <!-- Visibility -->
     <mat-slide-toggle formControlName="isVisible">Visible to public</mat-slide-toggle>
 
+    @if (submitError()) {
+      <p class="text-red-400" role="alert">{{ submitError() }}</p>
+    }
+
     <div class="flex gap-3 mt-4">
-      <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Save</button>
-      <button mat-stroked-button type="button" (click)="onCancel()">Cancel</button>
+      <button mat-flat-button color="primary" type="submit"
+              [disabled]="form.invalid || submitting()">
+        @if (submitting()) {
+          <mat-spinner diameter="18" class="inline-block align-middle mr-2" />
+          Saving…
+        } @else {
+          Save
+        }
+      </button>
+      <button mat-stroked-button type="button" [disabled]="submitting()" (click)="onCancel()">
+        Cancel
+      </button>
     </div>
   </form>
 </div>

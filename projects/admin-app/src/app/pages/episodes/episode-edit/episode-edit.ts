@@ -74,6 +74,12 @@ export class EpisodeEdit implements OnInit, OnDestroy {
   protected readonly posterPreview = signal<string | null>(null);
   protected readonly posterRemoved = signal(false);
   protected readonly showMarkdownPreview = signal(false);
+  protected readonly submitting = signal(false);
+  protected readonly submitError = signal<string | null>(null);
+
+  protected readonly initialLoading = computed(
+    () => this.episodeStore.loading() && !this.episodeStore.selectedEpisode()
+  );
 
   private readonly intelligenceValue = toSignal(this.form.controls.intelligence.valueChanges, {
     initialValue: '',
@@ -146,31 +152,40 @@ export class EpisodeEdit implements OnInit, OnDestroy {
   }
 
   protected async onSubmit(): Promise<void> {
-    if (this.form.invalid) return;
+    if (this.form.invalid || this.submitting()) return;
 
-    const v = this.form.getRawValue();
-    await this.episodeStore.updateEpisode(
-      this.episodeId,
-      {
-        episodeDate: Timestamp.fromDate(v.episodeDate),
-        episodeDuration: v.episodeDuration,
-        intelligence: v.intelligence || null,
-        isVisible: v.isVisible,
-        links: {
-          ...(v.spotifyLink ? { spotify: v.spotifyLink } : {}),
-          ...(v.youtubeLink ? { youtube: v.youtubeLink } : {}),
+    this.submitting.set(true);
+    this.submitError.set(null);
+    try {
+      const v = this.form.getRawValue();
+      await this.episodeStore.updateEpisode(
+        this.episodeId,
+        {
+          episodeDate: Timestamp.fromDate(v.episodeDate),
+          episodeDuration: v.episodeDuration,
+          intelligence: v.intelligence || null,
+          isVisible: v.isVisible,
+          links: {
+            ...(v.spotifyLink ? { spotify: v.spotifyLink } : {}),
+            ...(v.youtubeLink ? { youtube: v.youtubeLink } : {}),
+          },
+          title: v.title,
+          year: v.year,
         },
-        title: v.title,
-        year: v.year,
-      },
-      v.categoryIds,
-      v.genreIds,
-      v.tagIds,
-      this.posterFile() ?? undefined,
-      this.posterRemoved()
-    );
-    if (!this.episodeStore.error()) {
-      this.router.navigate(['/episodes']);
+        v.categoryIds,
+        v.genreIds,
+        v.tagIds,
+        this.posterFile() ?? undefined,
+        this.posterRemoved()
+      );
+      const error = this.episodeStore.error();
+      if (error) {
+        this.submitError.set(error);
+      } else {
+        this.router.navigate(['/episodes']);
+      }
+    } finally {
+      this.submitting.set(false);
     }
   }
 

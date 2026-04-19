@@ -8,6 +8,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { provideNativeDateAdapter } from '@angular/material/core';
@@ -28,6 +29,7 @@ import { TagStore } from '../../../../../../../libs/tag/tag.store';
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
+    MatProgressSpinnerModule,
     MatSelectModule,
     MatSlideToggleModule,
   ],
@@ -37,7 +39,7 @@ import { TagStore } from '../../../../../../../libs/tag/tag.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EpisodeAdd implements OnInit {
-  private readonly episodeStore = inject(EpisodeStore);
+  protected readonly episodeStore = inject(EpisodeStore);
   protected readonly categoryStore = inject(CategoryStore);
   protected readonly genreStore = inject(GenreStore);
   protected readonly tagStore = inject(TagStore);
@@ -61,6 +63,8 @@ export class EpisodeAdd implements OnInit {
   protected readonly posterFile = signal<File | null>(null);
   protected readonly posterPreview = signal<string | null>(null);
   protected readonly showMarkdownPreview = signal(false);
+  protected readonly submitting = signal(false);
+  protected readonly submitError = signal<string | null>(null);
 
   private readonly intelligenceValue = toSignal(this.form.controls.intelligence.valueChanges, {
     initialValue: '',
@@ -99,31 +103,40 @@ export class EpisodeAdd implements OnInit {
   }
 
   protected async onSubmit(): Promise<void> {
-    if (this.form.invalid) return;
+    if (this.form.invalid || this.submitting()) return;
 
-    const v = this.form.getRawValue();
-    await this.episodeStore.createEpisode(
-      {
-        createdAt: Timestamp.now(),
-        episodeDate: Timestamp.fromDate(v.episodeDate),
-        episodeDuration: v.episodeDuration,
-        intelligence: v.intelligence || null,
-        isVisible: v.isVisible,
-        links: {
-          ...(v.spotifyLink ? { spotify: v.spotifyLink } : {}),
-          ...(v.youtubeLink ? { youtube: v.youtubeLink } : {}),
+    this.submitting.set(true);
+    this.submitError.set(null);
+    try {
+      const v = this.form.getRawValue();
+      await this.episodeStore.createEpisode(
+        {
+          createdAt: Timestamp.now(),
+          episodeDate: Timestamp.fromDate(v.episodeDate),
+          episodeDuration: v.episodeDuration,
+          intelligence: v.intelligence || null,
+          isVisible: v.isVisible,
+          links: {
+            ...(v.spotifyLink ? { spotify: v.spotifyLink } : {}),
+            ...(v.youtubeLink ? { youtube: v.youtubeLink } : {}),
+          },
+          posterUrl: null,
+          title: v.title,
+          year: v.year,
         },
-        posterUrl: null,
-        title: v.title,
-        year: v.year,
-      },
-      v.categoryIds,
-      v.genreIds,
-      v.tagIds,
-      this.posterFile() ?? undefined
-    );
-    if (!this.episodeStore.error()) {
-      this.router.navigate(['/episodes']);
+        v.categoryIds,
+        v.genreIds,
+        v.tagIds,
+        this.posterFile() ?? undefined
+      );
+      const error = this.episodeStore.error();
+      if (error) {
+        this.submitError.set(error);
+      } else {
+        this.router.navigate(['/episodes']);
+      }
+    } finally {
+      this.submitting.set(false);
     }
   }
 
