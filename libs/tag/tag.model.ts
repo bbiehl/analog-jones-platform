@@ -1,4 +1,3 @@
-import { FormControl } from '@angular/forms';
 import { Episode } from '../episode/episode.model';
 
 export interface Tag {
@@ -9,9 +8,4 @@ export interface Tag {
 
 export interface TagWithRelations extends Tag {
   episodes: Episode[]; // Array of episodes associated with this tag
-}
-
-export interface TagForm {
-  name: FormControl<string>;
-  slug: FormControl<string>;
 }

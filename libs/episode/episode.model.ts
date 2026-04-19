@@ -1,4 +1,3 @@
-import { FormControl } from '@angular/forms';
 import { Timestamp } from 'firebase/firestore';
 import { Category } from '../category/category.model';
 import { Genre } from '../genre/genre.model';
@@ -24,18 +23,4 @@ export interface EpisodeWithRelations extends Episode {
   categories: Category[];
   genres: Genre[];
   tags: Tag[];
-}
-
-export interface EpisodeForm {
-  episodeDate: FormControl<Date>; // Using Date type for form control, will convert to Timestamp when saving
-  episodeDuration: FormControl<number>;
-  intelligence: FormControl<string | null>;
-  isVisible: FormControl<boolean>;
-  links: {
-    spotify: FormControl<string | null>;
-    youtube: FormControl<string | null>;
-  };
-  posterUrl: FormControl<string | null>;
-  title: FormControl<string>;
-  year: FormControl<number>;
 }
