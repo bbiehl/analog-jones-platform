@@ -113,7 +113,7 @@ describe('EpisodeEdit', () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = component as any;
-    c.form.patchValue({ title: 'Test', episodeDuration: 60 });
+    c.form.patchValue({ title: 'Test' });
 
     expect(c.submitting()).toBe(false);
 
@@ -134,7 +134,7 @@ describe('EpisodeEdit', () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = component as any;
-    c.form.patchValue({ title: 'Updated', episodeDuration: 60 });
+    c.form.patchValue({ title: 'Updated' });
 
     await c.onSubmit();
     fixture.detectChanges();
@@ -149,8 +149,6 @@ describe('EpisodeEdit', () => {
       id: 'ep1',
       title: 'Loaded',
       episodeDate: { toDate: () => new Date() },
-      episodeDuration: 60,
-      year: 2026,
       intelligence: null,
       isVisible: false,
       links: {},
@@ -175,7 +173,7 @@ describe('EpisodeEdit', () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = component as any;
-    c.form.patchValue({ title: 'Updated', episodeDuration: 60 });
+    c.form.patchValue({ title: 'Updated' });
 
     await c.onSubmit();
     fixture.detectChanges();
@@ -214,7 +212,7 @@ describe('EpisodeEdit', () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = component as any;
-    c.form.patchValue({ title: 'Test', episodeDuration: 60 });
+    c.form.patchValue({ title: 'Test' });
 
     const backButton = await loader.getHarness(
       MatButtonHarness.with({ selector: '[aria-label="Back to episodes"]' })
@@ -234,7 +232,7 @@ describe('EpisodeEdit', () => {
   it('should not submit twice if already submitting', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = component as any;
-    c.form.patchValue({ title: 'Test', episodeDuration: 60 });
+    c.form.patchValue({ title: 'Test' });
 
     let resolveUpdate!: () => void;
     mockEpisodeStore.updateEpisode.mockReturnValueOnce(

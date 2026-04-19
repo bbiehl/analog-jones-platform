@@ -117,13 +117,11 @@ export class EpisodeService {
       batch.set(episodeRef, {
         createdAt: episode.createdAt,
         episodeDate: episode.episodeDate,
-        episodeDuration: episode.episodeDuration,
         intelligence: episode.intelligence,
         isVisible: episode.isVisible,
         links: episode.links,
         posterUrl,
         title: episode.title,
-        year: episode.year,
       });
 
       for (const cId of categoryIds) {

@@ -71,7 +71,6 @@ describe('EpisodeService', () => {
           id: 'ep1',
           data: () => ({
             title: 'Episode One',
-            year: 2024,
             isVisible: true,
             createdAt: { seconds: 2000, nanoseconds: 0 },
           }),
@@ -80,7 +79,6 @@ describe('EpisodeService', () => {
           id: 'ep2',
           data: () => ({
             title: 'Episode Two',
-            year: 2023,
             isVisible: false,
             createdAt: { seconds: 1000, nanoseconds: 0 },
           }),
@@ -93,14 +91,12 @@ describe('EpisodeService', () => {
         {
           id: 'ep1',
           title: 'Episode One',
-          year: 2024,
           isVisible: true,
           createdAt: { seconds: 2000, nanoseconds: 0 },
         },
         {
           id: 'ep2',
           title: 'Episode Two',
-          year: 2023,
           isVisible: false,
           createdAt: { seconds: 1000, nanoseconds: 0 },
         },
@@ -119,11 +115,11 @@ describe('EpisodeService', () => {
     it('should return the first doc as an Episode', () => {
       const snap = {
         id: 'ep1',
-        data: () => ({ title: 'Latest', isVisible: true, year: 2024 }),
+        data: () => ({ title: 'Latest', isVisible: true }),
       };
 
       const result = { id: snap.id, ...snap.data() };
-      expect(result).toEqual({ id: 'ep1', title: 'Latest', isVisible: true, year: 2024 });
+      expect(result).toEqual({ id: 'ep1', title: 'Latest', isVisible: true });
     });
   });
 
@@ -171,7 +167,7 @@ describe('EpisodeService', () => {
     });
 
     it('should combine episode with relations into EpisodeWithRelations', () => {
-      const episode = { id: 'ep1', title: 'Test Episode', year: 2024 };
+      const episode = { id: 'ep1', title: 'Test Episode' };
       const categories = [{ id: 'c1', name: 'History', slug: 'history' }];
       const genres = [{ id: 'g1', name: 'Action', slug: 'action' }];
       const tags = [{ id: 't1', name: 'Featured', slug: 'featured' }];
@@ -181,7 +177,6 @@ describe('EpisodeService', () => {
       expect(result).toEqual({
         id: 'ep1',
         title: 'Test Episode',
-        year: 2024,
         categories: [{ id: 'c1', name: 'History', slug: 'history' }],
         genres: [{ id: 'g1', name: 'Action', slug: 'action' }],
         tags: [{ id: 't1', name: 'Featured', slug: 'featured' }],
@@ -193,8 +188,6 @@ describe('EpisodeService', () => {
     it('should build a payload without the id field', () => {
       const episode = {
         title: 'New Episode',
-        year: 2024,
-        episodeDuration: 60,
         isVisible: false,
         intelligence: null,
         posterUrl: null,
@@ -206,13 +199,11 @@ describe('EpisodeService', () => {
       const payload = {
         createdAt: episode.createdAt,
         episodeDate: episode.episodeDate,
-        episodeDuration: episode.episodeDuration,
         intelligence: episode.intelligence,
         isVisible: episode.isVisible,
         links: episode.links,
         posterUrl: null,
         title: episode.title,
-        year: episode.year,
       };
 
       expect(payload).not.toHaveProperty('id');
@@ -223,10 +214,10 @@ describe('EpisodeService', () => {
 
   describe('updateEpisode', () => {
     it('should strip the id field before updating', () => {
-      const episode = { id: 'ep1', title: 'Updated Title', year: 2024 };
+      const episode = { id: 'ep1', title: 'Updated Title' };
       const { id: _id, ...data } = episode;
 
-      expect(data).toEqual({ title: 'Updated Title', year: 2024 });
+      expect(data).toEqual({ title: 'Updated Title' });
       expect(data).not.toHaveProperty('id');
     });
   });

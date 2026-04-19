@@ -59,8 +59,6 @@ export class EpisodeEdit implements OnInit, OnDestroy {
   protected readonly form = this.fb.nonNullable.group({
     title: ['', Validators.required],
     episodeDate: [new Date(), Validators.required],
-    episodeDuration: [0, [Validators.required, Validators.min(1)]],
-    year: [new Date().getFullYear(), [Validators.required, Validators.min(1900)]],
     intelligence: [''],
     isVisible: [false],
     spotifyLink: [''],
@@ -100,8 +98,6 @@ export class EpisodeEdit implements OnInit, OnDestroy {
         this.form.patchValue({
           title: episode.title,
           episodeDate: episode.episodeDate.toDate(),
-          episodeDuration: episode.episodeDuration,
-          year: episode.year,
           intelligence: episode.intelligence ?? '',
           isVisible: episode.isVisible,
           spotifyLink: episode.links.spotify ?? '',
@@ -162,7 +158,6 @@ export class EpisodeEdit implements OnInit, OnDestroy {
         this.episodeId,
         {
           episodeDate: Timestamp.fromDate(v.episodeDate),
-          episodeDuration: v.episodeDuration,
           intelligence: v.intelligence || null,
           isVisible: v.isVisible,
           links: {
@@ -170,7 +165,6 @@ export class EpisodeEdit implements OnInit, OnDestroy {
             ...(v.youtubeLink ? { youtube: v.youtubeLink } : {}),
           },
           title: v.title,
-          year: v.year,
         },
         v.categoryIds,
         v.genreIds,
