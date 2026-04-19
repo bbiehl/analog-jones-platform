@@ -49,8 +49,6 @@ export class EpisodeAdd implements OnInit {
   protected readonly form = this.fb.nonNullable.group({
     title: ['', Validators.required],
     episodeDate: [new Date(), Validators.required],
-    episodeDuration: [0, [Validators.required, Validators.min(1)]],
-    year: [new Date().getFullYear(), [Validators.required, Validators.min(1900)]],
     intelligence: [''],
     isVisible: [false],
     spotifyLink: [''],
@@ -113,7 +111,6 @@ export class EpisodeAdd implements OnInit {
         {
           createdAt: Timestamp.now(),
           episodeDate: Timestamp.fromDate(v.episodeDate),
-          episodeDuration: v.episodeDuration,
           intelligence: v.intelligence || null,
           isVisible: v.isVisible,
           links: {
@@ -122,7 +119,6 @@ export class EpisodeAdd implements OnInit {
           },
           posterUrl: null,
           title: v.title,
-          year: v.year,
         },
         v.categoryIds,
         v.genreIds,

@@ -37,7 +37,7 @@ export class Episodes implements OnInit {
   protected readonly episodeStore = inject(EpisodeStore);
   private readonly router = inject(Router);
 
-  protected readonly displayedColumns = ['title', 'year', 'episodeDate', 'isVisible', 'actions'];
+  protected readonly displayedColumns = ['title', 'episodeDate', 'isVisible', 'actions'];
   protected readonly dataSource = new MatTableDataSource<Episode>([]);
   protected filterValue = '';
 
@@ -49,8 +49,6 @@ export class Episodes implements OnInit {
       switch (header) {
         case 'title':
           return episode.title.toLowerCase();
-        case 'year':
-          return episode.year;
         case 'episodeDate':
           return episode.episodeDate.toMillis();
         default:

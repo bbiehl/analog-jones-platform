@@ -96,7 +96,7 @@ describe('EpisodeAdd', () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = component as any;
-    c.form.patchValue({ title: 'Test', episodeDuration: 60 });
+    c.form.patchValue({ title: 'Test' });
 
     expect(c.submitting()).toBe(false);
 
@@ -115,7 +115,7 @@ describe('EpisodeAdd', () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = component as any;
-    c.form.patchValue({ title: 'New', episodeDuration: 60 });
+    c.form.patchValue({ title: 'New' });
 
     await c.onSubmit();
     fixture.detectChanges();
@@ -141,7 +141,7 @@ describe('EpisodeAdd', () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = component as any;
-    c.form.patchValue({ title: 'New', episodeDuration: 60 });
+    c.form.patchValue({ title: 'New' });
 
     await c.onSubmit();
     fixture.detectChanges();
@@ -178,7 +178,7 @@ describe('EpisodeAdd', () => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = component as any;
-    c.form.patchValue({ title: 'Test', episodeDuration: 60 });
+    c.form.patchValue({ title: 'Test' });
 
     const backButton = await loader.getHarness(
       MatButtonHarness.with({ selector: '[aria-label="Back to episodes"]' })
@@ -198,7 +198,7 @@ describe('EpisodeAdd', () => {
   it('should not submit twice if already submitting', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const c = component as any;
-    c.form.patchValue({ title: 'Test', episodeDuration: 60 });
+    c.form.patchValue({ title: 'Test' });
 
     let resolveCreate!: () => void;
     mockEpisodeStore.createEpisode.mockReturnValueOnce(

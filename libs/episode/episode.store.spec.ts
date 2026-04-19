@@ -13,25 +13,21 @@ describe('EpisodeStore', () => {
       id: 'ep1',
       createdAt: Timestamp.fromDate(new Date('2026-01-01')),
       episodeDate: Timestamp.fromDate(new Date('2026-01-01')),
-      episodeDuration: 60,
       intelligence: 'Some notes',
       isVisible: true,
       links: { spotify: 'https://spotify.com/ep1', youtube: 'https://youtube.com/ep1' },
       posterUrl: 'https://storage.example.com/poster/ep1',
       title: 'Episode One',
-      year: 2026,
     },
     {
       id: 'ep2',
       createdAt: Timestamp.fromDate(new Date('2026-02-01')),
       episodeDate: Timestamp.fromDate(new Date('2026-02-01')),
-      episodeDuration: 45,
       intelligence: null,
       isVisible: false,
       links: {},
       posterUrl: null,
       title: 'Episode Two',
-      year: 2026,
     },
   ];
 
@@ -234,13 +230,11 @@ describe('EpisodeStore', () => {
       const newEpisode: Omit<Episode, 'id'> = {
         createdAt: Timestamp.fromDate(new Date('2026-03-01')),
         episodeDate: Timestamp.fromDate(new Date('2026-03-01')),
-        episodeDuration: 30,
         intelligence: null,
         isVisible: true,
         links: {},
         posterUrl: null,
         title: 'New Episode',
-        year: 2026,
       };
       const categoryIds = ['c1'];
       const genreIds = ['g1'];
@@ -264,13 +258,11 @@ describe('EpisodeStore', () => {
       const newEpisode: Omit<Episode, 'id'> = {
         createdAt: Timestamp.fromDate(new Date('2026-03-01')),
         episodeDate: Timestamp.fromDate(new Date('2026-03-01')),
-        episodeDuration: 30,
         intelligence: null,
         isVisible: true,
         links: {},
         posterUrl: null,
         title: 'New Episode',
-        year: 2026,
       };
       const posterFile = new File(['img'], 'poster.png', { type: 'image/png' });
 
@@ -291,13 +283,11 @@ describe('EpisodeStore', () => {
       const newEpisode: Omit<Episode, 'id'> = {
         createdAt: Timestamp.fromDate(new Date('2026-03-01')),
         episodeDate: Timestamp.fromDate(new Date('2026-03-01')),
-        episodeDuration: 30,
         intelligence: null,
         isVisible: true,
         links: {},
         posterUrl: null,
         title: 'New Episode',
-        year: 2026,
       };
 
       await store.createEpisode(newEpisode, [], [], []);

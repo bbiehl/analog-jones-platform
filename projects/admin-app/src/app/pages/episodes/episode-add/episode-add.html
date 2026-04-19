@@ -15,23 +15,11 @@
       }
     </mat-form-field>
 
-    <div class="grid grid-cols-2 gap-4">
-      <mat-form-field>
-        <mat-label>Episode Date</mat-label>
-        <input matInput [matDatepicker]="picker" formControlName="episodeDate" />
-        <mat-datepicker-toggle matIconSuffix [for]="picker" />
-        <mat-datepicker #picker />
-      </mat-form-field>
-
-      <mat-form-field>
-        <mat-label>Year</mat-label>
-        <input matInput type="number" formControlName="year" />
-      </mat-form-field>
-    </div>
-
     <mat-form-field>
-      <mat-label>Duration (minutes)</mat-label>
-      <input matInput type="number" formControlName="episodeDuration" />
+      <mat-label>Episode Date</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="episodeDate" />
+      <mat-datepicker-toggle matIconSuffix [for]="picker" />
+      <mat-datepicker #picker />
     </mat-form-field>
 
     <div class="grid grid-cols-2 gap-4">
