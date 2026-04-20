@@ -8,8 +8,7 @@ export const routes: Routes = [
   },
   {
     path: 'access-denied',
-    loadComponent: () =>
-      import('./pages/access-denied/access-denied').then((c) => c.AccessDenied),
+    loadComponent: () => import('./pages/access-denied/access-denied').then((c) => c.AccessDenied),
   },
   {
     path: '',
@@ -53,6 +52,13 @@ export const routes: Routes = [
           import('./pages/categories/category-edit/category-edit').then((c) => c.CategoryEdit),
       },
       {
+        path: 'categories/bulk-edit/:id',
+        loadComponent: () =>
+          import('./pages/categories/category-bulk-edit/category-bulk-edit').then(
+            (c) => c.CategoryBulkEdit,
+          ),
+      },
+      {
         path: 'genres',
         loadComponent: () => import('./pages/genres/genres').then((c) => c.Genres),
       },
@@ -66,6 +72,11 @@ export const routes: Routes = [
           import('./pages/genres/genre-edit/genre-edit').then((c) => c.GenreEdit),
       },
       {
+        path: 'genres/bulk-edit/:id',
+        loadComponent: () =>
+          import('./pages/genres/genre-bulk-edit/genre-bulk-edit').then((c) => c.GenreBulkEdit),
+      },
+      {
         path: 'tags',
         loadComponent: () => import('./pages/tags/tags').then((c) => c.Tags),
       },
@@ -76,6 +87,11 @@ export const routes: Routes = [
       {
         path: 'tags/edit/:id',
         loadComponent: () => import('./pages/tags/tag-edit/tag-edit').then((c) => c.TagEdit),
+      },
+      {
+        path: 'tags/bulk-edit/:id',
+        loadComponent: () =>
+          import('./pages/tags/tag-bulk-edit/tag-bulk-edit').then((c) => c.TagBulkEdit),
       },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
