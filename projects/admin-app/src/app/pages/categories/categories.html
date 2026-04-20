@@ -33,6 +33,13 @@
           <button mat-icon-button aria-label="Edit category" (click)="onEdit(category.id)">
             <mat-icon>edit</mat-icon>
           </button>
+          <button
+            mat-icon-button
+            aria-label="Bulk edit episodes in category"
+            (click)="onBulkEdit(category.id)"
+          >
+            <mat-icon>playlist_add_check</mat-icon>
+          </button>
           <button mat-icon-button aria-label="Delete category" color="warn" (click)="onDelete(category.id)">
             <mat-icon>delete</mat-icon>
           </button>

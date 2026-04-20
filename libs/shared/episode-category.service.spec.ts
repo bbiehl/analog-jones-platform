@@ -124,6 +124,83 @@ describe('EpisodeCategoryService', () => {
     });
   });
 
+  describe('getEpisodeIdsByCategoryId', () => {
+    it('should extract episodeId strings from junction docs', () => {
+      const junctionDocs = [
+        { data: () => ({ episodeId: 'ep1', categoryId: 'cat1' }) },
+        { data: () => ({ episodeId: 'ep2', categoryId: 'cat1' }) },
+      ];
+
+      const ids = junctionDocs.map((d) => d.data()['episodeId']);
+
+      expect(ids).toEqual(['ep1', 'ep2']);
+    });
+
+    it('should return empty array when no junctions exist', () => {
+      const junctionDocs: { data: () => { episodeId: string } }[] = [];
+
+      const ids = junctionDocs.map((d) => d.data()['episodeId']);
+
+      expect(ids).toEqual([]);
+    });
+  });
+
+  describe('setEpisodesForCategory', () => {
+    it('should delete removed junctions and create added ones, leaving unchanged alone', () => {
+      const existingJunctions = [
+        { ref: 'ref-a', data: () => ({ episodeId: 'a', categoryId: 'cat1' }) },
+        { ref: 'ref-b', data: () => ({ episodeId: 'b', categoryId: 'cat1' }) },
+        { ref: 'ref-c', data: () => ({ episodeId: 'c', categoryId: 'cat1' }) },
+      ];
+      const desired = new Set(['b', 'c', 'd']);
+
+      const existing = new Map<string, string>();
+      for (const d of existingJunctions) {
+        existing.set(d.data()['episodeId'], d.ref);
+      }
+
+      const deletes: string[] = [];
+      const adds: { episodeId: string; categoryId: string }[] = [];
+
+      for (const [episodeId, ref] of existing) {
+        if (!desired.has(episodeId)) deletes.push(ref);
+      }
+      for (const episodeId of desired) {
+        if (!existing.has(episodeId)) {
+          adds.push({ episodeId, categoryId: 'cat1' });
+        }
+      }
+
+      expect(deletes).toEqual(['ref-a']);
+      expect(adds).toEqual([{ episodeId: 'd', categoryId: 'cat1' }]);
+    });
+
+    it('should produce no writes when desired matches existing', () => {
+      const existingJunctions = [
+        { ref: 'ref-a', data: () => ({ episodeId: 'a', categoryId: 'cat1' }) },
+        { ref: 'ref-b', data: () => ({ episodeId: 'b', categoryId: 'cat1' }) },
+      ];
+      const desired = new Set(['a', 'b']);
+
+      const existing = new Map<string, string>();
+      for (const d of existingJunctions) {
+        existing.set(d.data()['episodeId'], d.ref);
+      }
+
+      const deletes: string[] = [];
+      const adds: string[] = [];
+      for (const [episodeId, ref] of existing) {
+        if (!desired.has(episodeId)) deletes.push(ref);
+      }
+      for (const episodeId of desired) {
+        if (!existing.has(episodeId)) adds.push(episodeId);
+      }
+
+      expect(deletes).toEqual([]);
+      expect(adds).toEqual([]);
+    });
+  });
+
   describe('getEpisodesByCategorySlug', () => {
     it('should return empty array when no category matches the slug', () => {
       const categorySnapshot = { empty: true, docs: [] };
