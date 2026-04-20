@@ -31,6 +31,10 @@ export class Genres implements OnInit {
     this.router.navigate(['/genres/edit', id]);
   }
 
+  protected onBulkEdit(id: string): void {
+    this.router.navigate(['/genres/bulk-edit', id]);
+  }
+
   protected async onDelete(id: string): Promise<void> {
     if (confirm('Are you sure you want to delete this genre?')) {
       await this.genreStore.deleteGenre(id);

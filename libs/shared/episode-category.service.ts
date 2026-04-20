@@ -56,6 +56,50 @@ export class EpisodeCategoryService {
     await batch.commit();
   }
 
+  async getEpisodeIdsByCategoryId(categoryId: string): Promise<string[]> {
+    const q = query(
+      collection(this.firestore, 'episodeCategories'),
+      where('categoryId', '==', categoryId)
+    );
+    const snapshot = await getDocs(q);
+    return Array.from(new Set(snapshot.docs.map((d) => d.data()['episodeId'] as string)));
+  }
+
+  async setEpisodesForCategory(categoryId: string, episodeIds: string[]): Promise<void> {
+    const q = query(
+      collection(this.firestore, 'episodeCategories'),
+      where('categoryId', '==', categoryId)
+    );
+    const snapshot = await getDocs(q);
+
+    const desired = new Set(episodeIds);
+    const existing = new Map<string, (typeof snapshot.docs)[number]['ref'][]>();
+    for (const d of snapshot.docs) {
+      const episodeId = d.data()['episodeId'] as string;
+      const refs = existing.get(episodeId) ?? [];
+      refs.push(d.ref);
+      existing.set(episodeId, refs);
+    }
+
+    const batch = writeBatch(this.firestore);
+    for (const [episodeId, refs] of existing) {
+      if (!desired.has(episodeId)) {
+        for (const ref of refs) batch.delete(ref);
+      } else {
+        for (let i = 1; i < refs.length; i++) batch.delete(refs[i]);
+      }
+    }
+    for (const episodeId of desired) {
+      if (!existing.has(episodeId)) {
+        batch.set(doc(collection(this.firestore, 'episodeCategories')), {
+          episodeId,
+          categoryId,
+        });
+      }
+    }
+    await batch.commit();
+  }
+
   async getEpisodeCategoriesByEpisodeId(episodeId: string): Promise<Category[]> {
     const q = query(
       collection(this.firestore, 'episodeCategories'),

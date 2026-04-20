@@ -84,6 +84,10 @@ export class Tags implements OnInit {
     this.router.navigate(['/tags/edit', id]);
   }
 
+  protected onBulkEdit(id: string): void {
+    this.router.navigate(['/tags/bulk-edit', id]);
+  }
+
   protected applyFilter(value: string): void {
     this.dataSource.filter = value.trim().toLowerCase();
     if (this.dataSource.paginator) {

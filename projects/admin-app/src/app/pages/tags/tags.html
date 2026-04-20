@@ -47,6 +47,13 @@
           <button mat-icon-button aria-label="Edit tag" (click)="onEdit(tag.id)">
             <mat-icon>edit</mat-icon>
           </button>
+          <button
+            mat-icon-button
+            aria-label="Bulk edit episodes in tag"
+            (click)="onBulkEdit(tag.id)"
+          >
+            <mat-icon>playlist_add_check</mat-icon>
+          </button>
           <button mat-icon-button aria-label="Delete tag" color="warn" (click)="onDelete(tag.id)">
             <mat-icon>delete</mat-icon>
           </button>

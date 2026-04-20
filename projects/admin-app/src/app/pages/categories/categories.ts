@@ -31,6 +31,10 @@ export class Categories implements OnInit {
     this.router.navigate(['/categories/edit', id]);
   }
 
+  protected onBulkEdit(id: string): void {
+    this.router.navigate(['/categories/bulk-edit', id]);
+  }
+
   protected async onDelete(id: string): Promise<void> {
     if (confirm('Are you sure you want to delete this category?')) {
       await this.categoryStore.deleteCategory(id);
