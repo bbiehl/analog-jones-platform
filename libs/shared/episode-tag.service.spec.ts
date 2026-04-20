@@ -143,6 +143,20 @@ describe('EpisodeTagService', () => {
 
       expect(ids).toEqual([]);
     });
+
+    it('should dedupe episodeId values from duplicate junction docs', () => {
+      const junctionDocs = [
+        { data: () => ({ episodeId: 'ep1', tagId: 't1' }) },
+        { data: () => ({ episodeId: 'ep1', tagId: 't1' }) },
+        { data: () => ({ episodeId: 'ep2', tagId: 't1' }) },
+      ];
+
+      const ids = Array.from(
+        new Set(junctionDocs.map((d) => d.data()['episodeId']))
+      );
+
+      expect(ids).toEqual(['ep1', 'ep2']);
+    });
   });
 
   describe('setEpisodesForTag', () => {
@@ -198,6 +212,67 @@ describe('EpisodeTagService', () => {
 
       expect(deletes).toEqual([]);
       expect(adds).toEqual([]);
+    });
+
+    it('should delete duplicate refs but keep one when episode is in desired', () => {
+      const existingJunctions = [
+        { ref: 'ref-a1', data: () => ({ episodeId: 'a', tagId: 't1' }) },
+        { ref: 'ref-a2', data: () => ({ episodeId: 'a', tagId: 't1' }) },
+        { ref: 'ref-a3', data: () => ({ episodeId: 'a', tagId: 't1' }) },
+      ];
+      const desired = new Set(['a']);
+
+      const existing = new Map<string, string[]>();
+      for (const d of existingJunctions) {
+        const id = d.data()['episodeId'];
+        const refs = existing.get(id) ?? [];
+        refs.push(d.ref);
+        existing.set(id, refs);
+      }
+
+      const deletes: string[] = [];
+      const adds: string[] = [];
+      for (const [episodeId, refs] of existing) {
+        if (!desired.has(episodeId)) {
+          for (const ref of refs) deletes.push(ref);
+        } else {
+          for (let i = 1; i < refs.length; i++) deletes.push(refs[i]);
+        }
+      }
+      for (const episodeId of desired) {
+        if (!existing.has(episodeId)) adds.push(episodeId);
+      }
+
+      expect(deletes).toEqual(['ref-a2', 'ref-a3']);
+      expect(adds).toEqual([]);
+    });
+
+    it('should delete all duplicate refs when episode is not in desired', () => {
+      const existingJunctions = [
+        { ref: 'ref-a1', data: () => ({ episodeId: 'a', tagId: 't1' }) },
+        { ref: 'ref-a2', data: () => ({ episodeId: 'a', tagId: 't1' }) },
+        { ref: 'ref-b', data: () => ({ episodeId: 'b', tagId: 't1' }) },
+      ];
+      const desired = new Set(['b']);
+
+      const existing = new Map<string, string[]>();
+      for (const d of existingJunctions) {
+        const id = d.data()['episodeId'];
+        const refs = existing.get(id) ?? [];
+        refs.push(d.ref);
+        existing.set(id, refs);
+      }
+
+      const deletes: string[] = [];
+      for (const [episodeId, refs] of existing) {
+        if (!desired.has(episodeId)) {
+          for (const ref of refs) deletes.push(ref);
+        } else {
+          for (let i = 1; i < refs.length; i++) deletes.push(refs[i]);
+        }
+      }
+
+      expect(deletes).toEqual(['ref-a1', 'ref-a2']);
     });
   });
 

@@ -62,7 +62,7 @@ export class EpisodeGenreService {
       where('genreId', '==', genreId)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((d) => d.data()['episodeId'] as string);
+    return Array.from(new Set(snapshot.docs.map((d) => d.data()['episodeId'] as string)));
   }
 
   async setEpisodesForGenre(genreId: string, episodeIds: string[]): Promise<void> {
@@ -73,15 +73,20 @@ export class EpisodeGenreService {
     const snapshot = await getDocs(q);
 
     const desired = new Set(episodeIds);
-    const existing = new Map<string, (typeof snapshot.docs)[number]['ref']>();
+    const existing = new Map<string, (typeof snapshot.docs)[number]['ref'][]>();
     for (const d of snapshot.docs) {
-      existing.set(d.data()['episodeId'] as string, d.ref);
+      const episodeId = d.data()['episodeId'] as string;
+      const refs = existing.get(episodeId) ?? [];
+      refs.push(d.ref);
+      existing.set(episodeId, refs);
     }
 
     const batch = writeBatch(this.firestore);
-    for (const [episodeId, ref] of existing) {
+    for (const [episodeId, refs] of existing) {
       if (!desired.has(episodeId)) {
-        batch.delete(ref);
+        for (const ref of refs) batch.delete(ref);
+      } else {
+        for (let i = 1; i < refs.length; i++) batch.delete(refs[i]);
       }
     }
     for (const episodeId of desired) {
