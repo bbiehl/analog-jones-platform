@@ -24,10 +24,16 @@
     </div>
   </div>
 
-  @if (episodeStore.loading() || loadingJunctions()) {
+  @if (episodeStore.loading() || loadingJunctions() || categoryStore.loading()) {
     <div class="flex justify-center py-12">
       <mat-spinner diameter="48" />
     </div>
+  } @else if (categoryStore.error()) {
+    <p class="text-red-400">{{ categoryStore.error() }}</p>
+  } @else if (!categoryStore.selectedCategory()) {
+    <p class="text-red-400">Category not found.</p>
+  } @else if (junctionError()) {
+    <p class="text-red-400">{{ junctionError() }}</p>
   } @else if (episodeStore.error()) {
     <p class="text-red-400">{{ episodeStore.error() }}</p>
   } @else if (episodeStore.episodes().length === 0) {

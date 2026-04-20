@@ -38,6 +38,7 @@ export class GenreBulkEdit implements OnInit {
   protected readonly selected = signal<Set<string>>(new Set());
   protected readonly saving = signal(false);
   protected readonly loadingJunctions = signal(true);
+  protected readonly junctionError = signal<string | null>(null);
 
   protected readonly isDirty = computed(() => {
     const a = this.initialAssigned();
@@ -69,13 +70,19 @@ export class GenreBulkEdit implements OnInit {
 
   private async loadAssigned(): Promise<void> {
     this.loadingJunctions.set(true);
-    const ids = await this.episodeGenreService.getEpisodeIdsByGenreId(
-      this.route.snapshot.params['id']
-    );
-    const set = new Set(ids);
-    this.initialAssigned.set(set);
-    this.selected.set(new Set(set));
-    this.loadingJunctions.set(false);
+    this.junctionError.set(null);
+    try {
+      const ids = await this.episodeGenreService.getEpisodeIdsByGenreId(
+        this.route.snapshot.params['id']
+      );
+      const set = new Set(ids);
+      this.initialAssigned.set(set);
+      this.selected.set(new Set(set));
+    } catch (e) {
+      this.junctionError.set((e as Error).message);
+    } finally {
+      this.loadingJunctions.set(false);
+    }
   }
 
   protected isChecked(episodeId: string | undefined): boolean {
@@ -107,6 +114,7 @@ export class GenreBulkEdit implements OnInit {
 
   protected async onSave(): Promise<void> {
     if (!this.isDirty() || this.saving()) return;
+    if (!this.genreStore.selectedGenre()) return;
     this.saving.set(true);
     try {
       await this.episodeGenreService.setEpisodesForGenre(
