@@ -124,6 +124,83 @@ describe('EpisodeGenreService', () => {
     });
   });
 
+  describe('getEpisodeIdsByGenreId', () => {
+    it('should extract episodeId strings from junction docs', () => {
+      const junctionDocs = [
+        { data: () => ({ episodeId: 'ep1', genreId: 'g1' }) },
+        { data: () => ({ episodeId: 'ep2', genreId: 'g1' }) },
+      ];
+
+      const ids = junctionDocs.map((d) => d.data()['episodeId']);
+
+      expect(ids).toEqual(['ep1', 'ep2']);
+    });
+
+    it('should return empty array when no junctions exist', () => {
+      const junctionDocs: { data: () => { episodeId: string } }[] = [];
+
+      const ids = junctionDocs.map((d) => d.data()['episodeId']);
+
+      expect(ids).toEqual([]);
+    });
+  });
+
+  describe('setEpisodesForGenre', () => {
+    it('should delete removed junctions and create added ones, leaving unchanged alone', () => {
+      const existingJunctions = [
+        { ref: 'ref-a', data: () => ({ episodeId: 'a', genreId: 'g1' }) },
+        { ref: 'ref-b', data: () => ({ episodeId: 'b', genreId: 'g1' }) },
+        { ref: 'ref-c', data: () => ({ episodeId: 'c', genreId: 'g1' }) },
+      ];
+      const desired = new Set(['b', 'c', 'd']);
+
+      const existing = new Map<string, string>();
+      for (const d of existingJunctions) {
+        existing.set(d.data()['episodeId'], d.ref);
+      }
+
+      const deletes: string[] = [];
+      const adds: { episodeId: string; genreId: string }[] = [];
+
+      for (const [episodeId, ref] of existing) {
+        if (!desired.has(episodeId)) deletes.push(ref);
+      }
+      for (const episodeId of desired) {
+        if (!existing.has(episodeId)) {
+          adds.push({ episodeId, genreId: 'g1' });
+        }
+      }
+
+      expect(deletes).toEqual(['ref-a']);
+      expect(adds).toEqual([{ episodeId: 'd', genreId: 'g1' }]);
+    });
+
+    it('should produce no writes when desired matches existing', () => {
+      const existingJunctions = [
+        { ref: 'ref-a', data: () => ({ episodeId: 'a', genreId: 'g1' }) },
+        { ref: 'ref-b', data: () => ({ episodeId: 'b', genreId: 'g1' }) },
+      ];
+      const desired = new Set(['a', 'b']);
+
+      const existing = new Map<string, string>();
+      for (const d of existingJunctions) {
+        existing.set(d.data()['episodeId'], d.ref);
+      }
+
+      const deletes: string[] = [];
+      const adds: string[] = [];
+      for (const [episodeId, ref] of existing) {
+        if (!desired.has(episodeId)) deletes.push(ref);
+      }
+      for (const episodeId of desired) {
+        if (!existing.has(episodeId)) adds.push(episodeId);
+      }
+
+      expect(deletes).toEqual([]);
+      expect(adds).toEqual([]);
+    });
+  });
+
   describe('getEpisodesByGenreSlug', () => {
     it('should return empty array when no genre matches the slug', () => {
       const genreSnapshot = { empty: true, docs: [] };
