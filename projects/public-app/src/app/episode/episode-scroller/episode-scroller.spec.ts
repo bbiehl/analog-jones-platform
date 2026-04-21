@@ -12,6 +12,7 @@ describe('EpisodeScroller', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(EpisodeScroller);
+    fixture.componentRef.setInput('episodes', []);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
