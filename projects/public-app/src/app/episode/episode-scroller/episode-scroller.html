@@ -1,1 +1,36 @@
-<p>episode-scroller works!</p>
+@if (episodes().length) {
+  <section class="block" [attr.aria-label]="ariaLabel()">
+    <div class="page">
+      @if (heading() || seeAllLink()) {
+        <div class="section-head">
+          @if (heading(); as h) {
+            <h2>
+              @if (eyebrow(); as e) {
+                <small>{{ e }}</small>
+              }
+              {{ h }}
+            </h2>
+          }
+          @if (seeAllLink(); as link) {
+            <a class="see-all" [routerLink]="link">{{ seeAllLabel() ?? 'SEE ALL →' }}</a>
+          }
+        </div>
+      }
+      <div class="shelf" role="list">
+        @for (ep of episodes(); track ep.id) {
+          <article class="shelf-item" role="listitem">
+            <a [routerLink]="[routerPrefix(), ep.id]">
+              <div class="poster" [style.background]="posterBg(ep)">
+                <div class="noise"></div>
+              </div>
+            </a>
+            <div class="meta">
+              <span>{{ toDate(ep) | date: 'MMM dd · yyyy' | uppercase }}</span>
+            </div>
+            <div class="name">{{ ep.title }}</div>
+          </article>
+        }
+      </div>
+    </div>
+  </section>
+}

@@ -16,6 +16,7 @@ import { marked } from 'marked';
 import { interval } from 'rxjs';
 import { Episode } from '../../../../../../libs/episode/episode.model';
 import { EpisodeStore } from '../../../../../../libs/episode/episode.store';
+import { EpisodeScroller } from '../../episode/episode-scroller/episode-scroller';
 
 const INTELLIGENCE_PREVIEW_CHARS = 600;
 
@@ -28,7 +29,7 @@ interface Host {
 
 @Component({
   selector: 'app-home',
-  imports: [DatePipe, UpperCasePipe, RouterLink],
+  imports: [DatePipe, UpperCasePipe, RouterLink, EpisodeScroller],
   templateUrl: './home.html',
   styleUrl: './home.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
