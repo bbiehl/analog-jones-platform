@@ -335,41 +335,6 @@
   }
 }
 
-.hero .eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 24px;
-  color: var(--ink-dim);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.75rem;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-
-  .bar {
-    height: 1px;
-    flex: 1;
-    max-width: 120px;
-    background: var(--line);
-  }
-
-  .rec {
-    color: var(--red);
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-
-    .d {
-      width: 10px;
-      height: 10px;
-      border-radius: 99px;
-      background: var(--red);
-      box-shadow: 0 0 10px var(--red);
-      animation: blink 1.2s infinite;
-    }
-  }
-}
-
 .hero h1 {
   font-family: 'Barlow Condensed', sans-serif;
   font-weight: 800;
