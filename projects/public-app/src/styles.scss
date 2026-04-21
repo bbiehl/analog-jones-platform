@@ -6,3 +6,20 @@ body {
   background: var(--mat-app-background-color);
   color: var(--mat-app-text-color);
 }
+
+.toolbar-nav a[mat-button] {
+  outline: none !important;
+  border: none !important;
+
+  .mat-mdc-button-persistent-ripple,
+  .mat-mdc-button-persistent-ripple::before,
+  .mat-mdc-button-persistent-ripple::after,
+  .mat-mdc-focus-indicator,
+  .mat-mdc-focus-indicator::before,
+  .mat-mdc-button-ripple,
+  .mat-mdc-button-touch-target,
+  .mdc-button__ripple,
+  .mat-ripple {
+    display: none !important;
+  }
+}
