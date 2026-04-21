@@ -77,6 +77,14 @@
         <div class="body">
           <div class="meta-row">
             <span class="chip">{{ toDate(f) | date: 'MMM dd · yyyy' | uppercase }}</span>
+            @if (featuredDetails(); as d) {
+              @for (c of d.categories; track c.id) {
+                <span class="chip">{{ c.name }}</span>
+              }
+              @for (g of d.genres; track g.id) {
+                <span class="chip">{{ g.name }}</span>
+              }
+            }
           </div>
           <h3>{{ f.title }}</h3>
           @if (featuredIntelligence(); as html) {

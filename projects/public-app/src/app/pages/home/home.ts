@@ -43,6 +43,11 @@ export class Home implements OnInit {
   protected readonly episodes = computed(() => this.episodeStore.episodes());
   protected readonly featured = computed<Episode | null>(() => this.episodes()[0] ?? null);
   protected readonly shelfEpisodes = computed(() => this.episodes().slice(1, 9));
+  protected readonly featuredDetails = computed(() => {
+    const selected = this.episodeStore.selectedEpisode();
+    const featured = this.featured();
+    return selected && featured && selected.id === featured.id ? selected : null;
+  });
   protected readonly featuredIntelligence = computed<SafeHtml | null>(() => {
     const raw = this.featured()?.intelligence;
     if (!raw) return null;
@@ -81,7 +86,10 @@ export class Home implements OnInit {
   });
 
   ngOnInit(): void {
-    this.episodeStore.loadVisibleEpisodes();
+    this.episodeStore.loadVisibleEpisodes().then(() => {
+      const f = this.featured();
+      if (f?.id) this.episodeStore.loadEpisodeById(f.id);
+    });
 
     if (!this.isBrowser) return;
     interval(1000)
