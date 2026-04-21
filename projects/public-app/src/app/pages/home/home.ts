@@ -127,9 +127,8 @@ export class Home implements OnInit {
   protected posterBg(episode: Episode): string {
     if (episode.posterUrl) {
       return `
-        linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,.8) 100%),
-        url('${episode.posterUrl}') center/cover no-repeat,
-        #140a22
+        url('${episode.posterUrl}') center/contain no-repeat,
+        #050509
       `;
     }
     const color = this.posterColor(episode);
