@@ -23,3 +23,27 @@ body {
     display: none !important;
   }
 }
+
+.sidenav-nav a[mat-list-item] {
+  outline: none !important;
+  --mdc-list-list-item-container-color: transparent;
+  --mdc-list-list-item-hover-state-layer-color: transparent;
+  --mdc-list-list-item-focus-state-layer-color: transparent;
+
+  .mat-mdc-focus-indicator,
+  .mat-mdc-focus-indicator::before,
+  .mat-mdc-list-item-ripple,
+  .mdc-list-item__ripple,
+  .mat-ripple {
+    display: none !important;
+  }
+
+  &.mdc-list-item--activated,
+  &.mdc-list-item--selected {
+    background: transparent !important;
+
+    &::before {
+      background: transparent !important;
+    }
+  }
+}

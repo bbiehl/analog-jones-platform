@@ -16,6 +16,56 @@ mat-toolbar {
   border-bottom: 1px solid #2a2a3d;
 }
 
+mat-sidenav {
+  background: #0b0b12;
+  border-left: 1px solid #2a2a3d;
+}
+
+.sidenav-nav {
+  a[mat-list-item] {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #a7a3bf;
+    text-decoration: none;
+    transition: color 0.15s ease, text-shadow 0.15s ease;
+
+    &::before {
+      content: '/ ';
+      color: #6e6a86;
+      margin-right: 2px;
+    }
+
+    &:hover {
+      color: #eceaf4;
+      text-shadow: 0 0 12px rgba(213, 186, 255, 0.35);
+    }
+
+    &.active-link {
+      color: #d5baff;
+      text-shadow: 0 0 10px rgba(154, 108, 255, 0.45);
+
+      &::after {
+        content: '';
+        position: absolute;
+        left: 16px;
+        right: 16px;
+        bottom: 8px;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          #d5baff 20%,
+          #d5baff 80%,
+          transparent
+        );
+      }
+    }
+  }
+}
+
 .toolbar-nav {
   display: flex;
   align-items: center;
