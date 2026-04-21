@@ -8,9 +8,6 @@ export const serverRoutes: ServerRoute[] = [
   server(''),
   server('episodes'),
   server('episodes/:id'),
-  server('explorer/categories/:slug'),
-  server('explorer/genres/:slug'),
-  server('explorer/tags/:slug'),
 
   // Prerendered (static)
   prerender('contact'),
