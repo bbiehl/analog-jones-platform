@@ -26,7 +26,16 @@
 
 <mat-sidenav-container class="sidenav-container">
   @if (isMobile()) {
-    <mat-sidenav #sidenav mode="over" position="end" role="navigation" aria-label="Side navigation" autoFocus="false">
+    <mat-sidenav
+      #sidenav
+      mode="over"
+      position="end"
+      role="navigation"
+      aria-label="Side navigation"
+      autoFocus="false"
+      [fixedInViewport]="true"
+      [fixedTopGap]="56"
+    >
       <mat-nav-list class="sidenav-nav">
         @for (link of navLinks; track link.path) {
           <a
