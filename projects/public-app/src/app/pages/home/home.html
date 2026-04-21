@@ -24,9 +24,19 @@
       </div>
 
       <div class="hero-meta">
-        <div class="m"><div class="k">TAPES CATALOGED</div><div class="v">47 <small>/ and counting</small></div></div>
-        <div class="m"><div class="k">DROPS / WEEK</div><div class="v">01 <small>every Saturday</small></div></div>
-        <div class="m"><div class="k">RUNTIME · ALL</div><div class="v">52:18:44 <small>hh:mm:ss</small></div></div>
+        <div class="m">
+          <div class="k">TAPES CATALOGED</div>
+          <div class="v">{{ pad(episodes.length, 2) }} <small>/ and counting</small></div>
+        </div>
+        <div class="m tape-rolling" aria-label="Session runtime">
+          <div class="k">
+            <span class="rec-dot" aria-hidden="true"></span>
+            TAPE · ROLLING
+          </div>
+          <div class="v timecode">
+            {{ tapeCounter() }} <small>since tune-in</small>
+          </div>
+        </div>
       </div>
     </div>
 

@@ -516,7 +516,7 @@
 
 .hero-meta {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px;
   margin-top: 56px;
   padding-top: 22px;
@@ -547,15 +547,32 @@
       }
     }
   }
+
+  .tape-rolling {
+    .k {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .rec-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 99px;
+      background: var(--red);
+      box-shadow: 0 0 8px var(--red);
+      animation: blink 1.2s infinite;
+    }
+    .timecode {
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.04em;
+    }
+  }
 }
 
 @media (max-width: 720px) {
   .hero-meta {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 12px;
-  }
-  .hero-meta .m:last-child {
-    grid-column: 1 / -1;
   }
 }
 
