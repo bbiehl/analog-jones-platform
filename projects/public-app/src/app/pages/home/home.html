@@ -72,7 +72,6 @@
         <div class="poster-big">
           <div class="poster poster--big" [style.background]="posterBg(f)">
             <div class="noise"></div>
-            <div class="title title--big">{{ f.title }}</div>
           </div>
         </div>
         <div class="body">
@@ -113,7 +112,6 @@
             <a [routerLink]="['/episodes', ep.id]">
               <div class="poster" [style.background]="posterBg(ep)">
                 <div class="noise"></div>
-                <div class="title">{{ ep.title }}</div>
               </div>
             </a>
             <div class="meta">
