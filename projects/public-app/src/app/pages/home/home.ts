@@ -58,22 +58,22 @@ export class Home implements OnInit {
 
   protected readonly hosts: Host[] = [
     {
-      init: 'BJ',
-      name: "Brennan 'Tape Head' Jones",
-      role: 'CURATOR · PROGRAMMING',
-      line: 'Runs the shelves, picks the weekly drop, refuses to rewind.',
+      init: 'ST',
+      name: "Stephen 'Head Cleaner' ",
+      role: 'FOUNDER · HOST',
+      line: 'Started Analog Jones and still runs the original signal. The voice behind the first drop.',
     },
     {
-      init: 'MK',
-      name: "Marco 'Tracking' Kade",
-      role: 'AUDIO · TRANSFER',
-      line: 'Knows every flea market between Tulsa and Trenton. Speaks in TRT.',
+      init: 'CH',
+      name: "Chris 'Ogre Mode' ",
+      role: 'WEIRD · ANIME',
+      line: 'Treats Shrek like scripture and anime like a second language. The stranger the tape, the better.',
     },
     {
-      init: 'RP',
-      name: "Reggie 'Pan-n-Scan' Park",
-      role: 'FIELD · ARCHIVE',
-      line: 'Will descend into any basement for a Media Home Entertainment clamshell.',
+      init: 'BR',
+      name: "Brad 'Highlander' ",
+      role: 'ACTION · CODE',
+      line: "80s action kid who built the site. There can be only one — and it's usually Connor MacLeod.",
     },
   ];
 
