@@ -29,6 +29,14 @@ body {
   --mdc-list-list-item-container-color: transparent;
   --mdc-list-list-item-hover-state-layer-color: transparent;
   --mdc-list-list-item-focus-state-layer-color: transparent;
+  justify-content: center !important;
+  text-align: center;
+
+  .mdc-list-item__content,
+  .mdc-list-item__primary-text {
+    text-align: center !important;
+    justify-content: center !important;
+  }
 
   .mat-mdc-focus-indicator,
   .mat-mdc-focus-indicator::before,
