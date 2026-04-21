@@ -145,27 +145,6 @@
   </div>
 </section>
 
-<section class="block" aria-label="Explorer">
-  <div class="page">
-    <div class="section-head">
-      <h2><small>/ ENTER THE ARCHIVE</small>Change Channel</h2>
-      <a class="see-all" routerLink="/explorer">EXPLORER →</a>
-    </div>
-    <div class="channels">
-      @for (c of channels; track c.n) {
-        <a class="channel" [routerLink]="c.path">
-          <div>
-            <div class="ch-n">CH · {{ c.n }}</div>
-            <h3>{{ c.title }}</h3>
-            <p>{{ c.desc }}</p>
-          </div>
-          <div class="arrow">→</div>
-        </a>
-      }
-    </div>
-  </div>
-</section>
-
 <section class="block" id="listen" aria-label="Where to listen">
   <div class="page">
     <div class="section-head">

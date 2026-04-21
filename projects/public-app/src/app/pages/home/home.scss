@@ -897,65 +897,6 @@ section.block {
   }
 }
 
-/* Channels */
-.channels {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-
-@media (max-width: 760px) {
-  .channels {
-    grid-template-columns: 1fr;
-  }
-}
-
-.channel {
-  position: relative;
-  padding: 22px;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  transition: 0.15s;
-
-  &:hover {
-    border-color: var(--accent);
-    background: color-mix(in oklab, var(--surface) 70%, var(--accent) 6%);
-  }
-
-  .ch-n {
-    font-family: 'JetBrains Mono', monospace;
-    color: var(--cyan);
-    font-size: 0.75rem;
-    letter-spacing: 0.2em;
-    margin-bottom: 6px;
-  }
-
-  h3 {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 800;
-    font-size: 2.2rem;
-    text-transform: uppercase;
-    line-height: 0.9;
-  }
-
-  p {
-    color: var(--ink-dim);
-    font-size: 0.88rem;
-    margin: 6px 0 0;
-    max-width: 32ch;
-  }
-
-  .arrow {
-    font-family: Orbitron, sans-serif;
-    font-size: 1.2rem;
-    color: var(--accent);
-  }
-}
-
 /* Listen */
 .listen {
   display: grid;

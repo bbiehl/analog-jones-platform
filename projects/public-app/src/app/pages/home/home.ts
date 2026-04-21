@@ -22,13 +22,6 @@ interface Host {
   line: string;
 }
 
-interface Channel {
-  n: string;
-  title: string;
-  desc: string;
-  path: string;
-}
-
 @Component({
   selector: 'app-home',
   imports: [DatePipe, UpperCasePipe, RouterLink],
@@ -64,27 +57,6 @@ export class Home implements OnInit {
       name: "Reggie 'Pan-n-Scan' Park",
       role: 'FIELD · ARCHIVE',
       line: 'Will descend into any basement for a Media Home Entertainment clamshell.',
-    },
-  ];
-
-  protected readonly channels: Channel[] = [
-    {
-      n: '02',
-      title: 'Categories',
-      desc: 'Drive-ins, Midnight, Saturday Mornings, Straight-to-Video…',
-      path: '/explorer/categories',
-    },
-    {
-      n: '04',
-      title: 'Genres',
-      desc: 'Slasher, Kung-fu, Cyberpunk, Dance Movie, Post-Apoc…',
-      path: '/explorer/genres',
-    },
-    {
-      n: '11',
-      title: 'Tags',
-      desc: 'Carpenter, Cannon, Neon, Ninja, Practical FX, VHS-ONLY…',
-      path: '/explorer/tags',
     },
   ];
 
