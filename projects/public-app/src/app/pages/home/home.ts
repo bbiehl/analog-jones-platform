@@ -9,11 +9,15 @@ import {
   signal,
 } from '@angular/core';
 import { DatePipe, UpperCasePipe, isPlatformBrowser } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { marked } from 'marked';
 import { interval } from 'rxjs';
 import { Episode } from '../../../../../../libs/episode/episode.model';
 import { EpisodeStore } from '../../../../../../libs/episode/episode.store';
+
+const INTELLIGENCE_PREVIEW_CHARS = 600;
 
 interface Host {
   init: string;
@@ -33,11 +37,18 @@ interface Host {
 export class Home implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly sanitizer = inject(DomSanitizer);
   protected readonly episodeStore = inject(EpisodeStore);
 
   protected readonly episodes = computed(() => this.episodeStore.episodes());
   protected readonly featured = computed<Episode | null>(() => this.episodes()[0] ?? null);
   protected readonly shelfEpisodes = computed(() => this.episodes().slice(1, 9));
+  protected readonly featuredIntelligence = computed<SafeHtml | null>(() => {
+    const raw = this.featured()?.intelligence;
+    if (!raw) return null;
+    const trimmed = this.trimMarkdown(raw, INTELLIGENCE_PREVIEW_CHARS);
+    return this.sanitizer.bypassSecurityTrustHtml(marked.parse(trimmed) as string);
+  });
 
   protected readonly hosts: Host[] = [
     {
@@ -80,6 +91,14 @@ export class Home implements OnInit {
 
   protected pad(n: number, width = 3): string {
     return String(n).padStart(width, '0');
+  }
+
+  private trimMarkdown(raw: string, limit: number): string {
+    if (raw.length <= limit) return raw;
+    const slice = raw.slice(0, limit);
+    const lastSpace = slice.lastIndexOf(' ');
+    const cut = lastSpace > limit * 0.6 ? slice.slice(0, lastSpace) : slice;
+    return `${cut.trimEnd()}…`;
   }
 
   protected toDate(episode: Episode): Date {

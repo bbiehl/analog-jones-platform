@@ -79,10 +79,8 @@
             <span class="chip">{{ toDate(f) | date: 'MMM dd · yyyy' | uppercase }}</span>
           </div>
           <h3>{{ f.title }}</h3>
-          @if (f.intelligence) {
-            <div class="notes">
-              <p>{{ f.intelligence }}</p>
-            </div>
+          @if (featuredIntelligence(); as html) {
+            <div class="notes" [innerHTML]="html"></div>
           }
           <div class="actions">
             @if (f.links.spotify) {
