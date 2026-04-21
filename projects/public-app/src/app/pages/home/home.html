@@ -43,21 +43,20 @@
     </div>
 
     @if (featured(); as f) {
-      <div class="monitor" aria-hidden="true">
+      <a class="monitor" [routerLink]="['/episodes', f.id]" [attr.aria-label]="'Open ' + f.title">
         <div class="screen">
-          <div class="bars"></div>
-          <div class="osd">
+          <div class="bars" aria-hidden="true"></div>
+          <div class="osd" aria-hidden="true">
             <div class="row"><span>PLAY ▶</span><span class="counter">{{ tapeCounter() }}</span></div>
-            <div class="row row-sub">SP · {{ toDate(f) | date: 'yyyy' }}</div>
           </div>
-          <div class="badge"><span class="d"></span> REC</div>
-          <div class="monitor-glow" [style.background]="monitorGlow(f)"></div>
+          <div class="badge" aria-hidden="true"><span class="d"></span> REC</div>
+          <div class="monitor-glow" aria-hidden="true" [style.background]="monitorGlow(f)"></div>
           <div class="pl-title">{{ f.title }}</div>
           <div class="pl-meta">
             <span>{{ toDate(f) | date: 'MMM dd · yyyy' | uppercase }}</span>
           </div>
         </div>
-      </div>
+      </a>
     }
   </div>
 </section>
