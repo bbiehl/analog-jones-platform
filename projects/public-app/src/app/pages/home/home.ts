@@ -8,23 +8,12 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { DatePipe, UpperCasePipe, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { interval } from 'rxjs';
-
-interface HomeEpisode {
-  n: number;
-  date: string;
-  decade: string;
-  title: string;
-  tagline?: string;
-  tags: string[];
-  genres: string[];
-  runtime: string;
-  where: ('spotify' | 'youtube')[];
-  color: string;
-}
+import { Episode } from '../../../../../../libs/episode/episode.model';
+import { EpisodeStore } from '../../../../../../libs/episode/episode.store';
 
 interface Host {
   init: string;
@@ -40,16 +29,9 @@ interface Channel {
   path: string;
 }
 
-interface RelatedGroup {
-  tag: string;
-  ids: number[];
-  hue: 'cyan' | 'accent' | 'amber';
-  blurb: string;
-}
-
 @Component({
   selector: 'app-home',
-  imports: [RouterLink],
+  imports: [DatePipe, UpperCasePipe, RouterLink],
   templateUrl: './home.html',
   styleUrl: './home.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -58,99 +40,11 @@ interface RelatedGroup {
 export class Home implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  protected readonly episodeStore = inject(EpisodeStore);
 
-  protected readonly episodes: HomeEpisode[] = [
-    {
-      n: 47,
-      date: 'APR 18 · 2026',
-      decade: '1987',
-      title: 'The Last Dragon',
-      tagline:
-        "Sho'nuff vs. Bruce Leroy — the Berry Gordy curio that shouldn't work, and does.",
-      tags: ['KUNG-FU', 'CULT', 'MOTOWN'],
-      genres: ['Action', 'Musical'],
-      runtime: '1:12:04',
-      where: ['spotify', 'youtube'],
-      color: '#6d2bff',
-    },
-    {
-      n: 46,
-      date: 'APR 11 · 2026',
-      decade: '1983',
-      title: 'Krull',
-      tags: ['FANTASY', 'SYFY', 'QUEST'],
-      genres: ['Fantasy'],
-      runtime: '58:31',
-      where: ['spotify'],
-      color: '#2b3aff',
-    },
-    {
-      n: 45,
-      date: 'APR 04 · 2026',
-      decade: '1990',
-      title: 'Hardware',
-      tags: ['POST-APOC', 'INDIE', 'GRIM'],
-      genres: ['Sci-Fi', 'Horror'],
-      runtime: '1:04:17',
-      where: ['spotify', 'youtube'],
-      color: '#b42b2b',
-    },
-    {
-      n: 44,
-      date: 'MAR 28 · 2026',
-      decade: '1985',
-      title: 'The Stuff',
-      tags: ['BODY-HORROR', 'SATIRE'],
-      genres: ['Horror'],
-      runtime: '49:52',
-      where: ['spotify'],
-      color: '#caa04a',
-    },
-    {
-      n: 43,
-      date: 'MAR 21 · 2026',
-      decade: '1981',
-      title: 'Escape from New York',
-      tags: ['CARPENTER', 'DYSTOPIA'],
-      genres: ['Action', 'Sci-Fi'],
-      runtime: '1:18:10',
-      where: ['spotify', 'youtube'],
-      color: '#2b6d63',
-    },
-    {
-      n: 42,
-      date: 'MAR 14 · 2026',
-      decade: '1988',
-      title: 'They Live',
-      tags: ['CARPENTER', 'SATIRE'],
-      genres: ['Sci-Fi'],
-      runtime: '1:06:40',
-      where: ['spotify', 'youtube'],
-      color: '#3a8f5f',
-    },
-    {
-      n: 41,
-      date: 'MAR 07 · 2026',
-      decade: '1984',
-      title: 'Streets of Fire',
-      tags: ['ROCK', 'NEON', 'NOIR'],
-      genres: ['Musical', 'Action'],
-      runtime: '1:00:59',
-      where: ['spotify'],
-      color: '#ff3d7f',
-    },
-    {
-      n: 40,
-      date: 'FEB 28 · 2026',
-      decade: '1979',
-      title: 'The Warriors',
-      tags: ['CULT', 'GANG'],
-      genres: ['Action'],
-      runtime: '1:15:22',
-      where: ['spotify', 'youtube'],
-      color: '#a83232',
-    },
-  ];
+  protected readonly episodes = computed(() => this.episodeStore.episodes());
+  protected readonly featured = computed<Episode | null>(() => this.episodes()[0] ?? null);
+  protected readonly shelfEpisodes = computed(() => this.episodes().slice(1, 9));
 
   protected readonly hosts: Host[] = [
     {
@@ -194,31 +88,6 @@ export class Home implements OnInit {
     },
   ];
 
-  protected readonly relatedGroups: RelatedGroup[] = [
-    {
-      tag: 'CARPENTER',
-      ids: [43, 42],
-      hue: 'cyan',
-      blurb: 'Snake, Snake, and the rooftop shades.',
-    },
-    {
-      tag: 'NEON',
-      ids: [41, 44],
-      hue: 'accent',
-      blurb: 'Hot pink, wet streets, impractical jackets.',
-    },
-    {
-      tag: 'QUEST',
-      ids: [46, 40],
-      hue: 'amber',
-      blurb: 'One MacGuffin, many punches to the face.',
-    },
-  ];
-
-  protected readonly featured = this.episodes[0];
-  protected readonly shelfEpisodes = this.episodes.slice(1);
-  protected readonly episodesById = new Map(this.episodes.map((e) => [e.n, e]));
-
   private readonly tapeSeconds = signal(0);
   protected readonly tapeCounter = computed(() => {
     const t = this.tapeSeconds();
@@ -229,6 +98,8 @@ export class Home implements OnInit {
   });
 
   ngOnInit(): void {
+    this.episodeStore.loadVisibleEpisodes();
+
     if (!this.isBrowser) return;
     interval(1000)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -239,13 +110,29 @@ export class Home implements OnInit {
     return String(n).padStart(width, '0');
   }
 
-  protected chipTone(tag: string): 'cyan' | 'accent' | null {
-    if (tag === 'CARPENTER') return 'cyan';
-    if (tag === 'NEON') return 'accent';
-    return null;
+  protected toDate(episode: Episode): Date {
+    return episode.episodeDate.toDate();
   }
 
-  protected posterBg(color: string): string {
+  protected posterColor(episode: Episode): string {
+    const id = episode.id ?? episode.title;
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = (hash * 31 + id.charCodeAt(i)) & 0xffffffff;
+    }
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue}, 55%, 42%)`;
+  }
+
+  protected posterBg(episode: Episode): string {
+    if (episode.posterUrl) {
+      return `
+        linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,.8) 100%),
+        url('${episode.posterUrl}') center/cover no-repeat,
+        #140a22
+      `;
+    }
+    const color = this.posterColor(episode);
     return `
       linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,.8) 100%),
       radial-gradient(ellipse at 30% 20%, ${color}55, transparent 55%),
@@ -255,7 +142,8 @@ export class Home implements OnInit {
     `;
   }
 
-  protected monitorGlow(color: string): string {
+  protected monitorGlow(episode: Episode): string {
+    const color = this.posterColor(episode);
     return `
       radial-gradient(ellipse at 30% 30%, ${color}99, transparent 60%),
       radial-gradient(ellipse at 70% 80%, #00000099, transparent 60%)

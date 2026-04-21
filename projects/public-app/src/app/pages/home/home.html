@@ -19,14 +19,16 @@
         film museum. Like Indiana Jones would.
       </p>
       <div class="cta">
-        <a class="btn primary" [routerLink]="['/episodes', featured.n]">▶ PLAY EPISODE</a>
+        @if (featured(); as f) {
+          <a class="btn primary" [routerLink]="['/episodes', f.id]">▶ PLAY EPISODE</a>
+        }
         <a class="btn" routerLink="/episodes"><span class="dot"></span> ENTER THE ARCHIVE</a>
       </div>
 
       <div class="hero-meta">
         <div class="m">
           <div class="k">TAPES CATALOGED</div>
-          <div class="v">{{ pad(episodes.length, 2) }} <small>/ and counting</small></div>
+          <div class="v">{{ pad(episodes().length, 2) }} <small>/ and counting</small></div>
         </div>
         <div class="m tape-rolling" aria-label="Session runtime">
           <div class="k">
@@ -40,142 +42,91 @@
       </div>
     </div>
 
-    <div class="monitor" aria-hidden="true">
-      <div class="screen">
-        <div class="bars"></div>
-        <div class="osd">
-          <div class="row"><span>PLAY ▶</span><span class="counter">{{ tapeCounter() }}</span></div>
-          <div class="row row-sub">SP · EP {{ featured.decade }}</div>
-        </div>
-        <div class="badge"><span class="d"></span> REC</div>
-        <div class="monitor-glow" [style.background]="monitorGlow(featured.color)"></div>
-        <div class="pl-title">{{ featured.title }}</div>
-        <div class="pl-meta">
-          <span class="ep">EP · 047</span>
-          <span>{{ featured.date }}</span>
-          <span>•</span>
-          <span>{{ featured.genres.join(' / ') }}</span>
+    @if (featured(); as f) {
+      <div class="monitor" aria-hidden="true">
+        <div class="screen">
+          <div class="bars"></div>
+          <div class="osd">
+            <div class="row"><span>PLAY ▶</span><span class="counter">{{ tapeCounter() }}</span></div>
+            <div class="row row-sub">SP · {{ toDate(f) | date: 'yyyy' }}</div>
+          </div>
+          <div class="badge"><span class="d"></span> REC</div>
+          <div class="monitor-glow" [style.background]="monitorGlow(f)"></div>
+          <div class="pl-title">{{ f.title }}</div>
+          <div class="pl-meta">
+            <span>{{ toDate(f) | date: 'MMM dd · yyyy' | uppercase }}</span>
+          </div>
         </div>
       </div>
-    </div>
+    }
   </div>
 </section>
 
-<section class="block" id="drop" aria-label="This week">
-  <div class="page">
-    <div class="section-head">
-      <h2><small>/ THIS WEEK IN THE MUSEUM</small>The Drop</h2>
-      <a class="see-all" routerLink="/episodes">ALL 47 TAPES →</a>
-    </div>
-    <div class="drop">
-      <div class="poster-big">
-        <div class="poster poster--big" [style.background]="posterBg(featured.color)">
-          <div class="ribbon">EP · {{ pad(featured.n) }} / {{ featured.decade }}</div>
-          <div class="noise"></div>
-          <div class="title title--big">{{ featured.title }}</div>
-        </div>
+@if (featured(); as f) {
+  <section class="block" id="drop" aria-label="This week">
+    <div class="page">
+      <div class="section-head">
+        <h2><small>/ THIS WEEK IN THE MUSEUM</small>The Drop</h2>
+        <a class="see-all" routerLink="/episodes">ALL {{ pad(episodes().length, 2) }} TAPES →</a>
       </div>
-      <div class="body">
-        <div class="meta-row">
-          <span class="chip accent">EP · {{ pad(featured.n) }}</span>
-          <span class="chip">{{ featured.date }}</span>
-          <span class="chip cyan">TRT {{ featured.runtime }}</span>
-          <span class="chip amber">{{ featured.decade }}</span>
-          @for (g of featured.genres; track g) {
-            <span class="chip">{{ g }}</span>
-          }
+      <div class="drop">
+        <div class="poster-big">
+          <div class="poster poster--big" [style.background]="posterBg(f)">
+            <div class="noise"></div>
+            <div class="title title--big">{{ f.title }}</div>
+          </div>
         </div>
-        <h3>{{ featured.title }}</h3>
-        <div class="notes">
-          <p>
-            {{ featured.tagline }} We broke the clamshell open on Motown Productions' last true
-            swing — a film where a Harlem kung-fu apprentice faces off against the greatest
-            villain in VHS history. Box art: garbage. Trailer: a masterclass. Cover reprint on the
-            1994 RCA/Columbia sleeve: chef's kiss.
-          </p>
-          <blockquote>"WHO'S THE MASTER?" — and why the answer is always printed on the spine.</blockquote>
-          <h4>// In this tape</h4>
-          <ul>
-            <li>The unsolved mystery of the lost glow-effect dailies</li>
-            <li>Why Sho'nuff is VHS-native villainy</li>
-            <li>Flea market find: a sealed Canadian rental copy, Zellers sticker intact</li>
-            <li>Where it sits in our museum: <b>Wing 3 · Shelf B · Slot 07</b></li>
-          </ul>
-        </div>
-        <div class="actions">
-          <a class="btn primary" href="#listen-spotify">▶ SPOTIFY</a>
-          <a class="btn" href="#listen-youtube">▶ YOUTUBE</a>
-          <a class="btn" [routerLink]="['/episodes', featured.n]">SHOW NOTES →</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="block" id="shelf" aria-label="Museum shelf">
-  <div class="page">
-    <div class="section-head">
-      <h2><small>/ THE MUSEUM · RECENT ACQUISITIONS</small>Shelf B · Recently catalogued</h2>
-      <a class="see-all" routerLink="/episodes">BROWSE ARCHIVE →</a>
-    </div>
-    <div class="shelf" role="list">
-      @for (ep of shelfEpisodes; track ep.n) {
-        <article class="shelf-item" role="listitem">
-          <a [routerLink]="['/episodes', ep.n]">
-            <div class="poster" [style.background]="posterBg(ep.color)">
-              <div class="ribbon">EP · {{ pad(ep.n) }} / {{ ep.decade }}</div>
-              <div class="noise"></div>
-              <div class="title">{{ ep.title }}</div>
+        <div class="body">
+          <div class="meta-row">
+            <span class="chip">{{ toDate(f) | date: 'MMM dd · yyyy' | uppercase }}</span>
+          </div>
+          <h3>{{ f.title }}</h3>
+          @if (f.intelligence) {
+            <div class="notes">
+              <p>{{ f.intelligence }}</p>
             </div>
-          </a>
-          <div class="meta">
-            <span>EP · {{ pad(ep.n) }}</span>
-            <span>{{ ep.runtime }}</span>
-          </div>
-          <div class="name">{{ ep.title }}</div>
-          <div class="tags">
-            @for (t of ep.tags.slice(0, 2); track t) {
-              @let tone = chipTone(t);
-              <span class="chip" [class.cyan]="tone === 'cyan'" [class.accent]="tone === 'accent'">{{ t }}</span>
+          }
+          <div class="actions">
+            @if (f.links.spotify) {
+              <a class="btn primary" [href]="f.links.spotify" target="_blank" rel="noopener">▶ SPOTIFY</a>
             }
-          </div>
-        </article>
-      }
-    </div>
-  </div>
-</section>
-
-<section class="block" aria-label="Related tags">
-  <div class="page">
-    <div class="section-head">
-      <h2><small>/ BY TAG · BY GENRE</small>If you liked that, you'll dig…</h2>
-      <a class="see-all" routerLink="/explorer/tags">ALL TAGS →</a>
-    </div>
-    <div class="related-groups">
-      @for (g of relatedGroups; track g.tag) {
-        <div class="rg-card">
-          <div class="rg-head">
-            <span class="chip" [class.cyan]="g.hue === 'cyan'" [class.accent]="g.hue === 'accent'" [class.amber]="g.hue === 'amber'"># {{ g.tag }}</span>
-            <span class="brk">{{ g.ids.length }} TAPES</span>
-          </div>
-          <p class="rg-blurb">{{ g.blurb }}</p>
-          <div class="rg-posters">
-            @for (id of g.ids; track id) {
-              @let rep = episodesById.get(id)!;
-              <a [routerLink]="['/episodes', id]">
-                <div class="poster" [style.background]="posterBg(rep.color)">
-                  <div class="ribbon">EP · {{ pad(rep.n) }} / {{ rep.decade }}</div>
-                  <div class="noise"></div>
-                  <div class="title">{{ rep.title }}</div>
-                </div>
-              </a>
+            @if (f.links.youtube) {
+              <a class="btn" [href]="f.links.youtube" target="_blank" rel="noopener">▶ YOUTUBE</a>
             }
+            <a class="btn" [routerLink]="['/episodes', f.id]">SHOW NOTES →</a>
           </div>
         </div>
-      }
+      </div>
     </div>
-  </div>
-</section>
+  </section>
+}
+
+@if (shelfEpisodes().length) {
+  <section class="block" id="shelf" aria-label="Museum shelf">
+    <div class="page">
+      <div class="section-head">
+        <h2><small>/ THE MUSEUM · RECENT ACQUISITIONS</small>Shelf B · Recently catalogued</h2>
+        <a class="see-all" routerLink="/episodes">BROWSE ARCHIVE →</a>
+      </div>
+      <div class="shelf" role="list">
+        @for (ep of shelfEpisodes(); track ep.id) {
+          <article class="shelf-item" role="listitem">
+            <a [routerLink]="['/episodes', ep.id]">
+              <div class="poster" [style.background]="posterBg(ep)">
+                <div class="noise"></div>
+                <div class="title">{{ ep.title }}</div>
+              </div>
+            </a>
+            <div class="meta">
+              <span>{{ toDate(ep) | date: 'MMM dd · yyyy' | uppercase }}</span>
+            </div>
+            <div class="name">{{ ep.title }}</div>
+          </article>
+        }
+      </div>
+    </div>
+  </section>
+}
 
 <section class="block" aria-label="The Trio">
   <div class="page">
@@ -227,7 +178,6 @@
       <div class="card spotify">
         <div class="glyph" aria-hidden="true"></div>
         <h3>Spotify</h3>
-        <div class="avail"><b>47 / 47</b> episodes · full catalog</div>
         <p>Every single tape, from pilot to this week's drop — scroll back to 1987 and pretend your walkman is ok.</p>
         <div class="card-actions">
           <a class="btn primary" href="#">▶ OPEN IN SPOTIFY</a>
@@ -237,7 +187,6 @@
       <div class="card youtube">
         <div class="glyph" aria-hidden="true"></div>
         <h3>YouTube</h3>
-        <div class="avail"><b>23 / 47</b> episodes · video specials</div>
         <p>A growing reel of video episodes — box-art pans, trailer breakdowns, and the occasional tape-head cleaning tutorial. Some episodes are YouTube-only.</p>
         <div class="card-actions">
           <a class="btn primary" href="#">▶ OPEN IN YOUTUBE</a>
