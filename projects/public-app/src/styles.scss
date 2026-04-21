@@ -29,13 +29,33 @@ body {
   --mdc-list-list-item-container-color: transparent;
   --mdc-list-list-item-hover-state-layer-color: transparent;
   --mdc-list-list-item-focus-state-layer-color: transparent;
+  --mdc-list-list-item-label-text-font: 'JetBrains Mono', ui-monospace, monospace;
+  --mdc-list-list-item-label-text-size: 0.78rem;
+  --mdc-list-list-item-label-text-weight: 500;
+  --mdc-list-list-item-label-text-tracking: 0.22em;
+  --mdc-list-list-item-label-text-color: #a7a3bf;
+  --mdc-list-list-item-hover-label-text-color: #eceaf4;
+  --mdc-list-list-item-focus-label-text-color: #eceaf4;
+  text-decoration: none !important;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
   justify-content: center !important;
   text-align: center;
+  transition: color 0.15s ease, text-shadow 0.15s ease;
 
   .mdc-list-item__content,
   .mdc-list-item__primary-text {
     text-align: center !important;
     justify-content: center !important;
+    font-family: 'JetBrains Mono', ui-monospace, monospace !important;
+    letter-spacing: 0.22em !important;
+    text-transform: uppercase !important;
+  }
+
+  .mdc-list-item__primary-text::before {
+    content: '/ ';
+    color: #6e6a86;
+    margin-right: 2px;
   }
 
   .mat-mdc-focus-indicator,
@@ -46,12 +66,43 @@ body {
     display: none !important;
   }
 
+  &::before,
+  &::after {
+    display: none !important;
+  }
+
+  &:hover {
+    text-shadow: 0 0 12px rgba(213, 186, 255, 0.35);
+  }
+
   &.mdc-list-item--activated,
-  &.mdc-list-item--selected {
+  &.mdc-list-item--selected,
+  &.active-link {
     background: transparent !important;
+    --mdc-list-list-item-label-text-color: #d5baff;
+
+    .mdc-list-item__primary-text {
+      color: #d5baff !important;
+      text-shadow: 0 0 10px rgba(154, 108, 255, 0.45);
+    }
 
     &::before {
       background: transparent !important;
+    }
+
+    .mdc-list-item__primary-text::after {
+      content: '';
+      display: block;
+      height: 1px;
+      margin: 6px auto 0;
+      width: 60%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        #d5baff 20%,
+        #d5baff 80%,
+        transparent
+      );
     }
   }
 }
