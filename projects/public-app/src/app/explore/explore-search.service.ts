@@ -4,6 +4,10 @@ import { Injectable } from '@angular/core';
   providedIn: 'root',
 })
 export class ExploreSearchService {
+  // Get search term options for autocomplete
+  // Concatenate episode titles, genre names, and tag names into a single array of search term options for the autocomplete component.
+
+
 
   // Get search results based on the query
   // First, search by episode title.
