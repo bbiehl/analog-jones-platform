@@ -1,8 +1,173 @@
-<section class="p-6">
-  <header>
-    <h1 class="text-3xl font-bold mb-4 text-center">Welcome to Analog Jones and the Temple of Film</h1>
-  </header>
-  <div class="space-y-4">
-    <p class="text-lg">Discover episodes and explore topics through our curated content.</p>
+<div class="overlay scanlines" aria-hidden="true"></div>
+<div class="overlay grain" aria-hidden="true"></div>
+<div class="overlay vignette" aria-hidden="true"></div>
+
+<section class="hero" aria-label="Featured">
+  <div class="static-bg" aria-hidden="true"></div>
+  <div class="tracking" aria-hidden="true"></div>
+  <div class="page hero-inner">
+    <div>
+      <h1>
+        <span class="analog">ANALOG</span><br />
+        <span>JONES</span> <span class="amp">&amp;</span>
+        <span class="temple">THE TEMPLE</span>
+      </h1>
+      <div class="of-film">// OF&nbsp;&nbsp;FILM</div>
+      <p class="lede">
+        Three men set out to find the treasure in the countless mounds of forgotten VHS tapes —
+        flea markets, garage sales, basements, and closets. Every week, we put something in our
+        film museum. Like Indiana Jones would.
+      </p>
+      <div class="cta">
+        @if (featured(); as f) {
+          <a class="btn primary" [routerLink]="['/episodes', f.id]">▶ PLAY EPISODE</a>
+        }
+        <a class="btn" routerLink="/episodes"><span class="dot"></span> ENTER THE ARCHIVE</a>
+      </div>
+
+      <div class="hero-meta">
+        <div class="m">
+          <div class="k">TAPES CATALOGED</div>
+          <div class="v">{{ pad(episodes().length, 2) }} <small>/ and counting</small></div>
+        </div>
+        <div class="m tape-rolling" aria-label="Session runtime">
+          <div class="k">
+            <span class="rec-dot" aria-hidden="true"></span>
+            TAPE · ROLLING
+          </div>
+          <div class="v timecode">
+            {{ tapeCounter() }} <small>since tune-in</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @if (featured(); as f) {
+      <a class="monitor" [routerLink]="['/episodes', f.id]" [attr.aria-label]="'Open ' + f.title">
+        <div class="screen">
+          <div class="bars" aria-hidden="true"></div>
+          <div class="osd" aria-hidden="true">
+            <div class="row"><span>PLAY ▶</span><span class="counter">{{ tapeCounter() }}</span></div>
+          </div>
+          <div class="badge" aria-hidden="true"><span class="d"></span> REC</div>
+          <div class="monitor-glow" aria-hidden="true" [style.background]="monitorGlow(f)"></div>
+          <div class="pl-title">{{ f.title }}</div>
+          <div class="pl-meta">
+            <span>{{ toDate(f) | date: 'MMM dd · yyyy' | uppercase }}</span>
+          </div>
+        </div>
+      </a>
+    }
+  </div>
+</section>
+
+@if (featured(); as f) {
+  <section class="block" id="drop" aria-label="This week">
+    <div class="page">
+      <div class="section-head">
+        <h2><small>/ THIS WEEK IN THE MUSEUM</small>The Drop</h2>
+        <a class="see-all" routerLink="/episodes">ALL {{ pad(episodes().length, 2) }} TAPES →</a>
+      </div>
+      <div class="drop">
+        <div class="poster-big">
+          <div class="poster poster--big" [style.background]="posterBg(f)">
+            <div class="noise"></div>
+          </div>
+        </div>
+        <div class="body">
+          <div class="meta-row">
+            <span class="chip">{{ toDate(f) | date: 'MMM dd · yyyy' | uppercase }}</span>
+            @if (featuredDetails(); as d) {
+              @for (c of d.categories; track c.id) {
+                <span class="chip">{{ c.name }}</span>
+              }
+              @for (g of d.genres; track g.id) {
+                <span class="chip">{{ g.name }}</span>
+              }
+            }
+          </div>
+          <h3>{{ f.title }}</h3>
+          @if (featuredIntelligence(); as html) {
+            <div class="notes" [innerHTML]="html"></div>
+          }
+          <div class="actions">
+            @if (f.links.spotify) {
+              <a class="btn primary" [href]="f.links.spotify" target="_blank" rel="noopener">▶ SPOTIFY</a>
+            }
+            @if (f.links.youtube) {
+              <a class="btn" [href]="f.links.youtube" target="_blank" rel="noopener">▶ YOUTUBE</a>
+            }
+            <a class="btn" [routerLink]="['/episodes', f.id]">SHOW NOTES →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+}
+
+<app-episode-scroller
+  [episodes]="shelfEpisodes()"
+  eyebrow="/ THE MUSEUM · RECENT ACQUISITIONS"
+  heading="Shelf B · Recently catalogued"
+  ariaLabel="Museum shelf"
+  seeAllLabel="BROWSE ARCHIVE →"
+  seeAllLink="/episodes"
+/>
+
+<section class="block" aria-label="The Trio">
+  <div class="page">
+    <div class="section-head">
+      <h2><small>/ THE TRIO</small>The Trio</h2>
+    </div>
+    <div class="hosts">
+      @for (h of hosts; track h.init) {
+        <div class="host">
+          <div class="av" [attr.data-init]="h.init" aria-hidden="true"></div>
+          <div>
+            <h4>{{ h.name }}</h4>
+            <p>{{ h.line }}</p>
+            <div class="role">{{ h.role }}</div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<section class="block" id="listen" aria-label="Where to listen">
+  <div class="page">
+    <div class="section-head">
+      <h2><small>/ WHERE TO TUNE IN</small>All tapes live somewhere.</h2>
+    </div>
+    <div class="listen">
+      <div class="card spotify">
+        <div class="glyph" aria-hidden="true"></div>
+        <h3>Spotify</h3>
+        <p>Every single tape, from pilot to this week's drop — scroll back to 1987 and pretend your walkman is ok.</p>
+        <div class="card-actions">
+          <a
+            class="btn primary"
+            href="https://open.spotify.com/show/37eh3ycxOs92pCpGfPrSsz?si=cfb3697d1866461b"
+            target="_blank"
+            rel="noopener"
+            >▶ OPEN IN SPOTIFY</a
+          >
+        </div>
+      </div>
+      <div class="card youtube">
+        <div class="glyph" aria-hidden="true"></div>
+        <h3>YouTube</h3>
+        <p>A growing reel of video episodes — box-art pans, trailer breakdowns, and the occasional tape-head cleaning tutorial. Some episodes are YouTube-only.</p>
+        <div class="card-actions">
+          <a
+            class="btn primary"
+            href="https://youtube.com/@analogjonesandthetempleoff4035?si=LqkX3HoN73ZTVMs8"
+            target="_blank"
+            rel="noopener"
+            >▶ OPEN IN YOUTUBE</a
+          >
+        </div>
+      </div>
+    </div>
   </div>
 </section>

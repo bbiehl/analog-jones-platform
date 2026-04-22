@@ -21,7 +21,7 @@
     "dev:public": "concurrently --names emulators,app --prefix-colors blue,green \"firebase emulators:start --import=./seed-data\" \"ng serve public-app\"",
     "dev:admin": "concurrently --names emulators,app --prefix-colors blue,green \"firebase emulators:start --import=./seed-data\" \"ng serve admin-app\"",
     "dev:all": "concurrently --names emulators,public,admin --prefix-colors blue,green,magenta \"firebase emulators:start --import=./seed-data\" \"ng serve public-app --port 4200\" \"ng serve admin-app --port 4300\"",
-    "deploy:rules": "firebase deploy --only firestore:rules,storage"
+    "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes,storage"
   },
   "private": true,
   "packageManager": "pnpm@10.28.2",

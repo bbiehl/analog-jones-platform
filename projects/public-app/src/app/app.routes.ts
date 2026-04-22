@@ -22,40 +22,6 @@ export const routes: Routes = [
       {
         path: 'explorer',
         loadComponent: () => import('./pages/explorer/explorer').then((c) => c.Explorer),
-        children: [
-          {
-            path: 'categories',
-            loadComponent: () =>
-              import('./pages/explorer/categories/categories').then((c) => c.Categories),
-          },
-          {
-            path: 'categories/:slug',
-            loadComponent: () =>
-              import('./pages/explorer/categories/category-detail/category-detail').then(
-                (c) => c.CategoryDetail,
-              ),
-          },
-          {
-            path: 'genres',
-            loadComponent: () => import('./pages/explorer/genres/genres').then((c) => c.Genres),
-          },
-          {
-            path: 'genres/:slug',
-            loadComponent: () =>
-              import('./pages/explorer/genres/genre-detail/genre-detail').then(
-                (c) => c.GenreDetail,
-              ),
-          },
-          {
-            path: 'tags',
-            loadComponent: () => import('./pages/explorer/tags/tags').then((c) => c.Tags),
-          },
-          {
-            path: 'tags/:slug',
-            loadComponent: () =>
-              import('./pages/explorer/tags/tag-detail/tag-detail').then((c) => c.TagDetail),
-          },
-        ],
       },
 
       {
