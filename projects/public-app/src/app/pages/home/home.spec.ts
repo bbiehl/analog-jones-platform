@@ -176,8 +176,7 @@ describe('Home', () => {
       const long = 'word '.repeat(400);
       const ep = makeEpisode({ intelligence: long });
       const { component } = await setup({ episodes: signal([ep]) });
-      const html = component['featuredIntelligence']() as unknown as { changingThisBreaksApplicationSecurity: string };
-      const rendered = html.changingThisBreaksApplicationSecurity;
+      const rendered = component['featuredIntelligence']() as string;
       expect(rendered).toContain('…');
       expect(rendered.trim().startsWith('<p>')).toBe(true);
     });
@@ -185,8 +184,7 @@ describe('Home', () => {
     it('leaves short markdown unchanged (no ellipsis)', async () => {
       const ep = makeEpisode({ intelligence: '**hello** world' });
       const { component } = await setup({ episodes: signal([ep]) });
-      const html = component['featuredIntelligence']() as unknown as { changingThisBreaksApplicationSecurity: string };
-      const rendered = html.changingThisBreaksApplicationSecurity;
+      const rendered = component['featuredIntelligence']() as string;
       expect(rendered).toContain('<strong>hello</strong>');
       expect(rendered).not.toContain('…');
     });

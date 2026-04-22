@@ -9,7 +9,6 @@ import {
   signal,
 } from '@angular/core';
 import { DatePipe, UpperCasePipe, isPlatformBrowser } from '@angular/common';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { marked } from 'marked';
@@ -38,7 +37,6 @@ interface Host {
 export class Home implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
-  private readonly sanitizer = inject(DomSanitizer);
   protected readonly episodeStore = inject(EpisodeStore);
 
   protected readonly episodes = computed(() => this.episodeStore.episodes());
@@ -49,11 +47,11 @@ export class Home implements OnInit {
     const featured = this.featured();
     return selected && featured && selected.id === featured.id ? selected : null;
   });
-  protected readonly featuredIntelligence = computed<SafeHtml | null>(() => {
+  protected readonly featuredIntelligence = computed<string | null>(() => {
     const raw = this.featured()?.intelligence;
     if (!raw) return null;
     const trimmed = this.trimMarkdown(raw, INTELLIGENCE_PREVIEW_CHARS);
-    return this.sanitizer.bypassSecurityTrustHtml(marked.parse(trimmed) as string);
+    return marked.parse(trimmed) as string;
   });
 
   protected readonly hosts: Host[] = [
