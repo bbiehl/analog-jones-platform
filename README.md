@@ -1,59 +1,79 @@
-# AnalogJonesPlatform
+# Analog Jones Platform
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.3.
+Angular 21 multi-project workspace powering two SSR apps on Firebase App Hosting, backed by Firestore, Firebase Auth, and Cloud Storage.
 
-## Development server
+## Prerequisites
 
-To start a local development server, run:
+- Node.js 20+
+- pnpm 10.28.2 (pinned via `packageManager`)
+- Firebase CLI (installed as a dev dependency; `pnpm exec firebase ...`)
+
+## Projects
+
+- `projects/public-app` — public-facing SSR site
+- `projects/admin-app` — internal admin SSR app
+- `libs/` — shared domain libraries: `category`, `episode`, `genre`, `tag`, `user`, `shared`, `styles`
+
+## Getting started
 
 ```bash
-ng serve
+pnpm install
+pnpm dev:all          # emulators + both apps (public on :4200, admin on :4300)
+# or run one at a time:
+pnpm dev:public
+pnpm dev:admin
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Firebase emulators
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+Emulator data lives in `seed-data/` and is imported automatically by the `dev:*` scripts.
 
 ```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
+pnpm emulators:start  # start emulators without any app
+pnpm emulators:save   # export current emulator state back to seed-data/
+pnpm emulators:stop   # kill processes on emulator ports
 ```
 
 ## Building
 
-To build the project run:
-
 ```bash
-ng build
+pnpm build:public
+pnpm build:admin
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+SSR servers can be run locally from the build output:
 
 ```bash
-ng test
+pnpm serve:ssr:public-app
+pnpm serve:ssr:admin-app
 ```
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+## Testing
 
 ```bash
-ng e2e
+pnpm test             # public + admin + libs, in parallel
+pnpm test:public
+pnpm test:admin
+pnpm test:libs        # lib specs run under the admin-app test target
+pnpm e2e              # Playwright
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## Deployment
 
-## Additional Resources
+Both apps deploy via Firebase App Hosting using `apphosting.public.yaml` and `apphosting.admin.yaml`. Firestore and Storage rules/indexes are deployed separately:
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+```bash
+pnpm deploy:rules
+```
+
+## Tech stack
+
+- Angular 21 (SSR via `@angular/ssr` + Express)
+- Tailwind CSS v4, Angular Material + CDK
+- `@ngrx/signals` for state management
+- Firebase modular SDK (Auth, Firestore, Storage)
+- Vitest (unit), Playwright (e2e)
+
+## Further reading
+
+See `.claude/CLAUDE.md` for architecture notes, testing conventions, and Angular coding rules.
