@@ -2,7 +2,7 @@
 import { TestBed } from '@angular/core/testing';
 import { CategoryStore } from './category.store';
 import { CategoryService } from './category.service';
-import { Category, CategoryWithRelations } from './category.model';
+import { Category } from './category.model';
 
 describe('CategoryStore', () => {
   let store: InstanceType<typeof CategoryStore>;
@@ -12,17 +12,9 @@ describe('CategoryStore', () => {
     { id: '2', name: 'Tech', slug: 'tech' },
   ];
 
-  const mockCategoryWithRelations: CategoryWithRelations = {
-    id: '1',
-    name: 'Music',
-    slug: 'music',
-    episodes: [],
-  };
-
   const mockCategoryService = {
     getAllCategories: vi.fn().mockResolvedValue(mockCategories),
     getCategoryById: vi.fn().mockResolvedValue(mockCategories[0]),
-    getCategoryBySlug: vi.fn().mockResolvedValue(mockCategoryWithRelations),
     createCategory: vi.fn().mockResolvedValue('new-id'),
     updateCategory: vi.fn().mockResolvedValue(undefined),
     deleteCategory: vi.fn().mockResolvedValue(undefined),
@@ -37,7 +29,6 @@ describe('CategoryStore', () => {
     // Re-set default resolved values after clearAllMocks
     mockCategoryService.getAllCategories.mockResolvedValue(mockCategories);
     mockCategoryService.getCategoryById.mockResolvedValue(mockCategories[0]);
-    mockCategoryService.getCategoryBySlug.mockResolvedValue(mockCategoryWithRelations);
     mockCategoryService.createCategory.mockResolvedValue('new-id');
     mockCategoryService.updateCategory.mockResolvedValue(undefined);
     mockCategoryService.deleteCategory.mockResolvedValue(undefined);
@@ -104,27 +95,6 @@ describe('CategoryStore', () => {
       expect(store.error()).toBe('Category with id "missing" not found');
       expect(store.loading()).toBe(false);
       expect(store.selectedCategory()).toBeNull();
-    });
-  });
-
-  describe('loadCategoryBySlug', () => {
-    it('should load category by slug and set selectedCategory', async () => {
-      await store.loadCategoryBySlug('music');
-
-      expect(mockCategoryService.getCategoryBySlug).toHaveBeenCalledWith('music');
-      expect(store.selectedCategory()).toEqual(mockCategoryWithRelations);
-      expect(store.loading()).toBe(false);
-    });
-
-    it('should set error on failure', async () => {
-      mockCategoryService.getCategoryBySlug.mockRejectedValueOnce(
-        new Error('Category with slug "unknown" not found')
-      );
-
-      await store.loadCategoryBySlug('unknown');
-
-      expect(store.error()).toBe('Category with slug "unknown" not found');
-      expect(store.loading()).toBe(false);
     });
   });
 
@@ -195,7 +165,7 @@ describe('CategoryStore', () => {
   describe('clearSelectedCategory', () => {
     it('should set selectedCategory to null', async () => {
       // First load a category so selectedCategory is set
-      await store.loadCategoryBySlug('music');
+      await store.loadCategoryById('1');
       expect(store.selectedCategory()).not.toBeNull();
 
       store.clearSelectedCategory();
