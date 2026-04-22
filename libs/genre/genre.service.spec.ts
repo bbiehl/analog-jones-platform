@@ -1,26 +1,17 @@
 /// <reference types="vitest/globals" />
 import { TestBed } from '@angular/core/testing';
 import { FIRESTORE } from '../shared/firebase.token';
-import { EpisodeGenreService } from '../shared/episode-genre.service';
 import { GenreService } from './genre.service';
 import type { Firestore } from 'firebase/firestore';
 
 describe('GenreService', () => {
   let service: GenreService;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockEpisodeGenreService: any;
 
   beforeEach(() => {
-    mockEpisodeGenreService = {
-      getEpisodesByGenreSlug: vi.fn(),
-      deleteEpisodeGenresByGenreId: vi.fn(),
-    };
-
     TestBed.configureTestingModule({
       providers: [
         GenreService,
         { provide: FIRESTORE, useValue: {} as Firestore },
-        { provide: EpisodeGenreService, useValue: mockEpisodeGenreService },
       ],
     });
 
@@ -66,18 +57,6 @@ describe('GenreService', () => {
     });
   });
 
-  describe('getGenreBySlug', () => {
-    it('should throw when query snapshot is empty', () => {
-      const snapshot = { empty: true, docs: [] };
-
-      expect(() => {
-        if (snapshot.empty) {
-          throw new Error('Genre with slug "nonexistent" not found');
-        }
-      }).toThrow('Genre with slug "nonexistent" not found');
-    });
-  });
-
   describe('createGenre', () => {
     it('should only pass name and slug fields', () => {
       const genre = { name: 'Horror', slug: 'horror' };
@@ -99,12 +78,22 @@ describe('GenreService', () => {
   });
 
   describe('deleteGenre', () => {
-    it('should call episodeGenreService.deleteEpisodeGenresByGenreId', async () => {
-      mockEpisodeGenreService.deleteEpisodeGenresByGenreId.mockResolvedValue(undefined);
+    it('should batch delete episodeGenres junction docs and the genre doc', () => {
+      const junctionDocs = [
+        { ref: { path: 'episodeGenres/j1' } },
+        { ref: { path: 'episodeGenres/j2' } },
+      ];
+      const deleted: unknown[] = [];
+      const batch = { delete: (ref: unknown) => deleted.push(ref) };
 
-      await mockEpisodeGenreService.deleteEpisodeGenresByGenreId('g1');
+      junctionDocs.forEach((d) => batch.delete(d.ref));
+      batch.delete({ path: 'genres/g1' });
 
-      expect(mockEpisodeGenreService.deleteEpisodeGenresByGenreId).toHaveBeenCalledWith('g1');
+      expect(deleted).toEqual([
+        { path: 'episodeGenres/j1' },
+        { path: 'episodeGenres/j2' },
+        { path: 'genres/g1' },
+      ]);
     });
   });
 
