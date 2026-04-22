@@ -1,4 +1,7 @@
-import { Episode } from "../../../../../libs/episode/episode.model";
+import { inject } from '@angular/core';
+import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import { Episode } from '../../../../../libs/episode/episode.model';
+import { EpisodeListService } from './episode-list.service';
 
 interface EpisodeListState {
   episodesByGenre: { [genre: string]: Episode[] };
@@ -11,3 +14,26 @@ const initialState: EpisodeListState = {
   isLoading: false,
   error: null,
 };
+
+export const EpisodeListStore = signalStore(
+  { providedIn: 'root' },
+  withState(initialState),
+  withMethods((store) => {
+    const episodeListService = inject(EpisodeListService);
+
+    return {
+      async loadEpisodesByGenre() {
+        patchState(store, { isLoading: true, error: null });
+        try {
+          const episodesByGenre = await episodeListService.getEpisodesByGenre();
+          patchState(store, { episodesByGenre, isLoading: false });
+        } catch (e) {
+          patchState(store, {
+            isLoading: false,
+            error: e instanceof Error ? e.message : 'Failed to load episodes',
+          });
+        }
+      },
+    };
+  })
+);

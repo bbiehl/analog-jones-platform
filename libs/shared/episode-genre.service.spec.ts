@@ -276,6 +276,50 @@ describe('EpisodeGenreService', () => {
     });
   });
 
+  describe('getEpisodesByGenreId', () => {
+    it('should resolve episode docs from junction records', () => {
+      const junctionDocs = [
+        { data: () => ({ episodeId: 'ep1' }) },
+        { data: () => ({ episodeId: 'ep2' }) },
+      ];
+      const episodeSnaps = [
+        { exists: () => true, id: 'ep1', data: () => ({ title: 'Episode 1', isVisible: true }) },
+        { exists: () => true, id: 'ep2', data: () => ({ title: 'Episode 2', isVisible: true }) },
+      ];
+
+      const episodes = episodeSnaps
+        .filter((s) => s.exists() && s.data()['isVisible'])
+        .map((s) => ({ id: s.id, ...s.data() }));
+
+      expect(episodes).toEqual([
+        { id: 'ep1', title: 'Episode 1', isVisible: true },
+        { id: 'ep2', title: 'Episode 2', isVisible: true },
+      ]);
+      expect(junctionDocs[0].data()['episodeId']).toBe('ep1');
+    });
+
+    it('should return empty array when no junctions exist', () => {
+      const junctionDocs: { data: () => { episodeId: string } }[] = [];
+      const episodes = junctionDocs.map((d) => d.data()['episodeId']);
+
+      expect(episodes).toEqual([]);
+    });
+
+    it('should exclude hidden episodes', () => {
+      const episodeSnaps = [
+        { exists: () => true, id: 'ep1', data: () => ({ title: 'Episode 1', isVisible: true }) },
+        { exists: () => true, id: 'ep2', data: () => ({ title: 'Episode 2', isVisible: false }) },
+      ];
+
+      const episodes = episodeSnaps
+        .filter((s) => s.exists() && s.data()['isVisible'])
+        .map((s) => ({ id: s.id, ...s.data() }));
+
+      expect(episodes).toHaveLength(1);
+      expect(episodes[0]).toEqual({ id: 'ep1', title: 'Episode 1', isVisible: true });
+    });
+  });
+
   describe('getEpisodesByGenreSlug', () => {
     it('should return empty array when no genre matches the slug', () => {
       const genreSnapshot = { empty: true, docs: [] };

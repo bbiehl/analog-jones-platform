@@ -119,17 +119,7 @@ export class EpisodeGenreService {
     return genres;
   }
 
-  async getEpisodesByGenreSlug(slug: string): Promise<Episode[]> {
-    const genreQuery = query(
-      collection(this.firestore, 'genres'),
-      where('slug', '==', slug)
-    );
-    const genreSnapshot = await getDocs(genreQuery);
-    if (genreSnapshot.empty) {
-      return [];
-    }
-
-    const genreId = genreSnapshot.docs[0].id;
+  async getEpisodesByGenreId(genreId: string): Promise<Episode[]> {
     const junctionQuery = query(
       collection(this.firestore, 'episodeGenres'),
       where('genreId', '==', genreId)
@@ -146,5 +136,18 @@ export class EpisodeGenreService {
     }
 
     return episodes;
+  }
+
+  async getEpisodesByGenreSlug(slug: string): Promise<Episode[]> {
+    const genreQuery = query(
+      collection(this.firestore, 'genres'),
+      where('slug', '==', slug)
+    );
+    const genreSnapshot = await getDocs(genreQuery);
+    if (genreSnapshot.empty) {
+      return [];
+    }
+
+    return this.getEpisodesByGenreId(genreSnapshot.docs[0].id);
   }
 }

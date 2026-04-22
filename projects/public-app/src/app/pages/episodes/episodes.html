@@ -1,12 +1,26 @@
 <section class="p-6">
   <header>
     <h1 class="text-3xl font-bold mb-4">Episodes</h1>
-  </header>
-  <div class="space-y-4">
     <p>Browse all available episodes.</p>
-  </div>
-</section>
+  </header>
 
-<!-- Display lists genres, with episodes falling under each genre. -->
-<!-- Use the existing EpisodeScrollComponent to display the list of episodes in a scrollable format. -->
-<!-- If episodes are loading, show a skeleton loader. If there are no episodes, show a message that says "No episodes found." -->
+  @if (isLoading()) {
+    <div class="space-y-6 mt-6" aria-busy="true" aria-label="Loading episodes">
+      @for (row of skeletonRows; track row) {
+        <div class="h-40 rounded bg-neutral-200/40 animate-pulse"></div>
+      }
+    </div>
+  } @else if (error(); as err) {
+    <p class="mt-6" role="alert">{{ err }}</p>
+  } @else if (!hasEpisodes()) {
+    <p class="mt-6">No episodes found.</p>
+  } @else {
+    @for (entry of genreEntries(); track entry[0]) {
+      <app-episode-scroller
+        [episodes]="entry[1]"
+        [heading]="entry[0]"
+        [ariaLabel]="entry[0]"
+      />
+    }
+  }
+</section>
