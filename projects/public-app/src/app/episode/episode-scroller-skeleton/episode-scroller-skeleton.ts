@@ -7,4 +7,6 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   styleUrl: './episode-scroller-skeleton.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EpisodeScrollerSkeleton {}
+export class EpisodeScrollerSkeleton {
+  protected readonly posters = [0, 1, 2, 3, 4, 5];
+}

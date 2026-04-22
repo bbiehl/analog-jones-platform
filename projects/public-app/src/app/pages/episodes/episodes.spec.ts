@@ -67,14 +67,18 @@ describe('Episodes', () => {
   });
 
   describe('loading state', () => {
-    it('shows skeleton placeholders with aria-busy region', () => {
+    it('renders one skeleton scroller per configured placeholder slot', () => {
       isLoading.set(true);
       fixture.detectChanges();
 
-      const region = fixture.nativeElement.querySelector('[aria-busy="true"]');
-      expect(region).toBeTruthy();
-      expect(region.getAttribute('aria-label')).toBe('Loading episodes');
-      expect(region.querySelectorAll('.animate-pulse').length).toBe(3);
+      const skeletons = fixture.nativeElement.querySelectorAll(
+        'app-episode-scroller-skeleton'
+      );
+      expect(skeletons.length).toBe(2);
+
+      const busyRegions = fixture.nativeElement.querySelectorAll('[aria-busy="true"]');
+      expect(busyRegions.length).toBe(2);
+      expect(busyRegions[0].getAttribute('aria-label')).toBe('Loading episodes');
     });
 
     it('does not render scrollers, error, or empty message while loading', () => {
