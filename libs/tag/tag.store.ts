@@ -47,16 +47,6 @@ export const TagStore = signalStore(
         }
       },
 
-      async loadTagBySlug(slug: string) {
-        patchState(store, { loading: true, error: null });
-        try {
-          const tag = await tagService.getTagBySlug(slug);
-          patchState(store, { selectedTag: tag, loading: false });
-        } catch (e) {
-          patchState(store, { loading: false, error: (e as Error).message });
-        }
-      },
-
       async createTag(tag: Omit<Tag, 'id'>) {
         patchState(store, { loading: true, error: null });
         try {
@@ -94,5 +84,5 @@ export const TagStore = signalStore(
         patchState(store, { selectedTag: null });
       },
     };
-  })
+  }),
 );

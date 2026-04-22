@@ -1,26 +1,17 @@
 /// <reference types="vitest/globals" />
 import { TestBed } from '@angular/core/testing';
 import { FIRESTORE } from '../shared/firebase.token';
-import { EpisodeTagService } from '../shared/episode-tag.service';
 import { TagService } from './tag.service';
 import type { Firestore } from 'firebase/firestore';
 
 describe('TagService', () => {
   let service: TagService;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockEpisodeTagService: any;
 
   beforeEach(() => {
-    mockEpisodeTagService = {
-      getEpisodesByTagSlug: vi.fn(),
-      deleteEpisodeTagsByTagId: vi.fn(),
-    };
-
     TestBed.configureTestingModule({
       providers: [
         TagService,
         { provide: FIRESTORE, useValue: {} as Firestore },
-        { provide: EpisodeTagService, useValue: mockEpisodeTagService },
       ],
     });
 
@@ -76,34 +67,6 @@ describe('TagService', () => {
     });
   });
 
-  describe('getTagBySlug', () => {
-    it('should throw when query snapshot is empty', () => {
-      const snapshot = { empty: true, docs: [] };
-
-      expect(() => {
-        if (snapshot.empty) {
-          throw new Error('Tag with slug "nonexistent" not found');
-        }
-      }).toThrow('Tag with slug "nonexistent" not found');
-    });
-
-    it('should combine tag doc with episodes into TagWithRelations', () => {
-      const tagDoc = {
-        id: 't1',
-        data: () => ({ name: 'Vintage', slug: 'vintage' }),
-      };
-      const episodes = [{ id: 'ep1', title: 'Episode 1' }];
-
-      const result = { id: tagDoc.id, ...tagDoc.data(), episodes };
-      expect(result).toEqual({
-        id: 't1',
-        name: 'Vintage',
-        slug: 'vintage',
-        episodes: [{ id: 'ep1', title: 'Episode 1' }],
-      });
-    });
-  });
-
   describe('createTag', () => {
     it('should only pass name and slug fields', () => {
       const tag = { name: 'Retro', slug: 'retro' };
@@ -125,12 +88,18 @@ describe('TagService', () => {
   });
 
   describe('deleteTag', () => {
-    it('should call episodeTagService.deleteEpisodeTagsByTagId', async () => {
-      mockEpisodeTagService.deleteEpisodeTagsByTagId.mockResolvedValue(undefined);
+    it('should build episodeTags query payload and include the tag doc in the batch', () => {
+      const tagId = 't1';
+      const episodeTagDocs = [{ ref: { path: 'episodeTags/et1' } }];
+      const deletions = [
+        ...episodeTagDocs.map((d) => d.ref),
+        { path: `tags/${tagId}` },
+      ];
 
-      await mockEpisodeTagService.deleteEpisodeTagsByTagId('t1');
-
-      expect(mockEpisodeTagService.deleteEpisodeTagsByTagId).toHaveBeenCalledWith('t1');
+      expect(deletions).toEqual([
+        { path: 'episodeTags/et1' },
+        { path: 'tags/t1' },
+      ]);
     });
   });
 });

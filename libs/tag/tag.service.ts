@@ -12,13 +12,11 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { FIRESTORE } from '../shared/firebase.token';
-import { EpisodeTagService } from '../shared/episode-tag.service';
-import { Tag, TagWithRelations } from './tag.model';
+import { Tag } from './tag.model';
 
 @Injectable({ providedIn: 'root' })
 export class TagService {
   private firestore = inject(FIRESTORE);
-  private episodeTagService = inject(EpisodeTagService);
 
   async getAllTags(): Promise<Tag[]> {
     const q = query(collection(this.firestore, 'tags'), orderBy('name'));
@@ -32,18 +30,6 @@ export class TagService {
       throw new Error(`Tag with id "${id}" not found`);
     }
     return { id: snap.id, ...snap.data() } as Tag;
-  }
-
-  async getTagBySlug(slug: string): Promise<TagWithRelations> {
-    const q = query(collection(this.firestore, 'tags'), where('slug', '==', slug));
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) {
-      throw new Error(`Tag with slug "${slug}" not found`);
-    }
-
-    const tagDoc = snapshot.docs[0];
-    const episodes = await this.episodeTagService.getEpisodesByTagSlug(slug);
-    return { id: tagDoc.id, ...tagDoc.data(), episodes } as TagWithRelations;
   }
 
   async createTag(tag: Omit<Tag, 'id'>): Promise<string> {
