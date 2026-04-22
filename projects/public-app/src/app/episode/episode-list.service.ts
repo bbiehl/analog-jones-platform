@@ -11,16 +11,18 @@ export class EpisodeListService {
   private episodeGenreService = inject(EpisodeGenreService);
 
   async getEpisodesByGenre(): Promise<Record<string, Episode[]>> {
-    const genres = await this.genreService.getAllGenres();
+    const genres = (await this.genreService.getAllGenres()).filter((g) => g.id);
+    const episodesByGenre = await Promise.all(
+      genres.map((g) => this.episodeGenreService.getEpisodesByGenreId(g.id!)),
+    );
     const result: Record<string, Episode[]> = {};
 
-    for (const genre of genres) {
-      if (!genre.id) continue;
-      const episodes = await this.episodeGenreService.getEpisodesByGenreId(genre.id);
-      if (episodes.length === 0) continue;
+    genres.forEach((genre, i) => {
+      const episodes = episodesByGenre[i];
+      if (episodes.length === 0) return;
       episodes.sort((a, b) => b.episodeDate.toMillis() - a.episodeDate.toMillis());
       result[genre.name] = episodes;
-    }
+    });
 
     return result;
   }
