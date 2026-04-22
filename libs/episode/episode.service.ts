@@ -27,7 +27,7 @@ export class EpisodeService {
   private imageUploadService = inject(ImageUploadService);
 
   async getAllEpisodes(): Promise<Episode[]> {
-    const q = query(collection(this.firestore, 'episodes'), orderBy('createdAt', 'desc'));
+    const q = query(collection(this.firestore, 'episodes'), orderBy('episodeDate', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Episode);
   }
