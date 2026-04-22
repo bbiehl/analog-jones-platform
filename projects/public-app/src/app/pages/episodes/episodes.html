@@ -1,8 +1,24 @@
-<section class="p-6">
-  <header>
+<section>
+  <header class="page-frame pt-6">
     <h1 class="text-3xl font-bold mb-4">Episodes</h1>
+    <p class="mb-6">Browse all available episodes.</p>
   </header>
-  <div class="space-y-4">
-    <p>Browse all available episodes.</p>
-  </div>
+
+  @if (isLoading()) {
+    @for (i of skeletonScrollers; track i) {
+      <app-episode-scroller-skeleton />
+    }
+  } @else if (error(); as err) {
+    <p class="page-frame mt-6" role="alert">{{ err }}</p>
+  } @else if (!hasEpisodes()) {
+    <p class="page-frame mt-6">No episodes found.</p>
+  } @else {
+    @for (entry of genreEntries(); track entry[0]) {
+      <app-episode-scroller
+        [episodes]="entry[1]"
+        [heading]="entry[0]"
+        [ariaLabel]="entry[0]"
+      />
+    }
+  }
 </section>

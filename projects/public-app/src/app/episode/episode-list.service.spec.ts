@@ -1,0 +1,133 @@
+/// <reference types="vitest/globals" />
+import { TestBed } from '@angular/core/testing';
+import { Timestamp } from 'firebase/firestore';
+
+import { EpisodeListService } from './episode-list.service';
+import { GenreService } from '../../../../../libs/genre/genre.service';
+import { EpisodeGenreService } from '../../../../../libs/shared/episode-genre.service';
+import type { Episode } from '../../../../../libs/episode/episode.model';
+import type { Genre } from '../../../../../libs/genre/genre.model';
+
+function ep(id: string, millis: number, isVisible = true): Episode {
+  return {
+    id,
+    createdAt: Timestamp.fromMillis(0),
+    episodeDate: Timestamp.fromMillis(millis),
+    intelligence: null,
+    isVisible,
+    links: {},
+    posterUrl: null,
+    title: id,
+  };
+}
+
+describe('EpisodeListService', () => {
+  let service: EpisodeListService;
+  let mockGenreService: { getAllGenres: ReturnType<typeof vi.fn> };
+  let mockEpisodeGenreService: { getEpisodesByGenreId: ReturnType<typeof vi.fn> };
+
+  beforeEach(() => {
+    mockGenreService = { getAllGenres: vi.fn() };
+    mockEpisodeGenreService = { getEpisodesByGenreId: vi.fn() };
+
+    TestBed.configureTestingModule({
+      providers: [
+        EpisodeListService,
+        { provide: GenreService, useValue: mockGenreService },
+        { provide: EpisodeGenreService, useValue: mockEpisodeGenreService },
+      ],
+    });
+
+    service = TestBed.inject(EpisodeListService);
+  });
+
+  describe('service injection', () => {
+    it('should be created', () => {
+      expect(service).toBeTruthy();
+    });
+
+    it('should be an instance of EpisodeListService', () => {
+      expect(service).toBeInstanceOf(EpisodeListService);
+    });
+  });
+
+  describe('getEpisodesByGenre', () => {
+    it('should return empty object when no genres exist', async () => {
+      mockGenreService.getAllGenres.mockResolvedValue([]);
+
+      const result = await service.getEpisodesByGenre();
+
+      expect(result).toEqual({});
+      expect(mockEpisodeGenreService.getEpisodesByGenreId).not.toHaveBeenCalled();
+    });
+
+    it('should group episodes by genre name keyed in genre order', async () => {
+      const genres: Genre[] = [
+        { id: 'g1', name: 'Ambient', slug: 'ambient' },
+        { id: 'g2', name: 'Rock', slug: 'rock' },
+      ];
+      mockGenreService.getAllGenres.mockResolvedValue(genres);
+      mockEpisodeGenreService.getEpisodesByGenreId.mockImplementation((id: string) => {
+        if (id === 'g1') return Promise.resolve([ep('a', 100)]);
+        if (id === 'g2') return Promise.resolve([ep('b', 200)]);
+        return Promise.resolve([]);
+      });
+
+      const result = await service.getEpisodesByGenre();
+
+      expect(Object.keys(result)).toEqual(['Ambient', 'Rock']);
+      expect(result['Ambient'][0].id).toBe('a');
+      expect(result['Rock'][0].id).toBe('b');
+    });
+
+    it('should sort each bucket by episodeDate descending', async () => {
+      mockGenreService.getAllGenres.mockResolvedValue([
+        { id: 'g1', name: 'Rock', slug: 'rock' },
+      ]);
+      mockEpisodeGenreService.getEpisodesByGenreId.mockResolvedValue([
+        ep('old', 100),
+        ep('new', 500),
+        ep('mid', 300),
+      ]);
+
+      const result = await service.getEpisodesByGenre();
+
+      expect(result['Rock'].map((e) => e.id)).toEqual(['new', 'mid', 'old']);
+    });
+
+    it('should skip genres with zero visible episodes', async () => {
+      mockGenreService.getAllGenres.mockResolvedValue([
+        { id: 'g1', name: 'Empty', slug: 'empty' },
+        { id: 'g2', name: 'Rock', slug: 'rock' },
+      ]);
+      mockEpisodeGenreService.getEpisodesByGenreId.mockImplementation((id: string) => {
+        if (id === 'g1') return Promise.resolve([]);
+        return Promise.resolve([ep('a', 100)]);
+      });
+
+      const result = await service.getEpisodesByGenre();
+
+      expect(Object.keys(result)).toEqual(['Rock']);
+    });
+
+    it('should skip genres missing an id', async () => {
+      mockGenreService.getAllGenres.mockResolvedValue([
+        { name: 'Orphan', slug: 'orphan' },
+        { id: 'g2', name: 'Rock', slug: 'rock' },
+      ] as Genre[]);
+      mockEpisodeGenreService.getEpisodesByGenreId.mockResolvedValue([ep('a', 100)]);
+
+      const result = await service.getEpisodesByGenre();
+
+      expect(Object.keys(result)).toEqual(['Rock']);
+      expect(mockEpisodeGenreService.getEpisodesByGenreId).toHaveBeenCalledTimes(1);
+      expect(mockEpisodeGenreService.getEpisodesByGenreId).toHaveBeenCalledWith('g2');
+    });
+
+    it('should propagate errors from the genre service', async () => {
+      mockGenreService.getAllGenres.mockRejectedValue(new Error('boom'));
+
+      await expect(service.getEpisodesByGenre()).rejects.toThrow('boom');
+    });
+  });
+});

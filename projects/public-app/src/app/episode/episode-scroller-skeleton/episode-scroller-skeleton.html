@@ -1,0 +1,16 @@
+<section class="block" aria-busy="true" aria-label="Loading episodes">
+  <div class="page">
+    <div class="section-head">
+      <div class="skeleton-heading animate-pulse"></div>
+    </div>
+    <div class="shelf" aria-hidden="true">
+      @for (i of posters; track i) {
+        <div class="shelf-item">
+          <div class="poster animate-pulse"></div>
+          <div class="meta animate-pulse"></div>
+          <div class="name animate-pulse"></div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
