@@ -1,5 +1,7 @@
-import { signalStore, withMethods, withState } from '@ngrx/signals';
+import { inject } from '@angular/core';
+import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 import { Episode } from '../../../../../libs/episode/episode.model';
+import { ExploreSearchService } from './explore-search.service';
 import { SearchAutoCompleteOption } from './explore.model';
 
 interface ExploreSearchState {
@@ -18,8 +20,47 @@ const initialState: ExploreSearchState = {
   error: null,
 };
 
-// loadAutoCompleteOptions() - Fetch episode titles, genre names, and tag names from the backend and populate the autoCompleteOptions state. Handle loading and error states appropriately.
+export const ExploreSearchStore = signalStore(
+  { providedIn: 'root' },
+  withState(initialState),
+  withMethods((store) => {
+    const exploreSearchService = inject(ExploreSearchService);
 
-// selectSearchOption(option: SearchAutoCompleteOption) - Update the selectedSearchOption state when a user selects an option from the autocomplete dropdown. Trigger the search for episodes based on the selected option.
+    const searchEpisodes = async () => {
+      const option = store.selectedSearchOption();
+      if (!option) {
+        return;
+      }
+      patchState(store, { isLoading: true, error: null });
+      try {
+        const results = await exploreSearchService.searchEpisodes(option);
+        patchState(store, { results, isLoading: false });
+      } catch (e) {
+        patchState(store, {
+          isLoading: false,
+          error: e instanceof Error ? e.message : 'Failed to load results',
+        });
+      }
+    };
 
-// searchEpisodes() - Fetch episodes that match the selected autocomplete option from the backend. Update the results state with the fetched episodes, and handle loading and error states appropriately. Make sure to remove duplicates from the results if an episode matches multiple search criteria.
+    return {
+      async loadAutoCompleteOptions() {
+        patchState(store, { isLoading: true, error: null });
+        try {
+          const autoCompleteOptions = await exploreSearchService.getAutoCompleteOptions();
+          patchState(store, { autoCompleteOptions, isLoading: false });
+        } catch (e) {
+          patchState(store, {
+            isLoading: false,
+            error: e instanceof Error ? e.message : 'Failed to load search options',
+          });
+        }
+      },
+      async selectSearchOption(option: SearchAutoCompleteOption) {
+        patchState(store, { selectedSearchOption: option });
+        await searchEpisodes();
+      },
+      searchEpisodes,
+    };
+  })
+);

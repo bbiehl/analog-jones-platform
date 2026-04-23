@@ -1,12 +1,54 @@
-<section class="p-6">
-  <h1>Explorer</h1>
-  <p>Search for episodes, genres, and tags.</p>
+<section class="page-frame pt-6">
+  <h1 class="text-3xl font-bold mb-4">Explorer</h1>
+  <p class="mb-6">Search for episodes, genres, and tags.</p>
+
+  <mat-form-field class="w-full max-w-xl" appearance="outline">
+    <mat-label>Search</mat-label>
+    <input
+      matInput
+      type="text"
+      [formControl]="searchControl"
+      [matAutocomplete]="auto"
+      [disabled]="optionsLoading() || !!optionsError()"
+      aria-label="Search for episodes, genres, and tags"
+    />
+    @if (optionsLoading() || resultsLoading()) {
+      <mat-spinner matSuffix diameter="20" />
+    }
+    @if (optionsError(); as err) {
+      <mat-error>{{ err }}</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-autocomplete
+    #auto="matAutocomplete"
+    [displayWith]="displayFn"
+    (optionSelected)="onOptionSelected($event)"
+  >
+    @for (group of groupedOptions(); track group.label) {
+      <mat-optgroup [label]="group.label">
+        @for (option of group.options; track option.type + ':' + option.value) {
+          <mat-option [value]="option">{{ option.value }}</mat-option>
+        }
+      </mat-optgroup>
+    }
+  </mat-autocomplete>
 </section>
 
-<!-- Angular Material Autocomplete component with search input and dropdown options for episodes, genres, and tags.-->
- <!-- Wait to enable the autocomplete component until we have the search term options ready. Show a loading spinner in the input field while the options are being fetched. Display a message if there is an error fetching the options. -->
- <!-- Wait for the user to select an option from the autocomplete dropdown, then display the search results below. -->
- <!-- Disable the input and show a loading spinner while search results are being fetched. Show a message if no results are found. -->
-
-<!-- EpisodeScroller Component populated with episodes from ExploreSearchStore.results. -->
- <!-- While results are being fetched, show EpisodeScrollerSkeleton. If there is an error fetching results, show an error message instead of the EpisodeScroller. -->
+<section class="mt-6">
+  @if (resultsLoading()) {
+    <app-episode-scroller-skeleton />
+  } @else if (resultsError(); as err) {
+    <p class="page-frame" role="alert">{{ err }}</p>
+  } @else if (selectedSearchOption(); as sel) {
+    @if (results().length === 0) {
+      <p class="page-frame">No episodes found for "{{ sel.value }}".</p>
+    } @else {
+      <app-episode-scroller
+        [episodes]="results()"
+        [heading]="sel.value"
+        [ariaLabel]="'Episodes matching ' + sel.value"
+      />
+    }
+  }
+</section>
