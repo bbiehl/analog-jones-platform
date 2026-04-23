@@ -67,7 +67,12 @@ export const ExploreSearchStore = signalStore(
         await searchEpisodes();
       },
       clearSearch() {
-        patchState(store, { selectedSearchOption: null, results: [], error: null });
+        patchState(store, {
+          selectedSearchOption: null,
+          results: [],
+          error: null,
+          isLoading: false,
+        });
       },
       searchEpisodes,
     };

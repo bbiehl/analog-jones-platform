@@ -103,6 +103,13 @@ export class Explorer implements OnInit {
         this.searchControl.enable({ emitEvent: false });
       }
     });
+
+    effect(() => {
+      const value = this.searchText();
+      if (typeof value === 'string' && this.selectedSearchOption()) {
+        this.store.clearSearch();
+      }
+    });
   }
 
   ngOnInit(): void {
