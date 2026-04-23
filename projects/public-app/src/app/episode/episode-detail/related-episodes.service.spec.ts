@@ -142,62 +142,95 @@ describe('RelatedEpisodesService', () => {
   });
 
   describe('final ordering and limit', () => {
-    it('should sort by episodeDate descending and slice to max', () => {
-      const max = 2;
-      const collected = [
-        { id: 'old', episodeDate: { toMillis: () => 100 } },
-        { id: 'newest', episodeDate: { toMillis: () => 300 } },
-        { id: 'mid', episodeDate: { toMillis: () => 200 } },
-      ];
+    const byDateDesc = (
+      a: { episodeDate: { toMillis: () => number } },
+      b: { episodeDate: { toMillis: () => number } }
+    ) => b.episodeDate.toMillis() - a.episodeDate.toMillis();
 
-      const result = collected
-        .sort((a, b) => b.episodeDate.toMillis() - a.episodeDate.toMillis())
-        .slice(0, max);
-
-      expect(result.map((r) => r.id)).toEqual(['newest', 'mid']);
-    });
-
-    it('should return fewer than max when fewer relations exist', () => {
+    it('should emit all tag matches (sorted by date desc) before any genre matches', () => {
       const max = 12;
-      const collected = [
-        { id: 'a', episodeDate: { toMillis: () => 1 } },
-        { id: 'b', episodeDate: { toMillis: () => 2 } },
-      ];
-
-      const result = collected
-        .sort((a, b) => b.episodeDate.toMillis() - a.episodeDate.toMillis())
-        .slice(0, max);
-
-      expect(result).toHaveLength(2);
-      expect(result[0].id).toBe('b');
-    });
-
-    it('should fall back to genres only when tags do not fill max', () => {
-      const max = 3;
-      const tagResults = new Map<string, string>([
-        ['ep1', 'ep1'],
+      const tagResults = new Map([
+        ['tag-old', { id: 'tag-old', episodeDate: { toMillis: () => 100 } }],
+        ['tag-new', { id: 'tag-new', episodeDate: { toMillis: () => 300 } }],
+      ]);
+      const genreResults = new Map([
+        ['genre-new', { id: 'genre-new', episodeDate: { toMillis: () => 500 } }],
+        ['genre-old', { id: 'genre-old', episodeDate: { toMillis: () => 50 } }],
       ]);
 
-      const shouldFallback = tagResults.size < max;
-      if (shouldFallback) {
-        tagResults.set('ep2', 'ep2');
-        tagResults.set('ep3', 'ep3');
-      }
+      const tagsSorted = Array.from(tagResults.values()).sort(byDateDesc);
+      for (const id of tagResults.keys()) genreResults.delete(id);
+      const genresSorted = Array.from(genreResults.values()).sort(byDateDesc);
+      const result = [...tagsSorted, ...genresSorted].slice(0, max);
 
-      expect(shouldFallback).toBe(true);
-      expect(Array.from(tagResults.keys())).toEqual(['ep1', 'ep2', 'ep3']);
+      expect(result.map((r) => r.id)).toEqual(['tag-new', 'tag-old', 'genre-new', 'genre-old']);
     });
 
-    it('should skip the genre fallback when tags already fill max', () => {
+    it('should not let a recent genre match precede an older tag match', () => {
+      const max = 12;
+      const tagResults = new Map([
+        ['older-tag', { id: 'older-tag', episodeDate: { toMillis: () => 100 } }],
+      ]);
+      const genreResults = new Map([
+        ['newer-genre', { id: 'newer-genre', episodeDate: { toMillis: () => 999 } }],
+      ]);
+
+      const tagsSorted = Array.from(tagResults.values()).sort(byDateDesc);
+      for (const id of tagResults.keys()) genreResults.delete(id);
+      const genresSorted = Array.from(genreResults.values()).sort(byDateDesc);
+      const result = [...tagsSorted, ...genresSorted].slice(0, max);
+
+      expect(result.map((r) => r.id)).toEqual(['older-tag', 'newer-genre']);
+    });
+
+    it('should dedupe genre matches that already appeared in the tag bucket', () => {
+      const max = 12;
+      const tagResults = new Map([
+        ['shared', { id: 'shared', episodeDate: { toMillis: () => 200 } }],
+      ]);
+      const genreResults = new Map([
+        ['shared', { id: 'shared', episodeDate: { toMillis: () => 200 } }],
+        ['genre-only', { id: 'genre-only', episodeDate: { toMillis: () => 100 } }],
+      ]);
+
+      const tagsSorted = Array.from(tagResults.values()).sort(byDateDesc);
+      for (const id of tagResults.keys()) genreResults.delete(id);
+      const genresSorted = Array.from(genreResults.values()).sort(byDateDesc);
+      const result = [...tagsSorted, ...genresSorted].slice(0, max);
+
+      expect(result.map((r) => r.id)).toEqual(['shared', 'genre-only']);
+    });
+
+    it('should short-circuit and return only tag matches when they already fill max', () => {
       const max = 2;
-      const tagResults = new Map<string, string>([
-        ['ep1', 'ep1'],
-        ['ep2', 'ep2'],
+      const tagResults = new Map([
+        ['tag-a', { id: 'tag-a', episodeDate: { toMillis: () => 300 } }],
+        ['tag-b', { id: 'tag-b', episodeDate: { toMillis: () => 200 } }],
+        ['tag-c', { id: 'tag-c', episodeDate: { toMillis: () => 100 } }],
       ]);
 
-      const shouldFallback = tagResults.size < max;
+      const tagsSorted = Array.from(tagResults.values()).sort(byDateDesc);
+      const result = tagsSorted.length >= max ? tagsSorted.slice(0, max) : tagsSorted;
 
-      expect(shouldFallback).toBe(false);
+      expect(result.map((r) => r.id)).toEqual(['tag-a', 'tag-b']);
+    });
+
+    it('should truncate the combined list to max', () => {
+      const max = 3;
+      const tagResults = new Map([
+        ['t1', { id: 't1', episodeDate: { toMillis: () => 400 } }],
+        ['t2', { id: 't2', episodeDate: { toMillis: () => 300 } }],
+      ]);
+      const genreResults = new Map([
+        ['g1', { id: 'g1', episodeDate: { toMillis: () => 200 } }],
+        ['g2', { id: 'g2', episodeDate: { toMillis: () => 100 } }],
+      ]);
+
+      const tagsSorted = Array.from(tagResults.values()).sort(byDateDesc);
+      const genresSorted = Array.from(genreResults.values()).sort(byDateDesc);
+      const result = [...tagsSorted, ...genresSorted].slice(0, max);
+
+      expect(result.map((r) => r.id)).toEqual(['t1', 't2', 'g1']);
     });
   });
 
