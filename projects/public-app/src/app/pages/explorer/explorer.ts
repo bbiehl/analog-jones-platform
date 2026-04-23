@@ -11,7 +11,9 @@ import {
   MatAutocompleteModule,
   MatAutocompleteSelectedEvent,
 } from '@angular/material/autocomplete';
+import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { EpisodeScroller } from '../../episode/episode-scroller/episode-scroller';
@@ -37,6 +39,8 @@ const GROUP_ORDER: { type: SearchAutoCompleteOption['type']; label: string }[] =
     MatFormFieldModule,
     MatInputModule,
     MatAutocompleteModule,
+    MatButtonModule,
+    MatIconModule,
     MatProgressSpinnerModule,
     EpisodeScroller,
     EpisodeScrollerSkeleton,
@@ -101,5 +105,10 @@ export class Explorer implements OnInit {
   protected onOptionSelected(event: MatAutocompleteSelectedEvent): void {
     const option = event.option.value as SearchAutoCompleteOption;
     this.store.selectSearchOption(option);
+  }
+
+  protected clearSearch(): void {
+    this.searchControl.setValue('');
+    this.store.clearSearch();
   }
 }

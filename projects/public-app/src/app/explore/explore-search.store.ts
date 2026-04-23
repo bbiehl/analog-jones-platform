@@ -60,6 +60,9 @@ export const ExploreSearchStore = signalStore(
         patchState(store, { selectedSearchOption: option });
         await searchEpisodes();
       },
+      clearSearch() {
+        patchState(store, { selectedSearchOption: null, results: [], error: null });
+      },
       searchEpisodes,
     };
   })

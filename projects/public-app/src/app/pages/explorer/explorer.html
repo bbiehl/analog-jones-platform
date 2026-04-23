@@ -14,6 +14,16 @@
     />
     @if (optionsLoading() || resultsLoading()) {
       <mat-spinner matSuffix diameter="20" />
+    } @else if (searchControl.value) {
+      <button
+        matSuffix
+        mat-icon-button
+        type="button"
+        aria-label="Clear search"
+        (click)="clearSearch()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
     }
     @if (optionsError(); as err) {
       <mat-error>{{ err }}</mat-error>
