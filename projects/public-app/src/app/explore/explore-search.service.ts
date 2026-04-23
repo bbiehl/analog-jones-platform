@@ -45,6 +45,9 @@ export class ExploreSearchService {
         results = await this.episodeTagService.getEpisodesByTagSlug(tag.slug);
       }
     }
-    return Array.from(new Map(results.map((e) => [e.id, e])).values());
+    const deduped = Array.from(new Map(results.map((e) => [e.id, e])).values());
+    return deduped.sort(
+      (a, b) => b.episodeDate.toMillis() - a.episodeDate.toMillis()
+    );
   }
 }

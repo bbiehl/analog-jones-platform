@@ -152,6 +152,17 @@ describe('ExploreSearchService', () => {
       expect(result).toEqual([]);
     });
 
+    it('should sort results by episodeDate descending (newest first)', async () => {
+      const older = { ...makeEpisode('e1', 'Older'), episodeDate: Timestamp.fromMillis(1_000) };
+      const newer = { ...makeEpisode('e2', 'Newer'), episodeDate: Timestamp.fromMillis(5_000) };
+      const middle = { ...makeEpisode('e3', 'Middle'), episodeDate: Timestamp.fromMillis(3_000) };
+      mockEpisodeGenreService.getEpisodesByGenreId.mockResolvedValueOnce([older, newer, middle]);
+
+      const result = await service.searchEpisodes({ type: 'genre', value: 'Rock' });
+
+      expect(result.map((e) => e.id)).toEqual(['e2', 'e3', 'e1']);
+    });
+
     it('should dedupe episodes by id', async () => {
       const dup = makeEpisode('e1', 'Hello World');
       mockEpisodeGenreService.getEpisodesByGenreId.mockResolvedValueOnce([
