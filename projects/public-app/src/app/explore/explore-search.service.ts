@@ -33,7 +33,10 @@ export class ExploreSearchService {
     if (option.type === 'episode') {
       if (option.id) {
         try {
-          results = [await this.episodeService.getEpisodeById(option.id)];
+          const episode = await this.episodeService.getEpisodeById(option.id);
+          if (episode.isVisible) {
+            results = [episode];
+          }
         } catch {
           results = [];
         }
