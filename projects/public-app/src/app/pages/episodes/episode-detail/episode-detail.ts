@@ -7,7 +7,7 @@ import {
   inject,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { EpisodeStore } from '../../../../../../../libs/episode/episode.store';
 import { EpisodeProperties } from '../../../episode/episode-detail/episode-properties/episode-properties';
@@ -19,6 +19,7 @@ import { EpisodeScrollerSkeleton } from '../../../episode/episode-scroller-skele
 @Component({
   selector: 'app-episode-detail',
   imports: [
+    RouterLink,
     EpisodeProperties,
     EpisodePropertiesSkeleton,
     EpisodeScroller,
@@ -27,6 +28,7 @@ import { EpisodeScrollerSkeleton } from '../../../episode/episode-scroller-skele
   templateUrl: './episode-detail.html',
   styleUrl: './episode-detail.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'episode-detail-page' },
 })
 export class EpisodeDetail implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
@@ -42,6 +44,12 @@ export class EpisodeDetail implements OnDestroy {
   protected readonly loading = computed(() => this.episodeStore.loading());
   protected readonly relatedEpisodes = computed(() => this.relatedStore.relatedEpisodes());
   protected readonly relatedLoading = computed(() => this.relatedStore.loading());
+
+  protected readonly caseNumber = computed(() => {
+    const id = this.id();
+    if (!id) return '— — — — — —';
+    return id.slice(0, 6).toUpperCase();
+  });
 
   private previousLoading = false;
 
