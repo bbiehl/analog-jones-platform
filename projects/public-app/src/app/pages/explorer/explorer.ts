@@ -7,4 +7,6 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   styleUrl: './explorer.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Explorer {}
+export class Explorer {
+  // On init, load the search term options for the autocomplete component by calling the ExploreSearchStore.
+}
