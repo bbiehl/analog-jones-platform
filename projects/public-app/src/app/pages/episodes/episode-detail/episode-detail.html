@@ -1,2 +1,13 @@
-<!-- EpisodeProperties, EpisodePropertiesSkeleton when loading -->
-<!-- RelatedEpisodes, EpisodeScrollerSkeleton when loading -->
+@if (loading() || !episode()) {
+  <app-episode-properties-skeleton />
+} @else {
+  <app-episode-properties [episode]="episode()!" />
+}
+
+@if (relatedLoading()) {
+  <app-episode-scroller-skeleton />
+} @else if (relatedEpisodes().length) {
+  <app-episode-scroller [episodes]="relatedEpisodes()" heading="Related episodes" />
+} @else {
+  <p>No related episodes yet — explore the full archive.</p>
+}

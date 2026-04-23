@@ -1,1 +1,56 @@
-<p>episode-properties works!</p>
+<article class="episode-properties">
+  <header>
+    <h1>{{ episode().title }}</h1>
+    <p>{{ episodeDate() | date: 'longDate' }}</p>
+  </header>
+
+  @if (episode().posterUrl) {
+    <img [src]="episode().posterUrl" [alt]="episode().title + ' poster'" />
+  }
+
+  @if (intelligenceHtml(); as html) {
+    <div class="intelligence" [innerHTML]="html"></div>
+  }
+
+  <ul class="links">
+    @if (episode().links.spotify) {
+      <li><a [href]="episode().links.spotify" target="_blank" rel="noopener">Spotify</a></li>
+    }
+    @if (episode().links.youtube) {
+      <li><a [href]="episode().links.youtube" target="_blank" rel="noopener">YouTube</a></li>
+    }
+  </ul>
+
+  @if (episode().categories.length) {
+    <section>
+      <h2>Categories</h2>
+      <ul>
+        @for (category of episode().categories; track category.id) {
+          <li>{{ category.name }}</li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (episode().genres.length) {
+    <section>
+      <h2>Genres</h2>
+      <ul>
+        @for (genre of episode().genres; track genre.id) {
+          <li>{{ genre.name }}</li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (episode().tags.length) {
+    <section>
+      <h2>Tags</h2>
+      <ul>
+        @for (tag of episode().tags; track tag.id) {
+          <li>{{ tag.name }}</li>
+        }
+      </ul>
+    </section>
+  }
+</article>
