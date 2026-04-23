@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { Timestamp } from 'firebase/firestore';
 import { EpisodeStore } from '../../../../../../../libs/episode/episode.store';
@@ -211,6 +211,164 @@ describe('EpisodeDetail', () => {
       await createComponent();
 
       expect(fixture.debugElement.query(By.css('.no-crossrefs'))).toBeFalsy();
+    });
+  });
+
+  describe('episode loading effect', () => {
+    it('calls loadEpisodeById when the route id is present', async () => {
+      await createComponent('ep123456ABC');
+      expect(mockEpisodeStore.loadEpisodeById).toHaveBeenCalledWith('ep123456ABC');
+    });
+
+    it('does not call loadEpisodeById when the route has no id', async () => {
+      await createComponent(null);
+      expect(mockEpisodeStore.loadEpisodeById).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('related episodes loading effect', () => {
+    it('loads related episodes when the selected episode matches the route id and is visible', async () => {
+      const ep = makeEpisode({ id: 'ep123456ABC', isVisible: true });
+      selectedEpisode.set(ep);
+      await createComponent('ep123456ABC');
+
+      expect(mockRelatedEpisodeStore.loadRelatedEpisodes).toHaveBeenCalledWith(ep);
+    });
+
+    it('does not load related episodes when the selected episode id does not match the route id', async () => {
+      selectedEpisode.set(makeEpisode({ id: 'different-id', isVisible: true }));
+      await createComponent('ep123456ABC');
+
+      expect(mockRelatedEpisodeStore.loadRelatedEpisodes).not.toHaveBeenCalled();
+    });
+
+    it('does not load related episodes when the selected episode is not visible', async () => {
+      selectedEpisode.set(makeEpisode({ id: 'ep123456ABC', isVisible: false }));
+      await createComponent('ep123456ABC');
+
+      expect(mockRelatedEpisodeStore.loadRelatedEpisodes).not.toHaveBeenCalled();
+    });
+
+    it('does not load related episodes when no episode is selected', async () => {
+      await createComponent('ep123456ABC');
+      expect(mockRelatedEpisodeStore.loadRelatedEpisodes).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('not-found navigation effect', () => {
+    async function createWithRouterSpy(routeId: string | null = 'ep123456ABC') {
+      const paramMap$ = of(convertToParamMap(routeId ? { id: routeId } : {}));
+      const navigateByUrl = vi.fn();
+
+      TestBed.configureTestingModule({
+        imports: [EpisodeDetail],
+        providers: [
+          provideRouter([]),
+          { provide: EpisodeStore, useValue: mockEpisodeStore },
+          { provide: RelatedEpisodeStore, useValue: mockRelatedEpisodeStore },
+          { provide: ActivatedRoute, useValue: { paramMap: paramMap$ } },
+          { provide: Router, useValue: { navigateByUrl } },
+        ],
+      });
+
+      await TestBed.compileComponents();
+      fixture = TestBed.createComponent(EpisodeDetail);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      return { navigateByUrl };
+    }
+
+    it('navigates to /not-found when loading finishes with a store error', async () => {
+      loading.set(true);
+      const { navigateByUrl } = await createWithRouterSpy('ep123456ABC');
+
+      error.set('boom');
+      loading.set(false);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(navigateByUrl).toHaveBeenCalledWith('/not-found');
+    });
+
+    it('navigates to /not-found when loading finishes with no episode', async () => {
+      loading.set(true);
+      const { navigateByUrl } = await createWithRouterSpy('ep123456ABC');
+
+      loading.set(false);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(navigateByUrl).toHaveBeenCalledWith('/not-found');
+    });
+
+    it('navigates to /not-found when the loaded episode id does not match the route id', async () => {
+      loading.set(true);
+      const { navigateByUrl } = await createWithRouterSpy('ep123456ABC');
+
+      selectedEpisode.set(makeEpisode({ id: 'different', isVisible: true }));
+      loading.set(false);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(navigateByUrl).toHaveBeenCalledWith('/not-found');
+    });
+
+    it('navigates to /not-found when the loaded episode is hidden', async () => {
+      loading.set(true);
+      const { navigateByUrl } = await createWithRouterSpy('ep123456ABC');
+
+      selectedEpisode.set(makeEpisode({ id: 'ep123456ABC', isVisible: false }));
+      loading.set(false);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(navigateByUrl).toHaveBeenCalledWith('/not-found');
+    });
+
+    it('does not navigate when loading finishes and a valid episode is loaded', async () => {
+      loading.set(true);
+      const { navigateByUrl } = await createWithRouterSpy('ep123456ABC');
+
+      selectedEpisode.set(makeEpisode({ id: 'ep123456ABC', isVisible: true }));
+      loading.set(false);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(navigateByUrl).not.toHaveBeenCalled();
+    });
+
+    it('does not navigate while still loading', async () => {
+      loading.set(true);
+      const { navigateByUrl } = await createWithRouterSpy('ep123456ABC');
+      expect(navigateByUrl).not.toHaveBeenCalled();
+    });
+
+    it('does not navigate when there was never a loading transition', async () => {
+      const { navigateByUrl } = await createWithRouterSpy('ep123456ABC');
+      expect(navigateByUrl).not.toHaveBeenCalled();
+    });
+
+    it('does not navigate when the route has no id', async () => {
+      loading.set(true);
+      const { navigateByUrl } = await createWithRouterSpy(null);
+
+      loading.set(false);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(navigateByUrl).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('ngOnDestroy', () => {
+    it('clears the selected episode and related episodes on destroy', async () => {
+      await createComponent();
+      fixture.destroy();
+
+      expect(mockEpisodeStore.clearSelectedEpisode).toHaveBeenCalled();
+      expect(mockRelatedEpisodeStore.clearRelatedEpisodes).toHaveBeenCalled();
     });
   });
 });
