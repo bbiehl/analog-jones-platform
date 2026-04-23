@@ -24,10 +24,11 @@
         <mat-icon>close</mat-icon>
       </button>
     }
-    @if (optionsError(); as err) {
-      <mat-error>{{ err }}</mat-error>
-    }
   </mat-form-field>
+
+  @if (optionsError(); as err) {
+    <p class="mt-2 text-sm text-red-600" role="alert">{{ err }}</p>
+  }
 
   <mat-autocomplete
     #auto="matAutocomplete"
