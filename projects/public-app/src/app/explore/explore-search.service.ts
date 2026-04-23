@@ -22,16 +22,22 @@ export class ExploreSearchService {
       this.tagService.getAllTags(),
     ]);
     return [
-      ...episodes.map((e) => ({ type: 'episode' as const, value: e.title })),
-      ...genres.map((g) => ({ type: 'genre' as const, value: g.name })),
-      ...tags.map((t) => ({ type: 'tag' as const, value: t.name })),
+      ...episodes.map((e) => ({ type: 'episode' as const, value: e.title, id: e.id })),
+      ...genres.map((g) => ({ type: 'genre' as const, value: g.name, id: g.id })),
+      ...tags.map((t) => ({ type: 'tag' as const, value: t.name, id: t.id })),
     ];
   }
 
   async searchEpisodes(option: SearchAutoCompleteOption): Promise<Episode[]> {
     let results: Episode[] = [];
     if (option.type === 'episode') {
-      results = await this.episodeService.getVisibleEpisodes(option.value);
+      if (option.id) {
+        try {
+          results = [await this.episodeService.getEpisodeById(option.id)];
+        } catch {
+          results = [];
+        }
+      }
     } else if (option.type === 'genre') {
       const genres = await this.genreService.getAllGenres();
       const genre = genres.find((g) => g.name === option.value);
