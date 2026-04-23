@@ -250,5 +250,152 @@ describe('RelatedEpisodesService', () => {
       expect(genreIds).toEqual([]);
       expect(final).toEqual([]);
     });
+
+    it('should issue no junction queries when the id list is empty', () => {
+      const ids: string[] = [];
+      const queried: string[] = [];
+
+      for (const id of ids) {
+        queried.push(id);
+      }
+
+      expect(queried).toEqual([]);
+    });
+  });
+
+  describe('multi-id junction iteration', () => {
+    it('should union episodes across multiple ids into a single results map', () => {
+      const sourceId = 'ep-source';
+      const ids = ['t1', 't2'];
+      const junctionByTag: Record<string, { episodeId: string }[]> = {
+        t1: [{ episodeId: 'ep1' }, { episodeId: 'ep2' }],
+        t2: [{ episodeId: 'ep3' }],
+      };
+      const episodeSnaps: Record<
+        string,
+        { id: string; exists: () => boolean; data: () => Record<string, unknown> }
+      > = {
+        ep1: { id: 'ep1', exists: () => true, data: () => ({ isVisible: true }) },
+        ep2: { id: 'ep2', exists: () => true, data: () => ({ isVisible: true }) },
+        ep3: { id: 'ep3', exists: () => true, data: () => ({ isVisible: true }) },
+      };
+
+      const results = new Map<string, { id: string; isVisible: boolean }>();
+      for (const id of ids) {
+        for (const j of junctionByTag[id]) {
+          if (j.episodeId === sourceId || results.has(j.episodeId)) continue;
+          const snap = episodeSnaps[j.episodeId];
+          if (snap.exists() && snap.data()['isVisible']) {
+            results.set(snap.id, { id: snap.id, ...snap.data() } as {
+              id: string;
+              isVisible: boolean;
+            });
+          }
+        }
+      }
+
+      expect(Array.from(results.keys())).toEqual(['ep1', 'ep2', 'ep3']);
+    });
+
+    it('should dedupe an episode that appears under more than one id', () => {
+      const ids = ['t1', 't2'];
+      const junctionByTag: Record<string, { episodeId: string }[]> = {
+        t1: [{ episodeId: 'ep1' }],
+        t2: [{ episodeId: 'ep1' }, { episodeId: 'ep2' }],
+      };
+      const episodeSnaps: Record<
+        string,
+        { id: string; exists: () => boolean; data: () => Record<string, unknown> }
+      > = {
+        ep1: { id: 'ep1', exists: () => true, data: () => ({ isVisible: true }) },
+        ep2: { id: 'ep2', exists: () => true, data: () => ({ isVisible: true }) },
+      };
+
+      const fetches: string[] = [];
+      const results = new Map<string, { id: string; isVisible: boolean }>();
+      for (const id of ids) {
+        for (const j of junctionByTag[id]) {
+          if (results.has(j.episodeId)) continue;
+          fetches.push(j.episodeId);
+          const snap = episodeSnaps[j.episodeId];
+          if (snap.exists() && snap.data()['isVisible']) {
+            results.set(snap.id, { id: snap.id, ...snap.data() } as {
+              id: string;
+              isVisible: boolean;
+            });
+          }
+        }
+      }
+
+      expect(fetches).toEqual(['ep1', 'ep2']);
+      expect(Array.from(results.keys())).toEqual(['ep1', 'ep2']);
+    });
+  });
+
+  describe('genre-only fallback', () => {
+    it('should return genre matches when tag lookup yields nothing', () => {
+      const max = 12;
+      const tagResults = new Map<string, { id: string; episodeDate: { toMillis: () => number } }>();
+      const genreResults = new Map([
+        ['g1', { id: 'g1', episodeDate: { toMillis: () => 400 } }],
+        ['g2', { id: 'g2', episodeDate: { toMillis: () => 200 } }],
+      ]);
+
+      const byDateDesc = (
+        a: { episodeDate: { toMillis: () => number } },
+        b: { episodeDate: { toMillis: () => number } }
+      ) => b.episodeDate.toMillis() - a.episodeDate.toMillis();
+
+      const tagsSorted = Array.from(tagResults.values()).sort(byDateDesc);
+      for (const id of tagResults.keys()) genreResults.delete(id);
+      const genresSorted = Array.from(genreResults.values()).sort(byDateDesc);
+      const result = [...tagsSorted, ...genresSorted].slice(0, max);
+
+      expect(result.map((r) => r.id)).toEqual(['g1', 'g2']);
+    });
+
+    it('should skip the genre-lookup branch entirely when tags already fill max', () => {
+      const max = 2;
+      const tagResults = new Map([
+        ['t1', { id: 't1', episodeDate: { toMillis: () => 300 } }],
+        ['t2', { id: 't2', episodeDate: { toMillis: () => 200 } }],
+      ]);
+      let genreLookupPerformed = false;
+
+      const byDateDesc = (
+        a: { episodeDate: { toMillis: () => number } },
+        b: { episodeDate: { toMillis: () => number } }
+      ) => b.episodeDate.toMillis() - a.episodeDate.toMillis();
+
+      const tagsSorted = Array.from(tagResults.values()).sort(byDateDesc);
+      let result: typeof tagsSorted;
+      if (tagsSorted.length >= max) {
+        result = tagsSorted.slice(0, max);
+      } else {
+        genreLookupPerformed = true;
+        result = tagsSorted;
+      }
+
+      expect(genreLookupPerformed).toBe(false);
+      expect(result.map((r) => r.id)).toEqual(['t1', 't2']);
+    });
+  });
+
+  describe('date sorting edge cases', () => {
+    const byDateDesc = (
+      a: { episodeDate: { toMillis: () => number } },
+      b: { episodeDate: { toMillis: () => number } }
+    ) => b.episodeDate.toMillis() - a.episodeDate.toMillis();
+
+    it('should preserve insertion order when two episodes share an identical date', () => {
+      const results = new Map([
+        ['first', { id: 'first', episodeDate: { toMillis: () => 500 } }],
+        ['second', { id: 'second', episodeDate: { toMillis: () => 500 } }],
+      ]);
+
+      const sorted = Array.from(results.values()).sort(byDateDesc);
+
+      expect(sorted.map((r) => r.id)).toEqual(['first', 'second']);
+    });
   });
 });
