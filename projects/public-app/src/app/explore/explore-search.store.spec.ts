@@ -180,6 +180,63 @@ describe('ExploreSearchStore', () => {
     expect(store.results()).toEqual(updated);
   });
 
+  it('should ignore stale search responses when the selection changes mid-flight', async () => {
+    const firstEpisodes: Episode[] = [
+      {
+        id: 'stale',
+        createdAt: Timestamp.fromMillis(0),
+        episodeDate: Timestamp.fromMillis(0),
+        intelligence: null,
+        isVisible: true,
+        links: {},
+        posterUrl: null,
+        title: 'Stale',
+      },
+    ];
+    let resolveFirst!: (eps: Episode[]) => void;
+    mockExploreSearchService.searchEpisodes
+      .mockReturnValueOnce(
+        new Promise<Episode[]>((resolve) => {
+          resolveFirst = resolve;
+        })
+      )
+      .mockResolvedValueOnce(mockEpisodes);
+
+    const firstPending = store.selectSearchOption(mockOptions[0]);
+    await Promise.resolve();
+    const secondPending = store.selectSearchOption(mockOptions[1]);
+    await secondPending;
+
+    resolveFirst(firstEpisodes);
+    await firstPending;
+
+    expect(store.selectedSearchOption()).toEqual(mockOptions[1]);
+    expect(store.results()).toEqual(mockEpisodes);
+  });
+
+  it('should ignore stale search errors when the selection changes mid-flight', async () => {
+    let rejectFirst!: (err: unknown) => void;
+    mockExploreSearchService.searchEpisodes
+      .mockReturnValueOnce(
+        new Promise<Episode[]>((_, reject) => {
+          rejectFirst = reject;
+        })
+      )
+      .mockResolvedValueOnce(mockEpisodes);
+
+    const firstPending = store.selectSearchOption(mockOptions[0]);
+    await Promise.resolve();
+    const secondPending = store.selectSearchOption(mockOptions[1]);
+    await secondPending;
+
+    rejectFirst(new Error('stale boom'));
+    await firstPending;
+
+    expect(store.selectedSearchOption()).toEqual(mockOptions[1]);
+    expect(store.results()).toEqual(mockEpisodes);
+    expect(store.error()).toBeNull();
+  });
+
   it('searchEpisodes should no-op when no selection is set', async () => {
     await store.searchEpisodes();
 

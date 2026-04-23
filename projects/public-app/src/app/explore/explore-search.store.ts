@@ -34,8 +34,14 @@ export const ExploreSearchStore = signalStore(
       patchState(store, { isLoading: true, error: null });
       try {
         const results = await exploreSearchService.searchEpisodes(option);
+        if (store.selectedSearchOption() !== option) {
+          return;
+        }
         patchState(store, { results, isLoading: false });
       } catch (e) {
+        if (store.selectedSearchOption() !== option) {
+          return;
+        }
         patchState(store, {
           isLoading: false,
           error: e instanceof Error ? e.message : 'Failed to load results',
