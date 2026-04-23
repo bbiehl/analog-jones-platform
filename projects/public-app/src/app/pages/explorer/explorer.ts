@@ -3,6 +3,7 @@ import {
   Component,
   OnInit,
   computed,
+  effect,
   inject,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -92,6 +93,17 @@ export class Explorer implements OnInit {
       options: matches.filter((o) => o.type === type),
     })).filter((g) => g.options.length > 0);
   });
+
+  constructor() {
+    effect(() => {
+      const shouldDisable = this.optionsLoading() || !!this.optionsError();
+      if (shouldDisable && this.searchControl.enabled) {
+        this.searchControl.disable({ emitEvent: false });
+      } else if (!shouldDisable && this.searchControl.disabled) {
+        this.searchControl.enable({ emitEvent: false });
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.store.loadAutoCompleteOptions();

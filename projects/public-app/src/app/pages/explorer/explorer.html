@@ -9,7 +9,6 @@
       type="text"
       [formControl]="searchControl"
       [matAutocomplete]="auto"
-      [disabled]="optionsLoading() || !!optionsError()"
       aria-label="Search for episodes, genres, and tags"
     />
     @if (optionsLoading() || resultsLoading()) {
