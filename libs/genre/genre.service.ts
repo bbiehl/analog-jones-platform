@@ -12,13 +12,11 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { FIRESTORE } from '../shared/firebase.token';
-import { EpisodeGenreService } from '../shared/episode-genre.service';
-import { Genre, GenreWithRelations } from './genre.model';
+import { Genre } from './genre.model';
 
 @Injectable({ providedIn: 'root' })
 export class GenreService {
   private firestore = inject(FIRESTORE);
-  private episodeGenreService = inject(EpisodeGenreService);
 
   async getAllGenres(): Promise<Genre[]> {
     const q = query(collection(this.firestore, 'genres'), orderBy('name'));
@@ -32,18 +30,6 @@ export class GenreService {
       throw new Error(`Genre with id "${id}" not found`);
     }
     return { id: snap.id, ...snap.data() } as Genre;
-  }
-
-  async getGenreBySlug(slug: string): Promise<GenreWithRelations> {
-    const q = query(collection(this.firestore, 'genres'), where('slug', '==', slug));
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) {
-      throw new Error(`Genre with slug "${slug}" not found`);
-    }
-
-    const genreDoc = snapshot.docs[0];
-    const episodes = await this.episodeGenreService.getEpisodesByGenreSlug(slug);
-    return { id: genreDoc.id, ...genreDoc.data(), episodes } as GenreWithRelations;
   }
 
   async createGenre(genre: Omit<Genre, 'id'>): Promise<string> {

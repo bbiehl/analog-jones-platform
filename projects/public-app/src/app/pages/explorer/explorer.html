@@ -1,35 +1,64 @@
-<section class="p-6">
-  <h1>Explorer</h1>
-  <p>Browse episodes by category, genre, or tag.</p>
+<section class="page-frame pt-6">
+  <h1 class="text-3xl font-bold mb-4">Explorer</h1>
+  <p class="mb-6">Search for episodes, genres, and tags.</p>
 
-  <nav class="mt-6 mb-8 grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4" aria-label="Explorer sections">
-    <a routerLink="categories" class="no-underline text-inherit">
-      <mat-card>
-        <mat-card-content class="flex items-center gap-3 p-4 text-lg">
-          <mat-icon>folder</mat-icon>
-          <span>Categories</span>
-        </mat-card-content>
-      </mat-card>
-    </a>
+  <mat-form-field class="w-full max-w-xl" appearance="outline">
+    <mat-label>Search</mat-label>
+    <input
+      matInput
+      type="text"
+      [formControl]="searchControl"
+      [matAutocomplete]="auto"
+      aria-label="Search for episodes, genres, and tags"
+    />
+    @if (optionsLoading() || resultsLoading()) {
+      <mat-spinner matSuffix diameter="20" />
+    } @else if (searchControl.value) {
+      <button
+        matSuffix
+        mat-icon-button
+        type="button"
+        aria-label="Clear search"
+        (click)="clearSearch()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </mat-form-field>
 
-    <a routerLink="genres" class="no-underline text-inherit">
-      <mat-card>
-        <mat-card-content class="flex items-center gap-3 p-4 text-lg">
-          <mat-icon>library_music</mat-icon>
-          <span>Genres</span>
-        </mat-card-content>
-      </mat-card>
-    </a>
+  @if (optionsError(); as err) {
+    <p class="mt-2 text-sm text-red-600" role="alert">{{ err }}</p>
+  }
 
-    <a routerLink="tags" class="no-underline text-inherit">
-      <mat-card>
-        <mat-card-content class="flex items-center gap-3 p-4 text-lg">
-          <mat-icon>label</mat-icon>
-          <span>Tags</span>
-        </mat-card-content>
-      </mat-card>
-    </a>
-  </nav>
+  <mat-autocomplete
+    #auto="matAutocomplete"
+    [displayWith]="displayFn"
+    (optionSelected)="onOptionSelected($event)"
+  >
+    @for (group of groupedOptions(); track group.label) {
+      <mat-optgroup [label]="group.label">
+        @for (option of group.options; track option.type + ':' + option.value) {
+          <mat-option [value]="option">{{ option.value }}</mat-option>
+        }
+      </mat-optgroup>
+    }
+  </mat-autocomplete>
+</section>
 
-  <router-outlet />
+<section class="mt-6">
+  @if (resultsLoading()) {
+    <app-episode-scroller-skeleton />
+  } @else if (resultsError(); as err) {
+    <p class="page-frame" role="alert">{{ err }}</p>
+  } @else if (selectedSearchOption(); as sel) {
+    @if (results().length === 0) {
+      <p class="page-frame">No episodes found for "{{ sel.value }}".</p>
+    } @else {
+      <app-episode-scroller
+        [episodes]="results()"
+        [heading]="sel.value"
+        [ariaLabel]="'Episodes matching ' + sel.value"
+      />
+    }
+  }
 </section>

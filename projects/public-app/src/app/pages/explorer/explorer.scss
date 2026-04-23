@@ -1,0 +1,13 @@
+.page-frame {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
+@media (max-width: 720px) {
+  .page-frame {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}

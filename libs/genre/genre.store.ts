@@ -47,16 +47,6 @@ export const GenreStore = signalStore(
         }
       },
 
-      async loadGenreBySlug(slug: string) {
-        patchState(store, { loading: true, error: null });
-        try {
-          const genre = await genreService.getGenreBySlug(slug);
-          patchState(store, { selectedGenre: genre, loading: false });
-        } catch (e) {
-          patchState(store, { loading: false, error: (e as Error).message });
-        }
-      },
-
       async createGenre(genre: Omit<Genre, 'id'>) {
         patchState(store, { loading: true, error: null });
         try {

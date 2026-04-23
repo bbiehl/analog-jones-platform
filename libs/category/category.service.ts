@@ -12,13 +12,11 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { FIRESTORE } from '../shared/firebase.token';
-import { EpisodeCategoryService } from '../shared/episode-category.service';
-import { Category, CategoryWithRelations } from './category.model';
+import { Category } from './category.model';
 
 @Injectable({ providedIn: 'root' })
 export class CategoryService {
   private firestore = inject(FIRESTORE);
-  private episodeCategoryService = inject(EpisodeCategoryService);
 
   async getAllCategories(): Promise<Category[]> {
     const q = query(collection(this.firestore, 'categories'), orderBy('name'));
@@ -32,18 +30,6 @@ export class CategoryService {
       throw new Error(`Category with id "${id}" not found`);
     }
     return { id: snap.id, ...snap.data() } as Category;
-  }
-
-  async getCategoryBySlug(slug: string): Promise<CategoryWithRelations> {
-    const q = query(collection(this.firestore, 'categories'), where('slug', '==', slug));
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) {
-      throw new Error(`Category with slug "${slug}" not found`);
-    }
-
-    const categoryDoc = snapshot.docs[0];
-    const episodes = await this.episodeCategoryService.getEpisodesByCategorySlug(slug);
-    return { id: categoryDoc.id, ...categoryDoc.data(), episodes } as CategoryWithRelations;
   }
 
   async createCategory(category: Omit<Category, 'id'>): Promise<string> {

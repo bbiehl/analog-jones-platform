@@ -2,7 +2,7 @@
 import { TestBed } from '@angular/core/testing';
 import { GenreStore } from './genre.store';
 import { GenreService } from './genre.service';
-import { Genre, GenreWithRelations } from './genre.model';
+import { Genre } from './genre.model';
 
 describe('GenreStore', () => {
   let store: InstanceType<typeof GenreStore>;
@@ -12,17 +12,9 @@ describe('GenreStore', () => {
     { id: '2', name: 'Rock', slug: 'rock' },
   ];
 
-  const mockGenreWithRelations: GenreWithRelations = {
-    id: '1',
-    name: 'Jazz',
-    slug: 'jazz',
-    episodes: [],
-  };
-
   const mockGenreService = {
     getAllGenres: vi.fn().mockResolvedValue(mockGenres),
     getGenreById: vi.fn().mockResolvedValue(mockGenres[0]),
-    getGenreBySlug: vi.fn().mockResolvedValue(mockGenreWithRelations),
     createGenre: vi.fn().mockResolvedValue('new-id'),
     updateGenre: vi.fn().mockResolvedValue(undefined),
     deleteGenre: vi.fn().mockResolvedValue(undefined),
@@ -36,7 +28,6 @@ describe('GenreStore', () => {
     vi.clearAllMocks();
     mockGenreService.getAllGenres.mockResolvedValue(mockGenres);
     mockGenreService.getGenreById.mockResolvedValue(mockGenres[0]);
-    mockGenreService.getGenreBySlug.mockResolvedValue(mockGenreWithRelations);
     mockGenreService.createGenre.mockResolvedValue('new-id');
     mockGenreService.updateGenre.mockResolvedValue(undefined);
     mockGenreService.deleteGenre.mockResolvedValue(undefined);
@@ -106,27 +97,6 @@ describe('GenreStore', () => {
     });
   });
 
-  describe('loadGenreBySlug', () => {
-    it('should load genre by slug and set selectedGenre', async () => {
-      await store.loadGenreBySlug('jazz');
-
-      expect(mockGenreService.getGenreBySlug).toHaveBeenCalledWith('jazz');
-      expect(store.selectedGenre()).toEqual(mockGenreWithRelations);
-      expect(store.loading()).toBe(false);
-    });
-
-    it('should set error on failure', async () => {
-      mockGenreService.getGenreBySlug.mockRejectedValueOnce(
-        new Error('Genre with slug "unknown" not found')
-      );
-
-      await store.loadGenreBySlug('unknown');
-
-      expect(store.error()).toBe('Genre with slug "unknown" not found');
-      expect(store.loading()).toBe(false);
-    });
-  });
-
   describe('createGenre', () => {
     it('should create genre and reload all genres', async () => {
       const newGenre: Omit<Genre, 'id'> = { name: 'Blues', slug: 'blues' };
@@ -191,7 +161,7 @@ describe('GenreStore', () => {
 
   describe('clearSelectedGenre', () => {
     it('should set selectedGenre to null', async () => {
-      await store.loadGenreBySlug('jazz');
+      await store.loadGenreById('1');
       expect(store.selectedGenre()).not.toBeNull();
 
       store.clearSelectedGenre();

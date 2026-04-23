@@ -47,16 +47,6 @@ export const CategoryStore = signalStore(
         }
       },
 
-      async loadCategoryBySlug(slug: string) {
-        patchState(store, { loading: true, error: null });
-        try {
-          const category = await categoryService.getCategoryBySlug(slug);
-          patchState(store, { selectedCategory: category, loading: false });
-        } catch (e) {
-          patchState(store, { loading: false, error: (e as Error).message });
-        }
-      },
-
       async createCategory(category: Omit<Category, 'id'>) {
         patchState(store, { loading: true, error: null });
         try {
