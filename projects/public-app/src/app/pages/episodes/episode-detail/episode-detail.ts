@@ -8,9 +8,13 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EpisodeDetail {
-  // Load episode by ID (EpisodeWithRelations) from route params via the EpisodeStore in libs. If the episode is not found, route to the "not found" page.
+  // Load episode by ID (EpisodeWithRelations) from route params via the EpisodeStore in libs. 
+  // If the episode is not found, route to the "not found" page.
   // If the episode is not visible, route to the "not found" page.
   // Load EpisodeWithRelations, which includes categories, genres, and tags for the episode. This will be used to find related episodes and display episode properties.
+  // Use the EpisodeProperties component to display episode properties, and the RelatedEpisodes component to display related episodes.
+  // While the episode is loading, display the EpisodePropertiesSkeleton component for episode properties, and the EpisodeScrollerSkeleton component for related episodes.
+
   // Load related episodes using the RelatedEpisode.store in libs.
 
   // Display episode properties via the EpisodeProperties component.
