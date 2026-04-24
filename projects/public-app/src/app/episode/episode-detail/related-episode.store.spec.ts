@@ -92,6 +92,30 @@ describe('RelatedEpisodeStore', () => {
       expect(store.relatedEpisodes()).toEqual(mockRelated);
     });
 
+    it('should ignore results from superseded calls when a newer call resolves first', async () => {
+      const episodeA: EpisodeWithRelations = { ...episode, id: 'ep-A' };
+      const episodeB: EpisodeWithRelations = { ...episode, id: 'ep-B' };
+      const resultA: Episode[] = [{ ...mockRelated[0], id: 'for-A' }];
+      const resultB: Episode[] = [{ ...mockRelated[0], id: 'for-B' }];
+
+      let resolveA!: (v: Episode[]) => void;
+      const pendingA = new Promise<Episode[]>((r) => (resolveA = r));
+
+      mockService.getRelatedEpisodes.mockImplementationOnce(() => pendingA);
+      mockService.getRelatedEpisodes.mockResolvedValueOnce(resultB);
+
+      const callA = store.loadRelatedEpisodes(episodeA);
+      const callB = store.loadRelatedEpisodes(episodeB);
+
+      await callB;
+      expect(store.relatedEpisodes()).toEqual(resultB);
+
+      resolveA(resultA);
+      await callA;
+
+      expect(store.relatedEpisodes()).toEqual(resultB);
+    });
+
     it('should set error and reset loading when the service throws', async () => {
       mockService.getRelatedEpisodes.mockRejectedValueOnce(new Error('Network error'));
 
