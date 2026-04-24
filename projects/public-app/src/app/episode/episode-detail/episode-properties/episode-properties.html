@@ -1,0 +1,109 @@
+<article class="tape-file">
+  <aside class="sleeve" aria-hidden="true">
+    <div class="sleeve-top">
+      <span class="spine-label">ANALOG JONES</span>
+      <span class="spine-spec">VHS · HI-FI · T-120</span>
+    </div>
+
+    <div class="sleeve-cover" [style.background]="sleeveBackground()">
+      <div class="cover-noise"></div>
+      <div class="cover-gleam"></div>
+      <div class="cover-label">
+        <span class="label-side">SIDE A</span>
+        <span class="label-case">{{ caseNumber() ?? '— — — —' }}</span>
+      </div>
+      <div class="cover-scan"></div>
+    </div>
+
+    <div class="sleeve-barcode">
+      <div class="bars"></div>
+      <span class="barcode-id">{{ caseNumber() ?? '------' }}</span>
+    </div>
+
+    <dl class="sleeve-specs">
+      <div>
+        <dt>FMT</dt>
+        <dd>VHS</dd>
+      </div>
+      <div>
+        <dt>DATE</dt>
+        <dd>{{ episodeDate() | date: 'yy.MM.dd' }}</dd>
+      </div>
+      <div>
+        <dt>REEL</dt>
+        <dd>{{ episode().categories.length || '—' }}/{{ episode().genres.length || '—' }}/{{ episode().tags.length || '—' }}</dd>
+      </div>
+    </dl>
+  </aside>
+
+  <section class="file-body">
+    <div class="file-head">
+      <div class="file-eyebrow">
+        <span class="e-k">/ TRANSMISSION</span>
+        <span class="e-d">{{ episodeDate() | date: 'EEEE · MMM dd, yyyy' | uppercase }}</span>
+      </div>
+      <h1 class="file-title">{{ episode().title }}</h1>
+      <div class="file-sub">
+        <span class="sub-dot"></span>
+        <span>LOGGED INTO THE MUSEUM</span>
+      </div>
+    </div>
+
+    @if (episode().categories.length || episode().genres.length || episode().tags.length) {
+      <div class="chips-row" aria-label="Classification">
+        @for (c of episode().categories; track c.id) {
+          <span class="chip chip--accent">{{ c.name }}</span>
+        }
+        @for (g of episode().genres; track g.id) {
+          <span class="chip chip--cyan">{{ g.name }}</span>
+        }
+        @for (t of episode().tags; track t.id) {
+          <span class="chip chip--amber">#{{ t.name }}</span>
+        }
+      </div>
+    }
+
+    <section class="transmission" aria-label="Show notes">
+      <header class="tx-head">
+        <span class="tx-label">/ TRANSMISSION LOG</span>
+        <span class="tx-meta">REC · {{ episodeDate() | date: 'MM.dd.yy' }}</span>
+        <span class="tx-stamp" aria-hidden="true">REC</span>
+      </header>
+
+      @if (intelligenceHtml(); as html) {
+        <div class="tx-body" [innerHTML]="html"></div>
+      } @else {
+        <div class="tx-body tx-body--empty">
+          <p>/ NO NOTES RECORDED. Tape plays without commentary.</p>
+        </div>
+      }
+    </section>
+
+    @if (hasLinks()) {
+      <div class="cta-row">
+        @if (episode().links.spotify; as spotify) {
+          <a
+            class="btn btn--spotify"
+            [href]="spotify"
+            target="_blank"
+            rel="noopener"
+          >
+            <span class="btn-glyph" aria-hidden="true">▶</span>
+            <span>LISTEN ON SPOTIFY</span>
+          </a>
+        }
+        @if (episode().links.youtube; as youtube) {
+          <a
+            class="btn btn--youtube"
+            [href]="youtube"
+            target="_blank"
+            rel="noopener"
+          >
+            <span class="btn-glyph" aria-hidden="true">▶</span>
+            <span>WATCH ON YOUTUBE</span>
+          </a>
+        }
+      </div>
+    }
+  </section>
+</article>

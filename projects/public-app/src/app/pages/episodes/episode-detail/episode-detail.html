@@ -1,1 +1,75 @@
-<p>episode-detail works!</p>
+<div class="overlay scanlines" aria-hidden="true"></div>
+<div class="overlay grain" aria-hidden="true"></div>
+
+<section class="case-file" aria-label="Case file header">
+  <div class="page case-file-inner">
+    <a class="back-chip" routerLink="/episodes">
+      <span class="arrow" aria-hidden="true">◀</span>
+      <span>RETURN TO ARCHIVE</span>
+    </a>
+
+    <div class="file-meta" aria-hidden="true">
+      <div class="file-meta-row">
+        <span class="k">CASE</span>
+        <span class="v mono">{{ caseNumber() }}</span>
+      </div>
+      <div class="file-meta-divider"></div>
+      <div class="file-meta-row">
+        <span class="k">FILE</span>
+        <span class="v">TRANSMISSION LOG</span>
+      </div>
+    </div>
+
+    <div class="rec-badge" aria-hidden="true">
+      <span class="rec-dot"></span>
+      <span>REC</span>
+    </div>
+  </div>
+  <div class="case-file-tracks" aria-hidden="true"></div>
+</section>
+
+<section class="dossier" aria-label="Episode dossier">
+  <div class="page">
+    @if (loading() || !episode()) {
+      <app-episode-properties-skeleton />
+    } @else {
+      <app-episode-properties [episode]="episode()!" [caseNumber]="caseNumber()" />
+    }
+  </div>
+</section>
+
+@if (relatedLoading() || (loading() && !episodeMatchesRoute())) {
+  <app-episode-scroller-skeleton />
+} @else if (episodeMatchesRoute() && relatedEpisodes().length) {
+  <app-episode-scroller
+    [episodes]="relatedEpisodes()"
+    eyebrow="/ CROSS-REFERENCED FILES"
+    heading="More from the shelf."
+    ariaLabel="Related episodes"
+    seeAllLabel="ALL TAPES →"
+    seeAllLink="/episodes"
+  />
+} @else if (episodeMatchesRoute()) {
+  <section class="no-crossrefs" aria-label="No related episodes">
+    <div class="page">
+      <div class="no-crossrefs-card">
+        <div class="no-crossrefs-stripe" aria-hidden="true"></div>
+        <div class="no-crossrefs-body">
+          <div class="eyebrow">/ CROSS-REFERENCE INDEX</div>
+          <h3>
+            NO RELATED<br />
+            FILES ON RECORD
+          </h3>
+          <p>
+            This tape stands alone on the shelf. The vault has plenty more — unspool another one.
+          </p>
+          <a class="btn primary" routerLink="/episodes">▶ ENTER THE ARCHIVE</a>
+        </div>
+        <div class="no-crossrefs-stamp" aria-hidden="true">
+          <span>UNIQUE</span>
+          <span>SPECIMEN</span>
+        </div>
+      </div>
+    </div>
+  </section>
+}

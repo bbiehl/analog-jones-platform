@@ -201,6 +201,49 @@ describe('EpisodeStore', () => {
       expect(store.loading()).toBe(false);
       expect(store.selectedEpisode()).toBeNull();
     });
+
+    it('should ignore results from superseded calls when a newer call resolves first', async () => {
+      const episodeB: EpisodeWithRelations = { ...mockEpisodeWithRelations, id: 'ep-B' };
+
+      let resolveA!: (v: EpisodeWithRelations) => void;
+      const pendingA = new Promise<EpisodeWithRelations>((r) => (resolveA = r));
+
+      mockEpisodeService.getEpisodeById.mockImplementationOnce(() => pendingA);
+      mockEpisodeService.getEpisodeById.mockResolvedValueOnce(episodeB);
+
+      const callA = store.loadEpisodeById('ep-A');
+      const callB = store.loadEpisodeById('ep-B');
+
+      await callB;
+      expect(store.selectedEpisode()).toEqual(episodeB);
+      expect(store.loading()).toBe(false);
+
+      resolveA(mockEpisodeWithRelations);
+      await callA;
+
+      expect(store.selectedEpisode()).toEqual(episodeB);
+      expect(store.loading()).toBe(false);
+    });
+
+    it('should not surface errors from superseded calls', async () => {
+      let rejectA!: (e: Error) => void;
+      const pendingA = new Promise<EpisodeWithRelations>((_, r) => (rejectA = r));
+
+      mockEpisodeService.getEpisodeById.mockImplementationOnce(() => pendingA);
+      mockEpisodeService.getEpisodeById.mockResolvedValueOnce(mockEpisodeWithRelations);
+
+      const callA = store.loadEpisodeById('ep-A');
+      const callB = store.loadEpisodeById('ep-B');
+
+      await callB;
+      expect(store.error()).toBeNull();
+
+      rejectA(new Error('stale failure'));
+      await callA;
+
+      expect(store.error()).toBeNull();
+      expect(store.selectedEpisode()).toEqual(mockEpisodeWithRelations);
+    });
   });
 
   describe('toggleEpisodeVisibility', () => {

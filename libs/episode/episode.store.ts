@@ -26,6 +26,7 @@ export const EpisodeStore = signalStore(
   withState(initialState),
   withMethods((store) => {
     const episodeService = inject(EpisodeService);
+    let loadEpisodeByIdToken = 0;
 
     return {
       async loadEpisodes() {
@@ -69,11 +70,14 @@ export const EpisodeStore = signalStore(
       },
 
       async loadEpisodeById(id: string) {
+        const token = ++loadEpisodeByIdToken;
         patchState(store, { loading: true, error: null });
         try {
           const episode = await episodeService.getEpisodeById(id);
+          if (token !== loadEpisodeByIdToken) return;
           patchState(store, { selectedEpisode: episode, loading: false });
         } catch (e) {
+          if (token !== loadEpisodeByIdToken) return;
           patchState(store, { loading: false, error: (e as Error).message });
         }
       },
@@ -145,6 +149,7 @@ export const EpisodeStore = signalStore(
       },
 
       clearSelectedEpisode() {
+        loadEpisodeByIdToken++;
         patchState(store, { selectedEpisode: null });
       },
     };
