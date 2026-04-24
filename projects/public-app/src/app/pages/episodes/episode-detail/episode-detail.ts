@@ -44,6 +44,11 @@ export class EpisodeDetail implements OnDestroy {
   protected readonly loading = computed(() => this.episodeStore.loading());
   protected readonly relatedEpisodes = computed(() => this.relatedStore.relatedEpisodes());
   protected readonly relatedLoading = computed(() => this.relatedStore.loading());
+  protected readonly episodeMatchesRoute = computed(() => {
+    const id = this.id();
+    const ep = this.episode();
+    return !!id && !!ep && ep.id === id;
+  });
 
   protected readonly caseNumber = computed(() => {
     const id = this.id();
@@ -56,7 +61,9 @@ export class EpisodeDetail implements OnDestroy {
   constructor() {
     effect(() => {
       const id = this.id();
-      if (id) this.episodeStore.loadEpisodeById(id);
+      if (!id) return;
+      this.relatedStore.clearRelatedEpisodes();
+      this.episodeStore.loadEpisodeById(id);
     });
 
     effect(() => {

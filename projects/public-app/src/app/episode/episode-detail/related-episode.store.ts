@@ -37,6 +37,7 @@ export const RelatedEpisodeStore = signalStore(
       },
 
       clearRelatedEpisodes() {
+        loadRelatedEpisodesToken++;
         patchState(store, { relatedEpisodes: [] });
       },
     };

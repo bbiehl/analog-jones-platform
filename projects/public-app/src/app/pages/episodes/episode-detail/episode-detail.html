@@ -38,9 +38,9 @@
   </div>
 </section>
 
-@if (relatedLoading()) {
+@if (relatedLoading() || (loading() && !episodeMatchesRoute())) {
   <app-episode-scroller-skeleton />
-} @else if (relatedEpisodes().length) {
+} @else if (episodeMatchesRoute() && relatedEpisodes().length) {
   <app-episode-scroller
     [episodes]="relatedEpisodes()"
     eyebrow="/ CROSS-REFERENCED FILES"
@@ -49,7 +49,7 @@
     seeAllLabel="ALL TAPES →"
     seeAllLink="/episodes"
   />
-} @else if (!loading() && episode()) {
+} @else if (episodeMatchesRoute()) {
   <section class="no-crossrefs" aria-label="No related episodes">
     <div class="page">
       <div class="no-crossrefs-card">

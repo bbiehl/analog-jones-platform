@@ -173,7 +173,7 @@ describe('EpisodeDetail', () => {
     it('renders the scroller when related episodes are available', async () => {
       selectedEpisode.set(makeEpisode());
       relatedEpisodes.set([makeEpisode({ id: 'ep2' }), makeEpisode({ id: 'ep3' })]);
-      await createComponent();
+      await createComponent('ep1');
 
       expect(fixture.debugElement.query(By.css('app-episode-scroller'))).toBeTruthy();
       expect(fixture.debugElement.query(By.css('.no-crossrefs'))).toBeFalsy();
@@ -181,7 +181,7 @@ describe('EpisodeDetail', () => {
 
     it('renders the no-crossrefs fallback when episode loaded but no related episodes', async () => {
       selectedEpisode.set(makeEpisode());
-      await createComponent();
+      await createComponent('ep1');
 
       const card = fixture.debugElement.query(By.css('.no-crossrefs-card'));
       expect(card).toBeTruthy();
@@ -211,6 +211,22 @@ describe('EpisodeDetail', () => {
       await createComponent();
 
       expect(fixture.debugElement.query(By.css('.no-crossrefs'))).toBeFalsy();
+    });
+
+    it('hides stale related episodes when the loaded episode id does not match the route id', async () => {
+      selectedEpisode.set(makeEpisode({ id: 'previous' }));
+      relatedEpisodes.set([makeEpisode({ id: 'ep2' })]);
+      await createComponent('current');
+
+      expect(fixture.debugElement.query(By.css('app-episode-scroller'))).toBeFalsy();
+      expect(fixture.debugElement.query(By.css('.no-crossrefs'))).toBeFalsy();
+    });
+  });
+
+  describe('route id change side effects', () => {
+    it('clears the related episodes store when the route id is set', async () => {
+      await createComponent('ep123456ABC');
+      expect(mockRelatedEpisodeStore.clearRelatedEpisodes).toHaveBeenCalled();
     });
   });
 

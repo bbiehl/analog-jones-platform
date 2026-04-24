@@ -149,6 +149,7 @@ export const EpisodeStore = signalStore(
       },
 
       clearSelectedEpisode() {
+        loadEpisodeByIdToken++;
         patchState(store, { selectedEpisode: null });
       },
     };
