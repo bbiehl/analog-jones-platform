@@ -2,6 +2,7 @@
 import { TestBed } from '@angular/core/testing';
 import type { Firestore } from 'firebase/firestore';
 import { FIRESTORE } from '../../../../../../libs/shared/firebase.token';
+import type { EpisodeWithRelations } from '../../../../../../libs/episode/episode.model';
 import { RelatedEpisodesService } from './related-episodes.service';
 
 describe('RelatedEpisodesService', () => {
@@ -378,6 +379,54 @@ describe('RelatedEpisodesService', () => {
 
       expect(genreLookupPerformed).toBe(false);
       expect(result.map((r) => r.id)).toEqual(['t1', 't2']);
+    });
+  });
+
+  describe('getRelatedEpisodes (public API)', () => {
+    const makeEpisode = (
+      overrides: Partial<EpisodeWithRelations> = {}
+    ): EpisodeWithRelations =>
+      ({
+        id: 'ep-source',
+        tags: [],
+        genres: [],
+        categories: [],
+        episodeDate: { toMillis: () => 0 },
+        ...overrides,
+      }) as unknown as EpisodeWithRelations;
+
+    it('should resolve to an empty list when the episode has no tags or genres', async () => {
+      const result = await service.getRelatedEpisodes(makeEpisode());
+
+      expect(result).toEqual([]);
+    });
+
+    it('should short-circuit with an empty list when max is 0', async () => {
+      const result = await service.getRelatedEpisodes(makeEpisode(), 0);
+
+      expect(result).toEqual([]);
+    });
+
+    it('should drop tag and genre entries with falsy ids before hitting firestore', async () => {
+      const episode = makeEpisode({
+        tags: [{ id: undefined }, { id: '' }] as unknown as EpisodeWithRelations['tags'],
+        genres: [{ id: undefined }] as unknown as EpisodeWithRelations['genres'],
+      });
+
+      const result = await service.getRelatedEpisodes(episode);
+
+      expect(result).toEqual([]);
+    });
+
+    it('should accept an episode whose tags/genres arrays are only populated with empty ids and still return []', async () => {
+      const episode = makeEpisode({
+        tags: [{ id: '' }, { id: '' }] as unknown as EpisodeWithRelations['tags'],
+        genres: [{ id: '' }] as unknown as EpisodeWithRelations['genres'],
+      });
+
+      const result = await service.getRelatedEpisodes(episode, 5);
+
+      expect(result).toEqual([]);
     });
   });
 
