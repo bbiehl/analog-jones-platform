@@ -1,6 +1,7 @@
 export const environment = {
   production: true,
   useEmulators: false,
+  recaptchaSiteKey: '6LcCo80sAAAAAHlQ-SvbJOzTe_OM8rtghAxH7y8J',
   firebaseConfig: {
     apiKey: 'AIzaSyDTqvdZ9ti_Fht7Gkp_m9FxS8qaGYLwjDs',
     authDomain: 'analog-jones-v2.firebaseapp.com',

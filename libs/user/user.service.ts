@@ -10,7 +10,9 @@ export class UserService {
   private firestore = inject(FIRESTORE);
 
   async signInWithGoogle(): Promise<User> {
-    const result = await signInWithPopup(this.auth, new GoogleAuthProvider());
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    const result = await signInWithPopup(this.auth, provider);
     return result.user;
   }
 
