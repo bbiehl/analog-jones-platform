@@ -109,23 +109,6 @@ describe('EpisodeDetail', () => {
       expect(chip.nativeElement.textContent).toContain('RETURN TO ARCHIVE');
     });
 
-    it('renders CASE number from the first 6 chars of the id, upper-cased', async () => {
-      await createComponent('ab12cd34ef56');
-      const caseValue = fixture.debugElement.query(By.css('.file-meta-row .v.mono'));
-      expect(caseValue.nativeElement.textContent.trim()).toBe('AB12CD');
-    });
-
-    it('renders the placeholder case number when no id is in the route', async () => {
-      await createComponent(null);
-      const caseValue = fixture.debugElement.query(By.css('.file-meta-row .v.mono'));
-      expect(caseValue.nativeElement.textContent.trim()).toBe('— — — — — —');
-    });
-
-    it('renders the static TRANSMISSION LOG file row', async () => {
-      await createComponent();
-      const html = fixture.nativeElement.textContent;
-      expect(html).toContain('TRANSMISSION LOG');
-    });
   });
 
   describe('dossier block', () => {

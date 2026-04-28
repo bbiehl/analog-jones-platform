@@ -81,20 +81,8 @@
 }
 
 .case-file-inner {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 28px;
+  display: flex;
   align-items: center;
-
-  @media (max-width: 760px) {
-    grid-template-columns: 1fr;
-    row-gap: 14px;
-
-    .file-meta {
-      grid-column: 1 / -1;
-      order: 3;
-    }
-  }
 }
 
 .back-chip {
@@ -128,45 +116,6 @@
       transform: translateX(-3px);
     }
   }
-}
-
-.file-meta {
-  display: inline-flex;
-  align-items: center;
-  gap: 16px;
-  justify-self: end;
-  padding: 8px 14px;
-  border: 1px dashed var(--line);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.7rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-
-  @media (max-width: 760px) {
-    justify-self: start;
-  }
-}
-
-.file-meta-row {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
-
-  .k {
-    color: var(--ink-mute);
-  }
-  .v {
-    color: var(--ink);
-  }
-  .v.mono {
-    color: var(--cyan);
-  }
-}
-
-.file-meta-divider {
-  width: 1px;
-  height: 14px;
-  background: var(--line);
 }
 
 .case-file-tracks {

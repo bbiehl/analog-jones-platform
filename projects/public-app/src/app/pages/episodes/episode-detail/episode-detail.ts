@@ -61,12 +61,6 @@ export class EpisodeDetail implements OnDestroy {
     return !!id && !!ep && ep.id === id;
   });
 
-  protected readonly caseNumber = computed(() => {
-    const id = this.id();
-    if (!id) return '— — — — — —';
-    return id.slice(0, 6).toUpperCase();
-  });
-
   private previousLoading = false;
 
   constructor() {
