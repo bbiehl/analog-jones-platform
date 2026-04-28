@@ -57,6 +57,7 @@
   background: linear-gradient(180deg, #13131e, #0e0e18);
 
   @media (max-width: 960px) {
+    width: 100%;
     max-width: 420px;
     margin: 0 auto;
   }
@@ -64,6 +65,7 @@
 
 .cover-skel {
   position: relative;
+  width: 100%;
   aspect-ratio: 2 / 3;
   border: 1px solid #2d2246;
   overflow: hidden;

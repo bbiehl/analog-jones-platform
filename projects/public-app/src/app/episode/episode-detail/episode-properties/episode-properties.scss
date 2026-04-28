@@ -55,6 +55,7 @@
 
   @media (max-width: 960px) {
     position: static;
+    width: 100%;
     max-width: 420px;
     margin: 0 auto;
   }
@@ -62,6 +63,7 @@
 
 .sleeve-cover {
   position: relative;
+  width: 100%;
   aspect-ratio: 2 / 3;
   overflow: hidden;
   border: 1px solid #2d2246;
