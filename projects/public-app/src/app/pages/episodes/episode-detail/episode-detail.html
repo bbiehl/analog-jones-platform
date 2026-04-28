@@ -33,7 +33,7 @@
     @if (loading() || !episode()) {
       <app-episode-properties-skeleton />
     } @else {
-      <app-episode-properties [episode]="episode()!" [caseNumber]="caseNumber()" />
+      <app-episode-properties [episode]="episode()!" />
     }
   </div>
 </section>

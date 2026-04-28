@@ -51,23 +51,7 @@ describe('EpisodeProperties', () => {
     expect(title.textContent).toContain('Hidden Mix');
   });
 
-  describe('case number', () => {
-    it('renders provided caseNumber in label', () => {
-      setInputs({ episode: makeEpisode(), caseNumber: 'AJ-0042' });
-      fixture.detectChanges();
-      const labelCase: HTMLElement = fixture.nativeElement.querySelector('.label-case');
-      expect(labelCase.textContent?.trim()).toBe('AJ-0042');
-    });
-
-    it('falls back to placeholder dashes when caseNumber is null', () => {
-      setInputs({ episode: makeEpisode() });
-      fixture.detectChanges();
-      const labelCase: HTMLElement = fixture.nativeElement.querySelector('.label-case');
-      expect(labelCase.textContent?.trim()).toBe('— — — —');
-    });
-  });
-
-  describe('chips row', () => {
+describe('chips row', () => {
     it('is omitted when there are no classifications', () => {
       setInputs({ episode: makeEpisode() });
       fixture.detectChanges();

@@ -90,32 +90,6 @@
   pointer-events: none;
 }
 
-.cover-label {
-  position: absolute;
-  left: 12px;
-  bottom: 12px;
-  right: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 10px;
-  background: rgba(10, 6, 18, 0.78);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.64rem;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: #fff;
-  backdrop-filter: blur(2px);
-
-  .label-side {
-    color: var(--ep-cyan);
-  }
-  .label-case {
-    color: var(--ep-amber);
-  }
-}
-
 .cover-scan {
   position: absolute;
   left: 0;
