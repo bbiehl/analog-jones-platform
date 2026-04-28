@@ -5,21 +5,6 @@
       <div class="cover-gleam"></div>
       <div class="cover-scan"></div>
     </div>
-
-    <dl class="sleeve-specs">
-      <div>
-        <dt>FMT</dt>
-        <dd>VHS</dd>
-      </div>
-      <div>
-        <dt>DATE</dt>
-        <dd>{{ episodeDate() | date: 'yy.MM.dd' }}</dd>
-      </div>
-      <div>
-        <dt>REEL</dt>
-        <dd>{{ episode().categories.length || '—' }}/{{ episode().genres.length || '—' }}/{{ episode().tags.length || '—' }}</dd>
-      </div>
-    </dl>
   </aside>
 
   <section class="file-body">

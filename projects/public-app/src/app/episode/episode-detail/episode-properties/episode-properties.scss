@@ -116,42 +116,6 @@
   }
 }
 
-.sleeve-specs {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  margin: 0;
-  padding: 0;
-  border: 1px solid var(--ep-line);
-  background: rgba(255, 255, 255, 0.015);
-
-  > div {
-    padding: 10px 12px;
-    border-right: 1px solid var(--ep-line);
-
-    &:last-child {
-      border-right: none;
-    }
-  }
-
-  dt {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.6rem;
-    letter-spacing: 0.2em;
-    color: var(--ep-ink-mute);
-    text-transform: uppercase;
-    margin-bottom: 4px;
-  }
-
-  dd {
-    margin: 0;
-    font-family: Orbitron, sans-serif;
-    font-weight: 700;
-    font-size: 0.85rem;
-    color: #fff;
-    letter-spacing: 0.04em;
-  }
-}
-
 /* File body — right column */
 .file-body {
   display: flex;
