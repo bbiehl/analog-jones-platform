@@ -60,30 +60,6 @@
   }
 }
 
-.sleeve-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--ep-line);
-
-  .spine-label {
-    font-family: Orbitron, sans-serif;
-    font-weight: 700;
-    font-size: 0.7rem;
-    letter-spacing: 0.32em;
-    color: var(--ep-accent);
-  }
-
-  .spine-spec {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.62rem;
-    letter-spacing: 0.18em;
-    color: var(--ep-ink-mute);
-    text-transform: uppercase;
-  }
-}
-
 .sleeve-cover {
   position: relative;
   aspect-ratio: 2 / 3;
