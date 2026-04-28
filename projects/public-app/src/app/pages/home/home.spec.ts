@@ -283,11 +283,13 @@ describe('Home', () => {
       expect(play!.getAttribute('href')).toBe('/episodes/feat-99');
     });
 
-    it('omits PLAY EPISODE link when there is no featured episode', async () => {
+    it('omits PLAY EPISODE link and renders skeleton placeholder when there is no featured episode', async () => {
       const { fixture } = await setup();
-      const text = fixture.nativeElement.querySelector('.hero .cta')?.textContent ?? '';
-      expect(text).not.toContain('PLAY EPISODE');
-      expect(text).toContain('ENTER THE ARCHIVE');
+      const cta = fixture.nativeElement.querySelector('.hero .cta');
+      const links = Array.from(cta?.querySelectorAll('a') ?? []) as HTMLAnchorElement[];
+      expect(links.find((a) => a.textContent?.includes('PLAY EPISODE'))).toBeUndefined();
+      expect(cta?.querySelector('.btn--skeleton')).toBeTruthy();
+      expect(cta?.textContent ?? '').toContain('ENTER THE ARCHIVE');
     });
 
     it('renders padded TAPES CATALOGED count', async () => {

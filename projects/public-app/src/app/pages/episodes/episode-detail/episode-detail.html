@@ -7,23 +7,6 @@
       <span class="arrow" aria-hidden="true">◀</span>
       <span>RETURN TO ARCHIVE</span>
     </a>
-
-    <div class="file-meta" aria-hidden="true">
-      <div class="file-meta-row">
-        <span class="k">CASE</span>
-        <span class="v mono">{{ caseNumber() }}</span>
-      </div>
-      <div class="file-meta-divider"></div>
-      <div class="file-meta-row">
-        <span class="k">FILE</span>
-        <span class="v">TRANSMISSION LOG</span>
-      </div>
-    </div>
-
-    <div class="rec-badge" aria-hidden="true">
-      <span class="rec-dot"></span>
-      <span>REC</span>
-    </div>
   </div>
   <div class="case-file-tracks" aria-hidden="true"></div>
 </section>
@@ -33,7 +16,7 @@
     @if (loading() || !episode()) {
       <app-episode-properties-skeleton />
     } @else {
-      <app-episode-properties [episode]="episode()!" [caseNumber]="caseNumber()" />
+      <app-episode-properties [episode]="episode()!" />
     }
   </div>
 </section>

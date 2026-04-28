@@ -12,7 +12,6 @@ import { EpisodeWithRelations } from '../../../../../../../libs/episode/episode.
 })
 export class EpisodeProperties {
   readonly episode = input.required<EpisodeWithRelations>();
-  readonly caseNumber = input<string | null>(null);
 
   protected readonly intelligenceHtml = computed<string | null>(() => {
     const raw = this.episode().intelligence;

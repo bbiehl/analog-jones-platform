@@ -1,39 +1,10 @@
 <article class="tape-file">
   <aside class="sleeve" aria-hidden="true">
-    <div class="sleeve-top">
-      <span class="spine-label">ANALOG JONES</span>
-      <span class="spine-spec">VHS · HI-FI · T-120</span>
-    </div>
-
     <div class="sleeve-cover" [style.background]="sleeveBackground()">
       <div class="cover-noise"></div>
       <div class="cover-gleam"></div>
-      <div class="cover-label">
-        <span class="label-side">SIDE A</span>
-        <span class="label-case">{{ caseNumber() ?? '— — — —' }}</span>
-      </div>
       <div class="cover-scan"></div>
     </div>
-
-    <div class="sleeve-barcode">
-      <div class="bars"></div>
-      <span class="barcode-id">{{ caseNumber() ?? '------' }}</span>
-    </div>
-
-    <dl class="sleeve-specs">
-      <div>
-        <dt>FMT</dt>
-        <dd>VHS</dd>
-      </div>
-      <div>
-        <dt>DATE</dt>
-        <dd>{{ episodeDate() | date: 'yy.MM.dd' }}</dd>
-      </div>
-      <div>
-        <dt>REEL</dt>
-        <dd>{{ episode().categories.length || '—' }}/{{ episode().genres.length || '—' }}/{{ episode().tags.length || '—' }}</dd>
-      </div>
-    </dl>
   </aside>
 
   <section class="file-body">

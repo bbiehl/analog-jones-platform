@@ -51,27 +51,7 @@ describe('EpisodeProperties', () => {
     expect(title.textContent).toContain('Hidden Mix');
   });
 
-  describe('case number', () => {
-    it('renders provided caseNumber in label and barcode', () => {
-      setInputs({ episode: makeEpisode(), caseNumber: 'AJ-0042' });
-      fixture.detectChanges();
-      const labelCase: HTMLElement = fixture.nativeElement.querySelector('.label-case');
-      const barcodeId: HTMLElement = fixture.nativeElement.querySelector('.barcode-id');
-      expect(labelCase.textContent?.trim()).toBe('AJ-0042');
-      expect(barcodeId.textContent?.trim()).toBe('AJ-0042');
-    });
-
-    it('falls back to placeholder dashes when caseNumber is null', () => {
-      setInputs({ episode: makeEpisode() });
-      fixture.detectChanges();
-      const labelCase: HTMLElement = fixture.nativeElement.querySelector('.label-case');
-      const barcodeId: HTMLElement = fixture.nativeElement.querySelector('.barcode-id');
-      expect(labelCase.textContent?.trim()).toBe('— — — —');
-      expect(barcodeId.textContent?.trim()).toBe('------');
-    });
-  });
-
-  describe('chips row', () => {
+describe('chips row', () => {
     it('is omitted when there are no classifications', () => {
       setInputs({ episode: makeEpisode() });
       fixture.detectChanges();
@@ -92,35 +72,6 @@ describe('EpisodeProperties', () => {
       expect(chipsRow.querySelector('.chip--accent').textContent.trim()).toBe('Music');
       expect(chipsRow.querySelector('.chip--cyan').textContent.trim()).toBe('Synthwave');
       expect(chipsRow.querySelector('.chip--amber').textContent.trim()).toBe('#vhs');
-    });
-  });
-
-  describe('REEL spec', () => {
-    it('shows counts of categories/genres/tags', () => {
-      setInputs({
-        episode: makeEpisode({
-          categories: [
-            { id: 'c1', name: 'A', slug: 'a' },
-            { id: 'c2', name: 'B', slug: 'b' },
-          ],
-          genres: [{ id: 'g1', name: 'G', slug: 'g' }],
-          tags: [
-            { id: 't1', name: 'x', slug: 'x' },
-            { id: 't2', name: 'y', slug: 'y' },
-            { id: 't3', name: 'z', slug: 'z' },
-          ],
-        }),
-      });
-      fixture.detectChanges();
-      const reel: HTMLElement = fixture.nativeElement.querySelectorAll('.sleeve-specs dd')[2];
-      expect(reel.textContent?.trim()).toBe('2/1/3');
-    });
-
-    it('shows dashes when all classification arrays are empty', () => {
-      setInputs({ episode: makeEpisode() });
-      fixture.detectChanges();
-      const reel: HTMLElement = fixture.nativeElement.querySelectorAll('.sleeve-specs dd')[2];
-      expect(reel.textContent?.trim()).toBe('—/—/—');
     });
   });
 

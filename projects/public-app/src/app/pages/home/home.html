@@ -21,6 +21,8 @@
       <div class="cta">
         @if (featured(); as f) {
           <a class="btn primary" [routerLink]="['/episodes', f.id]">▶ PLAY EPISODE</a>
+        } @else {
+          <span class="btn btn--skeleton" aria-hidden="true">▶ PLAY EPISODE</span>
         }
         <a class="btn" routerLink="/episodes"><span class="dot"></span> ENTER THE ARCHIVE</a>
       </div>

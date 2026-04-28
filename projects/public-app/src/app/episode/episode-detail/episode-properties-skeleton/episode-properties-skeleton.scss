@@ -47,7 +47,7 @@
   }
 }
 
-/* Sleeve skeleton */
+/* Sleeve skeleton — mirrors .sleeve in episode-properties */
 .sleeve-skel {
   display: flex;
   flex-direction: column;
@@ -59,24 +59,6 @@
   @media (max-width: 960px) {
     max-width: 420px;
     margin: 0 auto;
-  }
-}
-
-.sleeve-top-skel {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--sk-line);
-
-  .pulse {
-    height: 10px;
-  }
-  .w-short {
-    width: 120px;
-  }
-  .w-tiny {
-    width: 70px;
   }
 }
 
@@ -112,54 +94,7 @@
   }
 }
 
-.barcode-skel {
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.85);
-
-  .bars {
-    height: 34px;
-    background-image: repeating-linear-gradient(
-      90deg,
-      #0b0b12 0 2px,
-      #fff 2px 4px,
-      #0b0b12 4px 5px,
-      #fff 5px 9px,
-      #0b0b12 9px 12px,
-      #fff 12px 14px
-    );
-    opacity: 0.6;
-  }
-}
-
-.specs-skel {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  border: 1px solid var(--sk-line);
-
-  > div {
-    padding: 10px 12px;
-    border-right: 1px solid var(--sk-line);
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-
-    &:last-child {
-      border-right: none;
-    }
-  }
-
-  .h-tiny {
-    height: 8px;
-  }
-  .h-small {
-    height: 12px;
-  }
-  .w-half {
-    width: 50%;
-  }
-}
-
-/* Body skeleton */
+/* Body skeleton — mirrors .file-body */
 .body-skel {
   display: flex;
   flex-direction: column;
@@ -182,24 +117,27 @@
     gap: 0;
   }
 
-  .h-tiny {
-    height: 12px;
-  }
   .h-title {
     /* Mirrors .file-title font-size × line-height (0.88) so each pulse row
        matches one rendered line of the real h1. */
     height: clamp(38.72px, 5.72vw, 84.48px);
     border-radius: 2px;
   }
-  .w-eyebrow {
-    width: 240px;
-  }
-  .w-sub {
-    width: 200px;
-  }
   .w-half {
     width: 60%;
   }
+}
+
+/* Eyebrow row — matches .file-eyebrow line-box (0.72rem × ~1.5 line-height). */
+.eyebrow-skel {
+  height: 16px;
+  width: 240px;
+}
+
+/* Sub row — matches .file-sub line-box (0.7rem × ~1.5 line-height). */
+.sub-skel {
+  height: 16px;
+  width: 200px;
 }
 
 .chips-skel {
@@ -227,14 +165,21 @@
 }
 
 .tx-head-skel {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   padding: 12px 18px;
   border-bottom: 1px solid var(--sk-line);
 
-  .h-small {
-    height: 12px;
+  .h-head-label {
+    height: 14px;
   }
   .w-header {
     width: 180px;
+  }
+  .w-meta {
+    width: 90px;
+    margin-left: auto;
   }
 }
 

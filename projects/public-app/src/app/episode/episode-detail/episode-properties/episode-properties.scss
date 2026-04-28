@@ -60,30 +60,6 @@
   }
 }
 
-.sleeve-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--ep-line);
-
-  .spine-label {
-    font-family: Orbitron, sans-serif;
-    font-weight: 700;
-    font-size: 0.7rem;
-    letter-spacing: 0.32em;
-    color: var(--ep-accent);
-  }
-
-  .spine-spec {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.62rem;
-    letter-spacing: 0.18em;
-    color: var(--ep-ink-mute);
-    text-transform: uppercase;
-  }
-}
-
 .sleeve-cover {
   position: relative;
   aspect-ratio: 2 / 3;
@@ -114,32 +90,6 @@
   pointer-events: none;
 }
 
-.cover-label {
-  position: absolute;
-  left: 12px;
-  bottom: 12px;
-  right: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 10px;
-  background: rgba(10, 6, 18, 0.78);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.64rem;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: #fff;
-  backdrop-filter: blur(2px);
-
-  .label-side {
-    color: var(--ep-cyan);
-  }
-  .label-case {
-    color: var(--ep-amber);
-  }
-}
-
 .cover-scan {
   position: absolute;
   left: 0;
@@ -163,74 +113,6 @@
   }
   100% {
     transform: translateY(280%);
-  }
-}
-
-.sleeve-barcode {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  background: #fff;
-  color: #0b0b12;
-
-  .bars {
-    flex: 1;
-    height: 34px;
-    background-image: repeating-linear-gradient(
-      90deg,
-      #0b0b12 0 2px,
-      #fff 2px 4px,
-      #0b0b12 4px 5px,
-      #fff 5px 9px,
-      #0b0b12 9px 12px,
-      #fff 12px 14px
-    );
-  }
-
-  .barcode-id {
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 700;
-    font-size: 0.72rem;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-  }
-}
-
-.sleeve-specs {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  margin: 0;
-  padding: 0;
-  border: 1px solid var(--ep-line);
-  background: rgba(255, 255, 255, 0.015);
-
-  > div {
-    padding: 10px 12px;
-    border-right: 1px solid var(--ep-line);
-
-    &:last-child {
-      border-right: none;
-    }
-  }
-
-  dt {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.6rem;
-    letter-spacing: 0.2em;
-    color: var(--ep-ink-mute);
-    text-transform: uppercase;
-    margin-bottom: 4px;
-  }
-
-  dd {
-    margin: 0;
-    font-family: Orbitron, sans-serif;
-    font-weight: 700;
-    font-size: 0.85rem;
-    color: #fff;
-    letter-spacing: 0.04em;
   }
 }
 
