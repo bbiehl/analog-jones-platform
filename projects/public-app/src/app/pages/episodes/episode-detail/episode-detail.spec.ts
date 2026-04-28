@@ -121,11 +121,10 @@ describe('EpisodeDetail', () => {
       expect(caseValue.nativeElement.textContent.trim()).toBe('— — — — — —');
     });
 
-    it('renders the static TRANSMISSION LOG file row and REC badge', async () => {
+    it('renders the static TRANSMISSION LOG file row', async () => {
       await createComponent();
       const html = fixture.nativeElement.textContent;
       expect(html).toContain('TRANSMISSION LOG');
-      expect(html).toContain('REC');
     });
   });
 

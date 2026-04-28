@@ -82,12 +82,12 @@
 
 .case-file-inner {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr;
   gap: 28px;
   align-items: center;
 
   @media (max-width: 760px) {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
     row-gap: 14px;
 
     .file-meta {
@@ -169,30 +169,6 @@
   background: var(--line);
 }
 
-.rec-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border: 1px solid var(--red);
-  color: var(--red);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  background: rgba(255, 77, 77, 0.06);
-  justify-self: end;
-
-  .rec-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
-    background: var(--red);
-    box-shadow: 0 0 10px var(--red);
-    animation: blink 1.2s infinite;
-  }
-}
-
 .case-file-tracks {
   position: absolute;
   left: 0;
@@ -207,12 +183,6 @@
     transparent 18px 30px
   );
   opacity: 0.35;
-}
-
-@keyframes blink {
-  50% {
-    opacity: 0.25;
-  }
 }
 
 /* ==========================================================================
