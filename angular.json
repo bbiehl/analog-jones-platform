@@ -86,7 +86,10 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "setupFiles": ["projects/public-app/src/test-setup.ts"]
+          }
         },
         "e2e": {
           "builder": "playwright-ng-schematics:playwright",
@@ -179,7 +182,8 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "include": ["**/*.spec.ts", "../../../libs/**/*.spec.ts"]
+            "include": ["**/*.spec.ts", "../../../libs/**/*.spec.ts"],
+            "setupFiles": ["projects/admin-app/src/test-setup.ts"]
           }
         },
         "e2e": {
