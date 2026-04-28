@@ -142,38 +142,6 @@
   }
 }
 
-.sleeve-barcode {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  background: #fff;
-  color: #0b0b12;
-
-  .bars {
-    flex: 1;
-    height: 34px;
-    background-image: repeating-linear-gradient(
-      90deg,
-      #0b0b12 0 2px,
-      #fff 2px 4px,
-      #0b0b12 4px 5px,
-      #fff 5px 9px,
-      #0b0b12 9px 12px,
-      #fff 12px 14px
-    );
-  }
-
-  .barcode-id {
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 700;
-    font-size: 0.72rem;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-  }
-}
-
 .sleeve-specs {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
