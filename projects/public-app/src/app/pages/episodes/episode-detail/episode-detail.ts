@@ -10,6 +10,15 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { EpisodeStore } from '../../../../../../../libs/episode/episode.store';
+import { SeoService } from '../../../../../../../libs/shared/seo/seo.service';
+import {
+  breadcrumbList,
+  organization,
+  podcastEpisode,
+  website,
+} from '../../../../../../../libs/shared/seo/seo.schemas';
+import { ORIGIN } from '../../../../../../../libs/shared/seo/origin.token';
+import { stripMarkdown } from '../../../../../../../libs/shared/seo/seo.text';
 import { EpisodeProperties } from '../../../episode/episode-detail/episode-properties/episode-properties';
 import { EpisodePropertiesSkeleton } from '../../../episode/episode-detail/episode-properties-skeleton/episode-properties-skeleton';
 import { RelatedEpisodeStore } from '../../../episode/episode-detail/related-episode.store';
@@ -35,6 +44,8 @@ export class EpisodeDetail implements OnDestroy {
   private readonly router = inject(Router);
   private readonly episodeStore = inject(EpisodeStore);
   private readonly relatedStore = inject(RelatedEpisodeStore);
+  private readonly seo = inject(SeoService);
+  private readonly origin = inject(ORIGIN);
 
   protected readonly id = toSignal(this.route.paramMap.pipe(map((p) => p.get('id'))), {
     initialValue: null,
@@ -71,6 +82,7 @@ export class EpisodeDetail implements OnDestroy {
       const ep = this.episode();
       if (id && ep && ep.id === id && ep.isVisible) {
         this.relatedStore.loadRelatedEpisodes(ep);
+        this.applyEpisodeSeo(ep);
       }
     });
 
@@ -93,5 +105,29 @@ export class EpisodeDetail implements OnDestroy {
   ngOnDestroy(): void {
     this.episodeStore.clearSelectedEpisode();
     this.relatedStore.clearRelatedEpisodes();
+  }
+
+  private applyEpisodeSeo(ep: NonNullable<ReturnType<typeof this.episode>>): void {
+    const path = `/episodes/${ep.id}`;
+    const description =
+      stripMarkdown(ep.intelligence, 160) ||
+      `Episode of ${ep.title} on Analog Jones and the Temple of Film.`;
+    this.seo.setHead({
+      title: ep.title,
+      description,
+      path,
+      image: ep.posterUrl ?? undefined,
+      type: 'article',
+      jsonLd: [
+        organization(this.origin),
+        website(this.origin),
+        podcastEpisode(ep, this.origin),
+        breadcrumbList(this.origin, [
+          { name: 'Home', path: '/' },
+          { name: 'Episodes', path: '/episodes' },
+          { name: ep.title, path },
+        ]),
+      ],
+    });
   }
 }

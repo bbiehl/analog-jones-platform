@@ -1,8 +1,9 @@
 import { signal, WritableSignal } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, DeferBlockState, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { Timestamp } from 'firebase/firestore';
+import { marked } from 'marked';
 
 import { Episode, EpisodeWithRelations } from '../../../../../../libs/episode/episode.model';
 import { EpisodeStore } from '../../../../../../libs/episode/episode.store';
@@ -99,8 +100,10 @@ describe('Home', () => {
     it('featured is null when list is empty', async () => {
       const { component, fixture } = await setup();
       expect(component['featured']()).toBeNull();
-      expect(fixture.nativeElement.querySelector('.monitor')).toBeNull();
-      expect(fixture.nativeElement.querySelector('#drop')).toBeNull();
+      // Monitor and Drop render skeleton placeholders to reserve layout when no
+      // featured episode is available — the interactive content is gated.
+      expect(fixture.nativeElement.querySelector('a.monitor')).toBeNull();
+      expect(fixture.nativeElement.querySelector('#drop .body h3')).toBeNull();
     });
   });
 
@@ -176,6 +179,7 @@ describe('Home', () => {
       const long = 'word '.repeat(400);
       const ep = makeEpisode({ intelligence: long });
       const { component } = await setup({ episodes: signal([ep]) });
+      component['markedParse'].set((src) => marked.parse(src) as string);
       const rendered = component['featuredIntelligence']() as string;
       expect(rendered).toContain('…');
       expect(rendered.trim().startsWith('<p>')).toBe(true);
@@ -184,6 +188,7 @@ describe('Home', () => {
     it('leaves short markdown unchanged (no ellipsis)', async () => {
       const ep = makeEpisode({ intelligence: '**hello** world' });
       const { component } = await setup({ episodes: signal([ep]) });
+      component['markedParse'].set((src) => marked.parse(src) as string);
       const rendered = component['featuredIntelligence']() as string;
       expect(rendered).toContain('<strong>hello</strong>');
       expect(rendered).not.toContain('…');
@@ -266,9 +271,131 @@ describe('Home', () => {
     });
   });
 
+  describe('Hero section template', () => {
+    it('shows PLAY EPISODE link routing to featured when present', async () => {
+      const ep = makeEpisode({ id: 'feat-99' });
+      const { fixture } = await setup({ episodes: signal([ep]) });
+      const links = Array.from(
+        fixture.nativeElement.querySelectorAll('.hero .cta a')
+      ) as HTMLAnchorElement[];
+      const play = links.find((a) => a.textContent?.includes('PLAY EPISODE'));
+      expect(play).toBeTruthy();
+      expect(play!.getAttribute('href')).toBe('/episodes/feat-99');
+    });
+
+    it('omits PLAY EPISODE link when there is no featured episode', async () => {
+      const { fixture } = await setup();
+      const text = fixture.nativeElement.querySelector('.hero .cta')?.textContent ?? '';
+      expect(text).not.toContain('PLAY EPISODE');
+      expect(text).toContain('ENTER THE ARCHIVE');
+    });
+
+    it('renders padded TAPES CATALOGED count', async () => {
+      const eps = Array.from({ length: 7 }, (_, i) => makeEpisode({ id: `e${i}` }));
+      const { fixture } = await setup({ episodes: signal(eps) });
+      const value = fixture.nativeElement.querySelector('.hero-meta .m .v')?.textContent ?? '';
+      expect(value).toContain('07');
+    });
+
+    it('renders monitor with title, formatted date, and glow style when featured', async () => {
+      const ep = makeEpisode({ id: 'mon-1', title: 'Monitor Tape' });
+      const { fixture } = await setup({ episodes: signal([ep]) });
+      const monitor = fixture.nativeElement.querySelector('a.monitor') as HTMLAnchorElement;
+      expect(monitor).toBeTruthy();
+      expect(monitor.getAttribute('href')).toBe('/episodes/mon-1');
+      expect(monitor.getAttribute('aria-label')).toBe('Open Monitor Tape');
+      expect(monitor.querySelector('.pl-title')?.textContent).toBe('Monitor Tape');
+      expect(monitor.querySelector('.pl-meta')?.textContent).toMatch(/· 2024/);
+      expect(monitor.querySelector('.monitor-glow')).toBeTruthy();
+    });
+  });
+
+  describe('Drop section see-all + intelligence', () => {
+    it('renders padded ALL XX TAPES link with episode count', async () => {
+      const eps = Array.from({ length: 12 }, (_, i) => makeEpisode({ id: `e${i}` }));
+      const { fixture } = await setup({ episodes: signal(eps) });
+      const seeAll = fixture.nativeElement.querySelector('#drop .see-all') as HTMLAnchorElement;
+      expect(seeAll.textContent).toContain('ALL 12 TAPES');
+      expect(seeAll.getAttribute('href')).toBe('/episodes');
+    });
+
+    it('renders featuredIntelligence into .notes via innerHTML', async () => {
+      const ep = makeEpisode({ intelligence: '**bold**' });
+      const { fixture, component } = await setup({ episodes: signal([ep]) });
+      component['markedParse'].set((src) => marked.parse(src) as string);
+      fixture.detectChanges();
+      const notes = fixture.nativeElement.querySelector('#drop .notes') as HTMLElement;
+      expect(notes).toBeTruthy();
+      expect(notes.querySelector('strong')?.textContent).toBe('bold');
+    });
+
+    it('omits .notes when featuredIntelligence is null', async () => {
+      const { fixture } = await setup({ episodes: signal([makeEpisode({ intelligence: null })]) });
+      expect(fixture.nativeElement.querySelector('#drop .notes')).toBeNull();
+    });
+
+    it('always renders SHOW NOTES link when featured exists', async () => {
+      const ep = makeEpisode({ id: 'sn-1' });
+      const { fixture } = await setup({ episodes: signal([ep]) });
+      const links = Array.from(
+        fixture.nativeElement.querySelectorAll('#drop .actions a')
+      ) as HTMLAnchorElement[];
+      const showNotes = links.find((a) => a.textContent?.includes('SHOW NOTES'));
+      expect(showNotes).toBeTruthy();
+      expect(showNotes!.getAttribute('href')).toBe('/episodes/sn-1');
+    });
+  });
+
+  describe('toDate', () => {
+    it('converts a Firestore Timestamp to a Date', async () => {
+      const { component } = await setup();
+      const ep = makeEpisode();
+      const d = component['toDate'](ep);
+      expect(d).toBeInstanceOf(Date);
+      expect(d.toISOString()).toBe('2024-06-01T00:00:00.000Z');
+    });
+  });
+
+  describe('Trio defer block', () => {
+    it('renders three host cards when complete', async () => {
+      const { fixture } = await setup();
+      const blocks = await fixture.getDeferBlocks();
+      // shelf=0, trio=1, listen=2
+      await blocks[1].render(DeferBlockState.Complete);
+      const hosts = fixture.nativeElement.querySelectorAll('.hosts .host');
+      expect(hosts.length).toBe(3);
+      const inits = Array.from(fixture.nativeElement.querySelectorAll('.hosts .av')).map((el) =>
+        (el as HTMLElement).getAttribute('data-init')
+      );
+      expect(inits).toEqual(['ST', 'CH', 'BR']);
+    });
+  });
+
+  describe('Listen defer block', () => {
+    it('renders Spotify and YouTube cards with external links', async () => {
+      const { fixture } = await setup();
+      const blocks = await fixture.getDeferBlocks();
+      await blocks[2].render(DeferBlockState.Complete);
+      const spotify = fixture.nativeElement.querySelector(
+        '#listen .card.spotify a.btn.primary'
+      ) as HTMLAnchorElement;
+      const youtube = fixture.nativeElement.querySelector(
+        '#listen .card.youtube a.btn.primary'
+      ) as HTMLAnchorElement;
+      expect(spotify.getAttribute('href')).toContain('open.spotify.com');
+      expect(spotify.getAttribute('target')).toBe('_blank');
+      expect(spotify.getAttribute('rel')).toBe('noopener');
+      expect(youtube.getAttribute('href')).toContain('youtube.com');
+      expect(youtube.getAttribute('target')).toBe('_blank');
+      expect(youtube.getAttribute('rel')).toBe('noopener');
+    });
+  });
+
   it('passes shelfEpisodes into <app-episode-scroller>', async () => {
     const eps = Array.from({ length: 5 }, (_, i) => makeEpisode({ id: `e${i}` }));
     const { fixture } = await setup({ episodes: signal(eps) });
+    const [shelfDeferBlock] = await fixture.getDeferBlocks();
+    await shelfDeferBlock.render(DeferBlockState.Complete);
     const scroller = fixture.debugElement.query(By.directive(EpisodeScroller))
       .componentInstance as EpisodeScroller;
     expect(scroller.episodes().length).toBe(4);

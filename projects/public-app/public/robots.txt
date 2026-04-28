@@ -1,0 +1,27 @@
+User-agent: *
+Allow: /
+Disallow: /not-found
+
+# AI / LLM crawlers — explicitly allowed.
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+Sitemap: https://analogjonestof.com/sitemap.xml

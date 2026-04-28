@@ -36,7 +36,7 @@
   h2,
   h3,
   h4 {
-    font-family: Orbitron, sans-serif;
+    font-family: Orbitron, 'Orbitron Fallback', sans-serif;
     font-weight: 700;
     letter-spacing: 0.02em;
     margin: 0;
@@ -72,8 +72,25 @@
   background: linear-gradient(to bottom, transparent 0%, rgba(213, 186, 255, 0.04) 50%, transparent 100%);
   background-size: 100% 8px;
   animation: roll 5.5s linear infinite;
+  animation-play-state: paused;
   mix-blend-mode: screen;
   opacity: var(--roll-a);
+}
+
+:host(.warm) .scanlines::after,
+:host(.warm) .grain,
+:host(.warm) .static-bg::before,
+:host(.warm) .tracking {
+  animation-play-state: running;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host(.warm) .scanlines::after,
+  :host(.warm) .grain,
+  :host(.warm) .static-bg::before,
+  :host(.warm) .tracking {
+    animation-play-state: paused;
+  }
 }
 
 @keyframes roll {
@@ -90,6 +107,7 @@
   opacity: var(--grain-a);
   mix-blend-mode: overlay;
   animation: grainShift 0.9s steps(6) infinite;
+  animation-play-state: paused;
 }
 
 @keyframes grainShift {
@@ -119,6 +137,7 @@
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='420' height='420'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.6' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.45  0 0 0 0 0.9  0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)' /></svg>");
     opacity: 0.35;
     animation: staticMove 0.18s steps(4) infinite;
+    animation-play-state: paused;
   }
 
   &::after {
@@ -146,6 +165,7 @@
   opacity: 0.22;
   filter: blur(0.4px);
   animation: trackFlick 4.5s steps(1) infinite;
+  animation-play-state: paused;
   mix-blend-mode: screen;
 }
 
@@ -164,7 +184,7 @@
   gap: 0.6rem;
   padding: 0.8rem 1.1rem;
   border: 1px solid var(--line);
-  font-family: Orbitron, sans-serif;
+  font-family: Orbitron, 'Orbitron Fallback', sans-serif;
   letter-spacing: 0.12em;
   font-size: 0.78rem;
   text-transform: uppercase;
@@ -269,7 +289,7 @@
     bottom: 0;
     padding: 14px 14px 12px;
     background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.85));
-    font-family: 'Barlow Condensed', sans-serif;
+    font-family: 'Barlow Condensed', 'Barlow Condensed Fallback', sans-serif;
     font-weight: 800;
     line-height: 0.92;
     text-transform: uppercase;
@@ -295,6 +315,17 @@
 :focus-visible {
   outline: 2px solid var(--cyan);
   outline-offset: 3px;
+}
+
+/* Defer placeholders — reserve space so on-viewport hydration doesn't shift layout */
+.defer-shelf {
+  min-height: 420px;
+}
+.defer-trio {
+  min-height: 360px;
+}
+.defer-listen {
+  min-height: 360px;
 }
 
 /* Layout */
@@ -334,7 +365,7 @@
 }
 
 .hero h1 {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Barlow Condensed', 'Barlow Condensed Fallback', sans-serif;
   font-weight: 800;
   font-size: clamp(52px, 8.2vw, 134px);
   line-height: 0.88;
@@ -347,7 +378,7 @@
     color: var(--accent);
   }
   .amp {
-    font-family: Orbitron, sans-serif;
+    font-family: Orbitron, 'Orbitron Fallback', sans-serif;
     font-weight: 500;
     font-size: 0.55em;
     color: var(--ink-dim);
@@ -362,7 +393,7 @@
 
 .hero .of-film {
   color: var(--cyan);
-  font-family: Orbitron, sans-serif;
+  font-family: Orbitron, 'Orbitron Fallback', sans-serif;
   font-weight: 700;
   font-size: clamp(18px, 1.9vw, 32px);
   letter-spacing: 0.18em;
@@ -501,7 +532,7 @@
     left: 20px;
     right: 20px;
     bottom: 60px;
-    font-family: 'Barlow Condensed', sans-serif;
+    font-family: 'Barlow Condensed', 'Barlow Condensed Fallback', sans-serif;
     font-weight: 800;
     font-size: clamp(22px, 2.4vw, 40px);
     line-height: 0.92;
@@ -548,7 +579,7 @@
       margin-bottom: 8px;
     }
     .v {
-      font-family: Orbitron, sans-serif;
+      font-family: Orbitron, 'Orbitron Fallback', sans-serif;
       font-weight: 700;
       font-size: 1.45rem;
       color: #fff;
@@ -609,7 +640,7 @@ section.block {
 
   h2 {
     max-width: 22ch;
-    font-family: 'Barlow Condensed', sans-serif;
+    font-family: 'Barlow Condensed', 'Barlow Condensed Fallback', sans-serif;
     font-weight: 800;
     text-transform: uppercase;
     font-size: clamp(34px, 4.4vw, 64px);
@@ -619,7 +650,7 @@ section.block {
 
     small {
       display: block;
-      font-family: Orbitron, sans-serif;
+      font-family: Orbitron, 'Orbitron Fallback', sans-serif;
       font-weight: 500;
       font-size: 0.22em;
       color: var(--accent);
@@ -657,7 +688,7 @@ section.block {
 
   .body {
     h3 {
-      font-family: 'Barlow Condensed', sans-serif;
+      font-family: 'Barlow Condensed', 'Barlow Condensed Fallback', sans-serif;
       font-weight: 800;
       font-size: clamp(40px, 5vw, 76px);
       line-height: 0.9;
@@ -680,7 +711,7 @@ section.block {
       max-width: 62ch;
 
       h4 {
-        font-family: Orbitron, sans-serif;
+        font-family: Orbitron, 'Orbitron Fallback', sans-serif;
         font-size: 0.85rem;
         letter-spacing: 0.18em;
         text-transform: uppercase;
@@ -701,7 +732,7 @@ section.block {
         padding: 6px 0 6px 14px;
         margin: 20px 0;
         color: #fff;
-        font-family: Orbitron, sans-serif;
+        font-family: Orbitron, 'Orbitron Fallback', sans-serif;
         letter-spacing: 0.04em;
         font-size: 1.05rem;
       }
@@ -804,7 +835,7 @@ section.block {
       inset: 0;
       display: grid;
       place-items: center;
-      font-family: Orbitron, sans-serif;
+      font-family: Orbitron, 'Orbitron Fallback', sans-serif;
       font-weight: 900;
       font-size: 1.6rem;
       color: #fff;
@@ -814,7 +845,7 @@ section.block {
   }
 
   h4 {
-    font-family: Orbitron, sans-serif;
+    font-family: Orbitron, 'Orbitron Fallback', sans-serif;
     font-size: 1rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -868,7 +899,7 @@ section.block {
   }
 
   h3 {
-    font-family: 'Barlow Condensed', sans-serif;
+    font-family: 'Barlow Condensed', 'Barlow Condensed Fallback', sans-serif;
     font-weight: 800;
     font-size: 2.4rem;
     text-transform: uppercase;

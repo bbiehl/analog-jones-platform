@@ -11,3 +11,8 @@
     padding-right: 20px;
   }
 }
+
+/* Defer placeholders — reserve space so on-viewport hydration doesn't shift layout */
+.defer-shelf {
+  min-height: 420px;
+}

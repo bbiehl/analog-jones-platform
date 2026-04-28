@@ -1,9 +1,11 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, DeferBlockState, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { Timestamp } from 'firebase/firestore';
 
 import { Episodes } from './episodes';
+import { EpisodeScroller } from '../../episode/episode-scroller/episode-scroller';
 import { EpisodeListStore } from '../../episode/episode-list.store';
 import { Episode } from '../../../../../../libs/episode/episode.model';
 
@@ -150,6 +152,95 @@ describe('Episodes', () => {
       expect(host.querySelector('[aria-busy="true"]')).toBeNull();
       expect(host.querySelector('[role="alert"]')).toBeNull();
       expect(host.textContent).not.toContain('No episodes found.');
+    });
+  });
+
+  describe('eager vs deferred rendering', () => {
+    it('renders only the first two genres eagerly and defers the rest as placeholders', () => {
+      episodesByGenre.set({
+        Rock: [makeEpisode('e1', 'A')],
+        Jazz: [makeEpisode('e2', 'B')],
+        Pop: [makeEpisode('e3', 'C')],
+        Folk: [makeEpisode('e4', 'D')],
+      });
+      fixture.detectChanges();
+
+      const eagerScrollers = fixture.debugElement.queryAll(By.directive(EpisodeScroller));
+      expect(eagerScrollers.length).toBe(2);
+
+      const placeholders = fixture.nativeElement.querySelectorAll('div.defer-shelf');
+      expect(placeholders.length).toBe(2);
+      placeholders.forEach((el: Element) => {
+        expect(el.getAttribute('aria-hidden')).toBe('true');
+      });
+    });
+
+    it('renders no defer placeholders when there are two or fewer genres', () => {
+      episodesByGenre.set({
+        Rock: [makeEpisode('e1', 'A')],
+        Jazz: [makeEpisode('e2', 'B')],
+      });
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelectorAll('div.defer-shelf').length).toBe(0);
+      expect(fixture.debugElement.queryAll(By.directive(EpisodeScroller)).length).toBe(2);
+    });
+
+    it('renders the deferred scroller once its defer block completes', async () => {
+      episodesByGenre.set({
+        Rock: [makeEpisode('e1', 'A')],
+        Jazz: [makeEpisode('e2', 'B')],
+        Pop: [makeEpisode('e3', 'C')],
+      });
+      fixture.detectChanges();
+
+      const blocks = await fixture.getDeferBlocks();
+      expect(blocks.length).toBe(1);
+      await blocks[0].render(DeferBlockState.Complete);
+
+      const scrollers = fixture.debugElement.queryAll(By.directive(EpisodeScroller));
+      expect(scrollers.length).toBe(3);
+      expect(fixture.nativeElement.querySelectorAll('div.defer-shelf').length).toBe(0);
+    });
+  });
+
+  describe('scroller input bindings', () => {
+    it('passes episodes, heading, and ariaLabel from each genre entry into the scroller', () => {
+      const rock = [makeEpisode('e1', 'A'), makeEpisode('e2', 'B')];
+      const jazz = [makeEpisode('e3', 'C')];
+      episodesByGenre.set({ Rock: rock, Jazz: jazz });
+      fixture.detectChanges();
+
+      const scrollers = fixture.debugElement
+        .queryAll(By.directive(EpisodeScroller))
+        .map((d) => d.componentInstance as EpisodeScroller);
+
+      expect(scrollers[0].heading()).toBe('Rock');
+      expect(scrollers[0].ariaLabel()).toBe('Rock');
+      expect(scrollers[0].episodes()).toEqual(rock);
+
+      expect(scrollers[1].heading()).toBe('Jazz');
+      expect(scrollers[1].ariaLabel()).toBe('Jazz');
+      expect(scrollers[1].episodes()).toEqual(jazz);
+    });
+
+    it('passes the correct genre data into a scroller after its defer block resolves', async () => {
+      const rock = [makeEpisode('e1', 'A')];
+      const jazz = [makeEpisode('e2', 'B')];
+      const pop = [makeEpisode('e3', 'C')];
+      episodesByGenre.set({ Rock: rock, Jazz: jazz, Pop: pop });
+      fixture.detectChanges();
+
+      const [block] = await fixture.getDeferBlocks();
+      await block.render(DeferBlockState.Complete);
+
+      const scrollers = fixture.debugElement
+        .queryAll(By.directive(EpisodeScroller))
+        .map((d) => d.componentInstance as EpisodeScroller);
+
+      expect(scrollers[2].heading()).toBe('Pop');
+      expect(scrollers[2].ariaLabel()).toBe('Pop');
+      expect(scrollers[2].episodes()).toEqual(pop);
     });
   });
 

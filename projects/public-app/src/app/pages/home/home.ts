@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
   OnInit,
   PLATFORM_ID,
   computed,
@@ -11,7 +12,6 @@ import {
 import { DatePipe, UpperCasePipe, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { marked } from 'marked';
 import { interval } from 'rxjs';
 import { Episode } from '../../../../../../libs/episode/episode.model';
 import { EpisodeStore } from '../../../../../../libs/episode/episode.store';
@@ -37,7 +37,10 @@ interface Host {
 export class Home implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly host = inject(ElementRef<HTMLElement>);
   protected readonly episodeStore = inject(EpisodeStore);
+
+  private readonly markedParse = signal<((src: string) => string) | null>(null);
 
   protected readonly episodes = computed(() => this.episodeStore.episodes());
   protected readonly featured = computed<Episode | null>(() => this.episodes()[0] ?? null);
@@ -49,9 +52,10 @@ export class Home implements OnInit {
   });
   protected readonly featuredIntelligence = computed<string | null>(() => {
     const raw = this.featured()?.intelligence;
-    if (!raw) return null;
+    const parse = this.markedParse();
+    if (!raw || !parse) return null;
     const trimmed = this.trimMarkdown(raw, INTELLIGENCE_PREVIEW_CHARS);
-    return marked.parse(trimmed) as string;
+    return parse(trimmed);
   });
 
   protected readonly hosts: Host[] = [
@@ -94,6 +98,14 @@ export class Home implements OnInit {
     interval(1000)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.tapeSeconds.update((v) => v + 1));
+
+    const idle =
+      (window as unknown as { requestIdleCallback?: (cb: () => void) => void })
+        .requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 200));
+    idle(() => {
+      this.host.nativeElement.classList.add('warm');
+      import('marked').then((m) => this.markedParse.set((src) => m.marked.parse(src) as string));
+    });
   }
 
   protected pad(n: number, width = 3): string {
