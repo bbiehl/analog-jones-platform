@@ -165,6 +165,10 @@
   flex-direction: column;
   gap: 40px;
   min-width: 0;
+
+  @media (max-width: 960px) {
+    gap: 32px;
+  }
 }
 
 .head-skel {
@@ -172,11 +176,19 @@
   flex-direction: column;
   gap: 14px;
 
+  .title-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
   .h-tiny {
     height: 12px;
   }
   .h-title {
-    height: clamp(44px, 6.5vw, 96px);
+    /* Mirrors .file-title font-size × line-height (0.88) so each pulse row
+       matches one rendered line of the real h1. */
+    height: clamp(38.72px, 5.72vw, 84.48px);
     border-radius: 2px;
   }
   .w-eyebrow {
@@ -215,7 +227,7 @@
 }
 
 .tx-head-skel {
-  padding: 14px 18px;
+  padding: 12px 18px;
   border-bottom: 1px solid var(--sk-line);
 
   .h-small {
