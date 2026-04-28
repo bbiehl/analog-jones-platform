@@ -220,6 +220,27 @@
     box-shadow: 0 0 8px var(--red);
     animation: blink 1.2s infinite;
   }
+
+  &--skeleton {
+    color: transparent;
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--line);
+    pointer-events: none;
+    user-select: none;
+    animation: btn-skeleton-pulse 1.4s ease-in-out infinite;
+
+    &:hover {
+      border-color: var(--line);
+      color: transparent;
+      box-shadow: none;
+    }
+  }
+}
+
+@keyframes btn-skeleton-pulse {
+  50% {
+    background: rgba(255, 255, 255, 0.12);
+  }
 }
 
 @keyframes blink {
