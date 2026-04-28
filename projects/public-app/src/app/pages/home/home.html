@@ -57,18 +57,24 @@
           </div>
         </div>
       </a>
+    } @else {
+      <div class="monitor" aria-hidden="true">
+        <div class="screen">
+          <div class="bars"></div>
+        </div>
+      </div>
     }
   </div>
 </section>
 
-@if (featured(); as f) {
-  <section class="block" id="drop" aria-label="This week">
-    <div class="page">
-      <div class="section-head">
-        <h2><small>/ THIS WEEK IN THE MUSEUM</small>The Drop</h2>
-        <a class="see-all" routerLink="/episodes">ALL {{ pad(episodes().length, 2) }} TAPES →</a>
-      </div>
-      <div class="drop">
+<section class="block" id="drop" aria-label="This week">
+  <div class="page">
+    <div class="section-head">
+      <h2><small>/ THIS WEEK IN THE MUSEUM</small>The Drop</h2>
+      <a class="see-all" routerLink="/episodes">ALL {{ pad(episodes().length, 2) }} TAPES →</a>
+    </div>
+    <div class="drop">
+      @if (featured(); as f) {
         <div class="poster-big">
           <div class="poster poster--big" [style.background]="posterBg(f)">
             <div class="noise"></div>
@@ -100,40 +106,54 @@
             <a class="btn" [routerLink]="['/episodes', f.id]">SHOW NOTES →</a>
           </div>
         </div>
-      </div>
-    </div>
-  </section>
-}
-
-<app-episode-scroller
-  [episodes]="shelfEpisodes()"
-  eyebrow="/ THE MUSEUM · RECENT ACQUISITIONS"
-  heading="Shelf B · Recently catalogued"
-  ariaLabel="Museum shelf"
-  seeAllLabel="BROWSE ARCHIVE →"
-  seeAllLink="/episodes"
-/>
-
-<section class="block" aria-label="The Trio">
-  <div class="page">
-    <div class="section-head">
-      <h2><small>/ THE TRIO</small>The Trio</h2>
-    </div>
-    <div class="hosts">
-      @for (h of hosts; track h.init) {
-        <div class="host">
-          <div class="av" [attr.data-init]="h.init" aria-hidden="true"></div>
-          <div>
-            <h4>{{ h.name }}</h4>
-            <p>{{ h.line }}</p>
-            <div class="role">{{ h.role }}</div>
-          </div>
+      } @else {
+        <div class="poster-big" aria-hidden="true">
+          <div class="poster poster--big"></div>
         </div>
+        <div class="body" aria-hidden="true"></div>
       }
     </div>
   </div>
 </section>
 
+@defer (on viewport; prefetch on idle) {
+  <app-episode-scroller
+    [episodes]="shelfEpisodes()"
+    eyebrow="/ THE MUSEUM · RECENT ACQUISITIONS"
+    heading="Shelf B · Recently catalogued"
+    ariaLabel="Museum shelf"
+    seeAllLabel="BROWSE ARCHIVE →"
+    seeAllLink="/episodes"
+  />
+} @placeholder (minimum 0ms) {
+  <div class="defer-shelf" aria-hidden="true"></div>
+}
+
+@defer (on viewport; prefetch on idle) {
+  <section class="block" aria-label="The Trio">
+    <div class="page">
+      <div class="section-head">
+        <h2><small>/ THE TRIO</small>The Trio</h2>
+      </div>
+      <div class="hosts">
+        @for (h of hosts; track h.init) {
+          <div class="host">
+            <div class="av" [attr.data-init]="h.init" aria-hidden="true"></div>
+            <div>
+              <h4>{{ h.name }}</h4>
+              <p>{{ h.line }}</p>
+              <div class="role">{{ h.role }}</div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+} @placeholder (minimum 0ms) {
+  <div class="defer-trio" aria-hidden="true"></div>
+}
+
+@defer (on viewport; prefetch on idle) {
 <section class="block" id="listen" aria-label="Where to listen">
   <div class="page">
     <div class="section-head">
@@ -171,3 +191,6 @@
     </div>
   </div>
 </section>
+} @placeholder (minimum 0ms) {
+  <div class="defer-listen" aria-hidden="true"></div>
+}

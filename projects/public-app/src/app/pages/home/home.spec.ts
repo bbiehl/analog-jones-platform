@@ -1,8 +1,9 @@
 import { signal, WritableSignal } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, DeferBlockState, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { Timestamp } from 'firebase/firestore';
+import { marked } from 'marked';
 
 import { Episode, EpisodeWithRelations } from '../../../../../../libs/episode/episode.model';
 import { EpisodeStore } from '../../../../../../libs/episode/episode.store';
@@ -99,8 +100,10 @@ describe('Home', () => {
     it('featured is null when list is empty', async () => {
       const { component, fixture } = await setup();
       expect(component['featured']()).toBeNull();
-      expect(fixture.nativeElement.querySelector('.monitor')).toBeNull();
-      expect(fixture.nativeElement.querySelector('#drop')).toBeNull();
+      // Monitor and Drop render skeleton placeholders to reserve layout when no
+      // featured episode is available — the interactive content is gated.
+      expect(fixture.nativeElement.querySelector('a.monitor')).toBeNull();
+      expect(fixture.nativeElement.querySelector('#drop .body h3')).toBeNull();
     });
   });
 
@@ -176,6 +179,7 @@ describe('Home', () => {
       const long = 'word '.repeat(400);
       const ep = makeEpisode({ intelligence: long });
       const { component } = await setup({ episodes: signal([ep]) });
+      component['markedParse'].set((src) => marked.parse(src) as string);
       const rendered = component['featuredIntelligence']() as string;
       expect(rendered).toContain('…');
       expect(rendered.trim().startsWith('<p>')).toBe(true);
@@ -184,6 +188,7 @@ describe('Home', () => {
     it('leaves short markdown unchanged (no ellipsis)', async () => {
       const ep = makeEpisode({ intelligence: '**hello** world' });
       const { component } = await setup({ episodes: signal([ep]) });
+      component['markedParse'].set((src) => marked.parse(src) as string);
       const rendered = component['featuredIntelligence']() as string;
       expect(rendered).toContain('<strong>hello</strong>');
       expect(rendered).not.toContain('…');
@@ -269,6 +274,8 @@ describe('Home', () => {
   it('passes shelfEpisodes into <app-episode-scroller>', async () => {
     const eps = Array.from({ length: 5 }, (_, i) => makeEpisode({ id: `e${i}` }));
     const { fixture } = await setup({ episodes: signal(eps) });
+    const [shelfDeferBlock] = await fixture.getDeferBlocks();
+    await shelfDeferBlock.render(DeferBlockState.Complete);
     const scroller = fixture.debugElement.query(By.directive(EpisodeScroller))
       .componentInstance as EpisodeScroller;
     expect(scroller.episodes().length).toBe(4);
