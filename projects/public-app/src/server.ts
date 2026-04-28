@@ -5,24 +5,50 @@ import {
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
 import express from 'express';
+import { collection, getDocs, orderBy, query, where } from 'firebase/firestore';
 import { join } from 'node:path';
+import { CANONICAL_ORIGIN } from '../../../libs/shared/seo/origin.token';
+import { firestore } from './app/firebase';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
-/**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
- */
+app.get('/sitemap-episodes.xml', async (_req, res, next) => {
+  try {
+    const snapshot = await getDocs(
+      query(
+        collection(firestore, 'episodes'),
+        where('isVisible', '==', true),
+        orderBy('episodeDate', 'desc'),
+      ),
+    );
+
+    const urls = snapshot.docs
+      .map((doc) => {
+        const data = doc.data() as { episodeDate?: { toDate?: () => Date } };
+        const lastmod = data.episodeDate?.toDate?.().toISOString();
+        const loc = `${CANONICAL_ORIGIN}/episodes/${doc.id}`;
+        return lastmod
+          ? `  <url><loc>${loc}</loc><lastmod>${lastmod}</lastmod></url>`
+          : `  <url><loc>${loc}</loc></url>`;
+      })
+      .join('\n');
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>
+`;
+
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
+    res.send(xml);
+  } catch (err) {
+    next(err);
+  }
+});
 
 /**
  * Serve static files from /browser
