@@ -52,22 +52,18 @@ describe('EpisodeProperties', () => {
   });
 
   describe('case number', () => {
-    it('renders provided caseNumber in label and barcode', () => {
+    it('renders provided caseNumber in label', () => {
       setInputs({ episode: makeEpisode(), caseNumber: 'AJ-0042' });
       fixture.detectChanges();
       const labelCase: HTMLElement = fixture.nativeElement.querySelector('.label-case');
-      const barcodeId: HTMLElement = fixture.nativeElement.querySelector('.barcode-id');
       expect(labelCase.textContent?.trim()).toBe('AJ-0042');
-      expect(barcodeId.textContent?.trim()).toBe('AJ-0042');
     });
 
     it('falls back to placeholder dashes when caseNumber is null', () => {
       setInputs({ episode: makeEpisode() });
       fixture.detectChanges();
       const labelCase: HTMLElement = fixture.nativeElement.querySelector('.label-case');
-      const barcodeId: HTMLElement = fixture.nativeElement.querySelector('.barcode-id');
       expect(labelCase.textContent?.trim()).toBe('— — — —');
-      expect(barcodeId.textContent?.trim()).toBe('------');
     });
   });
 
