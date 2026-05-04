@@ -24,6 +24,7 @@ Test coverage — write tests for each category:
 1. Happy paths — correct inputs produce expected outputs/state
 2. Edge cases — boundary values, empty arrays, null/undefined inputs, empty strings
 3. Error states — thrown errors, Firebase errors, rejected promises/observables
+4. For UI testing, use Angular Material harnesses when possible.
 
 Coverage tooling: uses `@vitest/coverage-v8`. Remind me to install if not present:
 // pnpm add -D @vitest/coverage-v8
