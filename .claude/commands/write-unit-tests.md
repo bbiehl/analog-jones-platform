@@ -5,6 +5,7 @@ Rules:
 - If a `.spec.ts` file already exists, add tests to it without removing existing ones
 - Use Vitest (`import { describe, it, expect, vi, beforeEach } from 'vitest'`) — never jasmine or jest
 - Use Angular's `TestBed` for components, directives, and services that require DI
+- Use Angular Material component harnesses for testing Angular Material components.
 - Use `ChangeDetectionStrategy.OnPush`-aware patterns: call `fixture.detectChanges()` after signal updates
 - Lib tests (`libs/**/*.spec.ts`) run under admin-app only — do not add lib specs expecting public-app to pick them up
 
@@ -24,7 +25,6 @@ Test coverage — write tests for each category:
 1. Happy paths — correct inputs produce expected outputs/state
 2. Edge cases — boundary values, empty arrays, null/undefined inputs, empty strings
 3. Error states — thrown errors, Firebase errors, rejected promises/observables
-4. For UI testing, use Angular Material harnesses when possible.
 
 Coverage tooling: uses `@vitest/coverage-v8`. Remind me to install if not present:
 // pnpm add -D @vitest/coverage-v8
