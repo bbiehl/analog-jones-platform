@@ -66,7 +66,8 @@ describe('CategoryBulkEdit', () => {
 
     fixture = TestBed.createComponent(CategoryBulkEdit);
     component = fixture.componentInstance;
-    await component.ngOnInit();
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
   });
 
@@ -127,5 +128,208 @@ describe('CategoryBulkEdit', () => {
   it('onCancel should navigate back to categories', () => {
     component['onCancel']();
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/categories']);
+  });
+
+  describe('isChecked', () => {
+    it('returns true for ids in the selected set', () => {
+      expect(component['isChecked']('e1')).toBe(true);
+    });
+
+    it('returns false for ids not in the selected set', () => {
+      expect(component['isChecked']('e3')).toBe(false);
+    });
+
+    it('returns false when episodeId is undefined', () => {
+      expect(component['isChecked'](undefined)).toBe(false);
+    });
+  });
+
+  describe('toggleEpisode edge cases', () => {
+    it('does nothing when episodeId is undefined', () => {
+      const before = new Set(component['selected']());
+      component['toggleEpisode'](undefined);
+      expect(component['selected']()).toEqual(before);
+    });
+  });
+
+  describe('toggleAll edge cases', () => {
+    it('skips episodes without an id when selecting all', () => {
+      mockEpisodeStore.episodes.set([
+        { id: 'e1', title: 'First', isVisible: true },
+        { id: undefined, title: 'No id', isVisible: true },
+        { id: 'e3', title: 'Third', isVisible: true },
+      ]);
+      component['selected'].set(new Set());
+
+      component['toggleAll']();
+
+      expect(component['selected']()).toEqual(new Set(['e1', 'e3']));
+    });
+  });
+
+  describe('allSelected / someSelected', () => {
+    it('allSelected is false when episodes list is empty', () => {
+      mockEpisodeStore.episodes.set([]);
+      component['selected'].set(new Set());
+      expect(component['allSelected']()).toBe(false);
+      expect(component['someSelected']()).toBe(false);
+    });
+
+    it('someSelected is true when a partial selection exists', () => {
+      component['selected'].set(new Set(['e1']));
+      expect(component['someSelected']()).toBe(true);
+      expect(component['allSelected']()).toBe(false);
+    });
+
+    it('someSelected is false when all episodes are selected', () => {
+      component['selected'].set(new Set(['e1', 'e2', 'e3']));
+      expect(component['allSelected']()).toBe(true);
+      expect(component['someSelected']()).toBe(false);
+    });
+  });
+
+  describe('isDirty edge cases', () => {
+    it('is true when sizes match but contents differ', () => {
+      component['selected'].set(new Set(['e1', 'e3']));
+      expect(component['isDirty']()).toBe(true);
+    });
+  });
+
+  describe('onSave guards', () => {
+    it('does not save when selectedCategory is null', async () => {
+      mockCategoryStore.selectedCategory.set(null);
+      component['toggleEpisode']('e3');
+
+      await component['onSave']();
+
+      expect(mockEpisodeCategoryService.setEpisodesForCategory).not.toHaveBeenCalled();
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+
+    it('does not save when already saving', async () => {
+      component['toggleEpisode']('e3');
+      component['saving'].set(true);
+
+      await component['onSave']();
+
+      expect(mockEpisodeCategoryService.setEpisodesForCategory).not.toHaveBeenCalled();
+    });
+
+    it('resets saving back to false after a successful save', async () => {
+      component['toggleEpisode']('e3');
+
+      await component['onSave']();
+
+      expect(component['saving']()).toBe(false);
+    });
+
+    it('resets saving back to false when setEpisodesForCategory rejects', async () => {
+      mockEpisodeCategoryService.setEpisodesForCategory.mockRejectedValueOnce(
+        new Error('boom')
+      );
+      component['toggleEpisode']('e3');
+
+      await expect(component['onSave']()).rejects.toThrow('boom');
+      expect(component['saving']()).toBe(false);
+    });
+  });
+
+  describe('loadAssigned error path', () => {
+    it('sets junctionError when getEpisodeIdsByCategoryId rejects', async () => {
+      mockEpisodeCategoryService.getEpisodeIdsByCategoryId.mockRejectedValueOnce(
+        new Error('network down')
+      );
+
+      const fresh = TestBed.createComponent(CategoryBulkEdit);
+      fresh.detectChanges();
+      await fresh.whenStable();
+
+      expect(fresh.componentInstance['junctionError']()).toBe('network down');
+      expect(fresh.componentInstance['loadingJunctions']()).toBe(false);
+    });
+  });
+
+  describe('template rendering', () => {
+    it('renders the category name in the heading when selected', () => {
+      const heading = fixture.nativeElement.querySelector('h1');
+      expect(heading.textContent).toContain('Music');
+    });
+
+    it('shows "Category not found." when selectedCategory is null and not loading', () => {
+      mockCategoryStore.selectedCategory.set(null);
+      component['loadingJunctions'].set(false);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('Category not found.');
+    });
+
+    it('shows the junction error message when junctionError is set', () => {
+      component['junctionError'].set('Failed to load assignments');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('Failed to load assignments');
+    });
+
+    it('shows the empty-state message when there are no episodes', () => {
+      mockEpisodeStore.episodes.set([]);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('No episodes yet.');
+    });
+
+    it('shows a loading spinner when loadingJunctions is true', () => {
+      component['loadingJunctions'].set(true);
+      fixture.detectChanges();
+
+      const spinner = fixture.nativeElement.querySelector('mat-spinner');
+      expect(spinner).toBeTruthy();
+    });
+
+    it('shows the categoryStore error when set', () => {
+      mockCategoryStore.error.set('Boom from category store');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('Boom from category store');
+    });
+
+    it('shows the episodeStore error when set', () => {
+      mockEpisodeStore.error.set('Boom from episode store');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('Boom from episode store');
+    });
+
+    it('shows the in-button save spinner when saving is true', () => {
+      component['toggleEpisode']('e3');
+      component['saving'].set(true);
+      fixture.detectChanges();
+
+      const buttonSpinner = fixture.nativeElement.querySelector(
+        'button[mat-flat-button] mat-spinner'
+      );
+      expect(buttonSpinner).toBeTruthy();
+    });
+
+    it('renders the mat-table with a row per episode and respects selection state', () => {
+      const tables = fixture.nativeElement.querySelectorAll('table');
+      expect(tables.length).toBe(1);
+
+      const dataRows = fixture.nativeElement.querySelectorAll('tr.mat-mdc-row');
+      expect(dataRows.length).toBe(3);
+
+      const titleCells = fixture.nativeElement.querySelectorAll(
+        'tr.mat-mdc-row td.cdk-column-title'
+      );
+      const titles = Array.from(titleCells).map((c: any) => c.textContent.trim());
+      expect(titles).toEqual(['First', 'Second', 'Third']);
+
+      const visibleIcons = fixture.nativeElement.querySelectorAll(
+        'tr.mat-mdc-row td.cdk-column-isVisible mat-icon'
+      );
+      expect(visibleIcons.length).toBe(3);
+      expect(visibleIcons[0].textContent.trim()).toBe('visibility');
+      expect(visibleIcons[1].textContent.trim()).toBe('visibility_off');
+      expect(visibleIcons[2].textContent.trim()).toBe('visibility');
+    });
   });
 });
