@@ -4,9 +4,9 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "../../out-tsc/app",
-    "rootDir": "./src",
+    "rootDir": "..",
     "types": ["node"]
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["src/**/*.spec.ts"]
+  "include": ["src/**/*.ts", "../core/src/**/*.ts"],
+  "exclude": ["src/**/*.spec.ts", "../core/src/**/*.spec.ts", "../core/src/test-setup.ts"]
 }

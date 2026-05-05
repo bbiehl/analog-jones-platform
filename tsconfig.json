@@ -4,7 +4,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "paths": {
-      "@aj/core": ["./dist/core"]
+      "@aj/core": ["./projects/core/src/public-api"]
     },
     "strict": true,
     "noImplicitOverride": true,

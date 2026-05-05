@@ -19,7 +19,7 @@ Angular v21 multi-project workspace with pnpm. Two apps:
 
 ### Core Library (`projects/core/`)
 
-Single Angular library at `projects/core/` (package name `@aj/core`, generated via `ng generate library`). All domain services, stores, models, and shared infra live here. Apps consume it via the `@aj/core` path alias resolving to `dist/core` — run `pnpm build:core` before app builds (the `build:*`/`dev:*` scripts chain it automatically).
+Single Angular library at `projects/core/` (package name `@aj/core`, generated via `ng generate library`). All domain services, stores, models, and shared infra live here. Apps consume it via the `@aj/core` path alias resolving directly to `projects/core/src/public-api`, so `ng build`/`ng test`/`ng serve` work on a clean checkout without prebuilding the lib. Run `pnpm build:core` only when you actually need the packaged output in `dist/core`.
 
 Subfolders under `projects/core/src/lib/`:
 - `category/`, `episode/`, `genre/`, `tag/`, `user/` — each with `<domain>.model.ts`, `<domain>.service.ts`, `<domain>.store.ts` (+ specs)
