@@ -1,13 +1,13 @@
 import { inject, Injectable } from '@angular/core';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth';
-import { collection, doc, getDoc, getDocs, orderBy, query } from 'firebase/firestore';
-import { AUTH, FIRESTORE } from '../shared/firebase.token';
+import { AUTH, FIRESTORE, FIRESTORE_OPS } from '../shared/firebase.token';
 import { AppUser } from './user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private auth = inject(AUTH);
   private firestore = inject(FIRESTORE);
+  private ops = inject(FIRESTORE_OPS);
 
   async signInWithGoogle(): Promise<User> {
     const provider = new GoogleAuthProvider();
@@ -21,7 +21,7 @@ export class UserService {
   }
 
   async getUserDoc(uid: string): Promise<AppUser | null> {
-    const snap = await getDoc(doc(this.firestore, 'users', uid));
+    const snap = await this.ops.getDoc(this.ops.doc(this.firestore, 'users', uid));
     if (!snap.exists()) {
       return null;
     }
@@ -33,8 +33,11 @@ export class UserService {
   }
 
   async getAllUsers(): Promise<AppUser[]> {
-    const q = query(collection(this.firestore, 'users'), orderBy('name'));
-    const snapshot = await getDocs(q);
+    const q = this.ops.query(
+      this.ops.collection(this.firestore, 'users'),
+      this.ops.orderBy('name')
+    );
+    const snapshot = await this.ops.getDocs(q);
     return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as AppUser);
   }
 }

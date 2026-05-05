@@ -1,76 +1,69 @@
 import { inject, Injectable } from '@angular/core';
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  writeBatch,
-} from 'firebase/firestore';
 import { Episode } from '../episode/episode.model';
 import { Tag } from '../tag/tag.model';
-import { FIRESTORE } from '../shared/firebase.token';
+import { FIRESTORE, FIRESTORE_OPS } from '../shared/firebase.token';
 
 @Injectable({ providedIn: 'root' })
 export class EpisodeTagService {
   private firestore = inject(FIRESTORE);
+  private ops = inject(FIRESTORE_OPS);
 
   async createEpisodeTag(episodeId: string, tagId: string): Promise<void> {
-    await addDoc(collection(this.firestore, 'episodeTags'), { episodeId, tagId });
+    await this.ops.addDoc(this.ops.collection(this.firestore, 'episodeTags'), {
+      episodeId,
+      tagId,
+    });
   }
 
   async deleteEpisodeTag(episodeId: string, tagId: string): Promise<void> {
-    const q = query(
-      collection(this.firestore, 'episodeTags'),
-      where('episodeId', '==', episodeId),
-      where('tagId', '==', tagId)
+    const q = this.ops.query(
+      this.ops.collection(this.firestore, 'episodeTags'),
+      this.ops.where('episodeId', '==', episodeId),
+      this.ops.where('tagId', '==', tagId)
     );
-    const snapshot = await getDocs(q);
-    const batch = writeBatch(this.firestore);
+    const snapshot = await this.ops.getDocs(q);
+    const batch = this.ops.writeBatch(this.firestore);
     snapshot.docs.forEach((d) => batch.delete(d.ref));
     await batch.commit();
   }
 
   async deleteEpisodeTagsByTagId(tagId: string): Promise<void> {
-    const q = query(
-      collection(this.firestore, 'episodeTags'),
-      where('tagId', '==', tagId)
+    const q = this.ops.query(
+      this.ops.collection(this.firestore, 'episodeTags'),
+      this.ops.where('tagId', '==', tagId)
     );
-    const snapshot = await getDocs(q);
-    const batch = writeBatch(this.firestore);
+    const snapshot = await this.ops.getDocs(q);
+    const batch = this.ops.writeBatch(this.firestore);
     snapshot.docs.forEach((d) => batch.delete(d.ref));
     await batch.commit();
   }
 
   async deleteEpisodeTagsByEpisodeId(episodeId: string): Promise<void> {
-    const q = query(
-      collection(this.firestore, 'episodeTags'),
-      where('episodeId', '==', episodeId)
+    const q = this.ops.query(
+      this.ops.collection(this.firestore, 'episodeTags'),
+      this.ops.where('episodeId', '==', episodeId)
     );
-    const snapshot = await getDocs(q);
-    const batch = writeBatch(this.firestore);
+    const snapshot = await this.ops.getDocs(q);
+    const batch = this.ops.writeBatch(this.firestore);
     snapshot.docs.forEach((d) => batch.delete(d.ref));
     await batch.commit();
   }
 
   async getEpisodeIdsByTagId(tagId: string): Promise<string[]> {
-    const q = query(
-      collection(this.firestore, 'episodeTags'),
-      where('tagId', '==', tagId)
+    const q = this.ops.query(
+      this.ops.collection(this.firestore, 'episodeTags'),
+      this.ops.where('tagId', '==', tagId)
     );
-    const snapshot = await getDocs(q);
+    const snapshot = await this.ops.getDocs(q);
     return Array.from(new Set(snapshot.docs.map((d) => d.data()['episodeId'] as string)));
   }
 
   async setEpisodesForTag(tagId: string, episodeIds: string[]): Promise<void> {
-    const q = query(
-      collection(this.firestore, 'episodeTags'),
-      where('tagId', '==', tagId)
+    const q = this.ops.query(
+      this.ops.collection(this.firestore, 'episodeTags'),
+      this.ops.where('tagId', '==', tagId)
     );
-    const snapshot = await getDocs(q);
+    const snapshot = await this.ops.getDocs(q);
 
     const desired = new Set(episodeIds);
     const existing = new Map<string, (typeof snapshot.docs)[number]['ref'][]>();
@@ -81,7 +74,7 @@ export class EpisodeTagService {
       existing.set(episodeId, refs);
     }
 
-    const batch = writeBatch(this.firestore);
+    const batch = this.ops.writeBatch(this.firestore);
     for (const [episodeId, refs] of existing) {
       if (!desired.has(episodeId)) {
         for (const ref of refs) batch.delete(ref);
@@ -91,7 +84,7 @@ export class EpisodeTagService {
     }
     for (const episodeId of desired) {
       if (!existing.has(episodeId)) {
-        batch.set(doc(collection(this.firestore, 'episodeTags')), {
+        batch.set(this.ops.doc(this.ops.collection(this.firestore, 'episodeTags')), {
           episodeId,
           tagId,
         });
@@ -101,16 +94,16 @@ export class EpisodeTagService {
   }
 
   async getEpisodeTagsByEpisodeId(episodeId: string): Promise<Tag[]> {
-    const q = query(
-      collection(this.firestore, 'episodeTags'),
-      where('episodeId', '==', episodeId)
+    const q = this.ops.query(
+      this.ops.collection(this.firestore, 'episodeTags'),
+      this.ops.where('episodeId', '==', episodeId)
     );
-    const snapshot = await getDocs(q);
+    const snapshot = await this.ops.getDocs(q);
     const tags: Tag[] = [];
 
     for (const junction of snapshot.docs) {
       const tagId = junction.data()['tagId'];
-      const tagSnap = await getDoc(doc(this.firestore, 'tags', tagId));
+      const tagSnap = await this.ops.getDoc(this.ops.doc(this.firestore, 'tags', tagId));
       if (tagSnap.exists()) {
         tags.push({ id: tagSnap.id, ...tagSnap.data() } as Tag);
       }
@@ -120,26 +113,28 @@ export class EpisodeTagService {
   }
 
   async getEpisodesByTagSlug(slug: string): Promise<Episode[]> {
-    const tagQuery = query(
-      collection(this.firestore, 'tags'),
-      where('slug', '==', slug)
+    const tagQuery = this.ops.query(
+      this.ops.collection(this.firestore, 'tags'),
+      this.ops.where('slug', '==', slug)
     );
-    const tagSnapshot = await getDocs(tagQuery);
+    const tagSnapshot = await this.ops.getDocs(tagQuery);
     if (tagSnapshot.empty) {
       return [];
     }
 
     const tagId = tagSnapshot.docs[0].id;
-    const junctionQuery = query(
-      collection(this.firestore, 'episodeTags'),
-      where('tagId', '==', tagId)
+    const junctionQuery = this.ops.query(
+      this.ops.collection(this.firestore, 'episodeTags'),
+      this.ops.where('tagId', '==', tagId)
     );
-    const junctionSnapshot = await getDocs(junctionQuery);
+    const junctionSnapshot = await this.ops.getDocs(junctionQuery);
     const episodes: Episode[] = [];
 
     for (const junction of junctionSnapshot.docs) {
       const episodeId = junction.data()['episodeId'];
-      const episodeSnap = await getDoc(doc(this.firestore, 'episodes', episodeId));
+      const episodeSnap = await this.ops.getDoc(
+        this.ops.doc(this.firestore, 'episodes', episodeId)
+      );
       if (episodeSnap.exists() && episodeSnap.data()['isVisible']) {
         episodes.push({ id: episodeSnap.id, ...episodeSnap.data() } as Episode);
       }

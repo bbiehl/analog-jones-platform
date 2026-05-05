@@ -7,6 +7,7 @@ import {
   Firestore,
   getDoc,
   getDocs,
+  limit,
   orderBy,
   query,
   updateDoc,
@@ -43,6 +44,7 @@ export interface FirestoreOps {
   query: typeof query;
   orderBy: typeof orderBy;
   where: typeof where;
+  limit: typeof limit;
   getDoc: typeof getDoc;
   getDocs: typeof getDocs;
   addDoc: typeof addDoc;
@@ -58,6 +60,7 @@ export const FIRESTORE_OPS = new InjectionToken<FirestoreOps>('FirestoreOps', {
     query,
     orderBy,
     where,
+    limit,
     getDoc,
     getDocs,
     addDoc,

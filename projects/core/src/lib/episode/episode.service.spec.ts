@@ -1,6 +1,6 @@
 /// <reference types="vitest/globals" />
 import { TestBed } from '@angular/core/testing';
-import { FIRESTORE } from '../shared/firebase.token';
+import { FIRESTORE, FIRESTORE_OPS, FirestoreOps } from '../shared/firebase.token';
 import { EpisodeCategoryService } from '../junction/episode-category.service';
 import { EpisodeGenreService } from '../junction/episode-genre.service';
 import { EpisodeTagService } from '../junction/episode-tag.service';
@@ -10,6 +10,9 @@ import type { Firestore } from 'firebase/firestore';
 
 describe('EpisodeService', () => {
   let service: EpisodeService;
+  let ops: { [K in keyof FirestoreOps]: ReturnType<typeof vi.fn> };
+  const firestore = { __brand: 'fake-firestore' } as unknown as Firestore;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockEpisodeCategoryService: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -20,30 +23,54 @@ describe('EpisodeService', () => {
   let mockImageUploadService: any;
 
   beforeEach(() => {
+    let autoIdCounter = 0;
+    ops = {
+      collection: vi.fn((_db, path) => ({ __collection: path })),
+      // doc(firestore, path, id) -> path/id ; doc(collectionRef) -> auto-id ref
+      doc: vi.fn((arg1, arg2, arg3) => {
+        if (arg2 === undefined) {
+          // Called with just a collection ref — auto-generates an id
+          autoIdCounter += 1;
+          return { id: `auto-${autoIdCounter}`, __collection: (arg1 as { __collection?: string }).__collection };
+        }
+        return { __doc: `${arg2}/${arg3}` };
+      }),
+      query: vi.fn((coll, ...constraints) => ({ __query: { coll, constraints } })),
+      orderBy: vi.fn((field, dir) => ({ __orderBy: { field, dir } })),
+      where: vi.fn((field, op, value) => ({ __where: { field, op, value } })),
+      limit: vi.fn((n) => ({ __limit: n })),
+      getDoc: vi.fn(),
+      getDocs: vi.fn(),
+      addDoc: vi.fn(),
+      updateDoc: vi.fn().mockResolvedValue(undefined),
+      writeBatch: vi.fn(),
+    };
+
     mockEpisodeCategoryService = {
-      getEpisodeCategoriesByEpisodeId: vi.fn(),
+      getEpisodeCategoriesByEpisodeId: vi.fn().mockResolvedValue([]),
       createEpisodeCategory: vi.fn(),
       deleteEpisodeCategoriesByEpisodeId: vi.fn(),
     };
     mockEpisodeGenreService = {
-      getEpisodeGenresByEpisodeId: vi.fn(),
+      getEpisodeGenresByEpisodeId: vi.fn().mockResolvedValue([]),
       createEpisodeGenre: vi.fn(),
       deleteEpisodeGenresByEpisodeId: vi.fn(),
     };
     mockEpisodeTagService = {
-      getEpisodeTagsByEpisodeId: vi.fn(),
+      getEpisodeTagsByEpisodeId: vi.fn().mockResolvedValue([]),
       createEpisodeTag: vi.fn(),
       deleteEpisodeTagsByEpisodeId: vi.fn(),
     };
     mockImageUploadService = {
       uploadPoster: vi.fn(),
-      deletePoster: vi.fn(),
+      deletePoster: vi.fn().mockResolvedValue(undefined),
     };
 
     TestBed.configureTestingModule({
       providers: [
         EpisodeService,
-        { provide: FIRESTORE, useValue: {} as Firestore },
+        { provide: FIRESTORE, useValue: firestore },
+        { provide: FIRESTORE_OPS, useValue: ops as unknown as FirestoreOps },
         { provide: EpisodeCategoryService, useValue: mockEpisodeCategoryService },
         { provide: EpisodeGenreService, useValue: mockEpisodeGenreService },
         { provide: EpisodeTagService, useValue: mockEpisodeTagService },
@@ -54,129 +81,133 @@ describe('EpisodeService', () => {
     service = TestBed.inject(EpisodeService);
   });
 
-  describe('service injection', () => {
-    it('should be created', () => {
-      expect(service).toBeTruthy();
-    });
+  describe('getAllEpisodes', () => {
+    it('should query episodes ordered by episodeDate desc and map docs', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          { id: 'ep1', data: () => ({ title: 'One', isVisible: true }) },
+          { id: 'ep2', data: () => ({ title: 'Two', isVisible: false }) },
+        ],
+      });
 
-    it('should be an instance of EpisodeService', () => {
-      expect(service).toBeInstanceOf(EpisodeService);
+      const result = await service.getAllEpisodes();
+
+      expect(ops.collection).toHaveBeenCalledWith(firestore, 'episodes');
+      expect(ops.orderBy).toHaveBeenCalledWith('episodeDate', 'desc');
+      expect(result).toEqual([
+        { id: 'ep1', title: 'One', isVisible: true },
+        { id: 'ep2', title: 'Two', isVisible: false },
+      ]);
     });
   });
 
-  describe('getAllEpisodes', () => {
-    it('should map snapshot docs to Episode objects', () => {
-      const mockDocs = [
-        {
-          id: 'ep1',
-          data: () => ({
-            title: 'Episode One',
-            isVisible: true,
-            createdAt: { seconds: 2000, nanoseconds: 0 },
-          }),
-        },
-        {
-          id: 'ep2',
-          data: () => ({
-            title: 'Episode Two',
-            isVisible: false,
-            createdAt: { seconds: 1000, nanoseconds: 0 },
-          }),
-        },
-      ];
+  describe('toggleEpisodeVisibility', () => {
+    it('should call updateDoc with { isVisible }', async () => {
+      await service.toggleEpisodeVisibility('ep1', false);
 
-      const result = mockDocs.map((d) => ({ id: d.id, ...d.data() }));
-
-      expect(result).toEqual([
-        {
-          id: 'ep1',
-          title: 'Episode One',
-          isVisible: true,
-          createdAt: { seconds: 2000, nanoseconds: 0 },
-        },
-        {
-          id: 'ep2',
-          title: 'Episode Two',
-          isVisible: false,
-          createdAt: { seconds: 1000, nanoseconds: 0 },
-        },
-      ]);
+      expect(ops.updateDoc).toHaveBeenCalledWith({ __doc: 'episodes/ep1' }, { isVisible: false });
     });
   });
 
   describe('getCurrentEpisode', () => {
-    it('should return null when snapshot is empty', () => {
-      const snapshot = { empty: true, docs: [] };
-
-      const result = snapshot.empty ? null : { id: snapshot.docs[0] };
-      expect(result).toBeNull();
+    it('should return null when the snapshot is empty', async () => {
+      ops.getDocs.mockResolvedValueOnce({ empty: true, docs: [] });
+      expect(await service.getCurrentEpisode()).toBeNull();
     });
 
-    it('should return the first doc as an Episode', () => {
-      const snap = {
-        id: 'ep1',
-        data: () => ({ title: 'Latest', isVisible: true }),
-      };
+    it('should query visible episodes ordered desc with limit 1 and return the first', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        empty: false,
+        docs: [{ id: 'ep1', data: () => ({ title: 'Latest', isVisible: true }) }],
+      });
 
-      const result = { id: snap.id, ...snap.data() };
+      const result = await service.getCurrentEpisode();
+
+      expect(ops.where).toHaveBeenCalledWith('isVisible', '==', true);
+      expect(ops.orderBy).toHaveBeenCalledWith('episodeDate', 'desc');
+      expect(ops.limit).toHaveBeenCalledWith(1);
       expect(result).toEqual({ id: 'ep1', title: 'Latest', isVisible: true });
     });
   });
 
+  describe('getRecentEpisodes', () => {
+    it('should query visible episodes with limit 5', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [{ id: 'ep1', data: () => ({ title: 'A' }) }],
+      });
+
+      const result = await service.getRecentEpisodes();
+
+      expect(ops.limit).toHaveBeenCalledWith(5);
+      expect(result).toEqual([{ id: 'ep1', title: 'A' }]);
+    });
+  });
+
   describe('getVisibleEpisodes', () => {
-    it('should filter episodes by search term (case-insensitive)', () => {
-      const episodes = [
-        { id: 'ep1', title: 'The Moon Landing' },
-        { id: 'ep2', title: 'Mars Exploration' },
-        { id: 'ep3', title: 'Moon Base Alpha' },
-      ];
+    it('should return all visible episodes when no search term', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          { id: 'ep1', data: () => ({ title: 'Moon Landing' }) },
+          { id: 'ep2', data: () => ({ title: 'Mars Rover' }) },
+        ],
+      });
 
-      const term = 'moon';
-      const filtered = episodes.filter((e) => e.title.toLowerCase().includes(term));
-
-      expect(filtered).toEqual([
-        { id: 'ep1', title: 'The Moon Landing' },
-        { id: 'ep3', title: 'Moon Base Alpha' },
-      ]);
+      const result = await service.getVisibleEpisodes();
+      expect(result).toHaveLength(2);
     });
 
-    it('should return all episodes when no search term is provided', () => {
-      const episodes = [
-        { id: 'ep1', title: 'Episode One' },
-        { id: 'ep2', title: 'Episode Two' },
-      ];
+    it('should filter case-insensitively when a search term is given', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          { id: 'ep1', data: () => ({ title: 'The Moon Landing' }) },
+          { id: 'ep2', data: () => ({ title: 'Mars Rover' }) },
+          { id: 'ep3', data: () => ({ title: 'Moon Base Alpha' }) },
+        ],
+      });
 
-      const searchTerm = undefined;
-      const result = searchTerm
-        ? episodes.filter((e) => e.title.toLowerCase().includes(searchTerm))
-        : episodes;
+      const result = await service.getVisibleEpisodes('moon');
+      expect(result.map((e) => e.id)).toEqual(['ep1', 'ep3']);
+    });
 
-      expect(result).toHaveLength(2);
+    it('should not filter when search term is empty string', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [{ id: 'ep1', data: () => ({ title: 'X' }) }],
+      });
+
+      const result = await service.getVisibleEpisodes('');
+      expect(result).toHaveLength(1);
     });
   });
 
   describe('getEpisodeById', () => {
-    it('should throw when snapshot does not exist', () => {
-      const snap = { exists: () => false };
-
-      expect(() => {
-        if (!snap.exists()) {
-          throw new Error('Episode with id "missing" not found');
-        }
-      }).toThrow('Episode with id "missing" not found');
+    it('should throw when the snapshot does not exist', async () => {
+      ops.getDoc.mockResolvedValueOnce({ exists: () => false });
+      await expect(service.getEpisodeById('missing')).rejects.toThrow(
+        'Episode with id "missing" not found'
+      );
     });
 
-    it('should combine episode with relations into EpisodeWithRelations', () => {
-      const episode = { id: 'ep1', title: 'Test Episode' };
-      const categories = [{ id: 'c1', name: 'History', slug: 'history' }];
-      const genres = [{ id: 'g1', name: 'Action', slug: 'action' }];
-      const tags = [{ id: 't1', name: 'Featured', slug: 'featured' }];
+    it('should combine the episode with hydrated relations', async () => {
+      ops.getDoc.mockResolvedValueOnce({
+        exists: () => true,
+        id: 'ep1',
+        data: () => ({ title: 'Test' }),
+      });
+      mockEpisodeCategoryService.getEpisodeCategoriesByEpisodeId.mockResolvedValueOnce([
+        { id: 'c1', name: 'History', slug: 'history' },
+      ]);
+      mockEpisodeGenreService.getEpisodeGenresByEpisodeId.mockResolvedValueOnce([
+        { id: 'g1', name: 'Action', slug: 'action' },
+      ]);
+      mockEpisodeTagService.getEpisodeTagsByEpisodeId.mockResolvedValueOnce([
+        { id: 't1', name: 'Featured', slug: 'featured' },
+      ]);
 
-      const result = { ...episode, categories, genres, tags };
+      const result = await service.getEpisodeById('ep1');
 
       expect(result).toEqual({
         id: 'ep1',
-        title: 'Test Episode',
+        title: 'Test',
         categories: [{ id: 'c1', name: 'History', slug: 'history' }],
         genres: [{ id: 'g1', name: 'Action', slug: 'action' }],
         tags: [{ id: 't1', name: 'Featured', slug: 'featured' }],
@@ -185,63 +216,176 @@ describe('EpisodeService', () => {
   });
 
   describe('createEpisode', () => {
-    it('should build a payload without the id field', () => {
-      const episode = {
-        title: 'New Episode',
-        isVisible: false,
-        intelligence: null,
-        posterUrl: null,
-        links: { spotify: 'https://spotify.com/ep1' },
-        createdAt: { seconds: 1000, nanoseconds: 0 },
-        episodeDate: { seconds: 2000, nanoseconds: 0 },
-      };
+    const baseEpisode = {
+      createdAt: { seconds: 1, nanoseconds: 0 },
+      episodeDate: { seconds: 2, nanoseconds: 0 },
+      intelligence: null,
+      isVisible: true,
+      links: { spotify: 'https://spotify.com/ep1' },
+      posterUrl: null,
+      title: 'New Episode',
+    } as never;
 
-      const payload = {
-        createdAt: episode.createdAt,
-        episodeDate: episode.episodeDate,
-        intelligence: episode.intelligence,
-        isVisible: episode.isVisible,
-        links: episode.links,
-        posterUrl: null,
-        title: episode.title,
-      };
+    it('should batch-write the episode plus all junctions and return the new id', async () => {
+      const batch = { set: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      ops.writeBatch.mockReturnValueOnce(batch);
 
-      expect(payload).not.toHaveProperty('id');
-      expect(payload.title).toBe('New Episode');
-      expect(payload.posterUrl).toBeNull();
+      const result = await service.createEpisode(baseEpisode, ['c1', 'c2'], ['g1'], ['t1']);
+
+      // 1 episode + 2 categories + 1 genre + 1 tag = 5 set calls
+      expect(batch.set).toHaveBeenCalledTimes(5);
+      // First set is the episode itself with no id field
+      expect(batch.set.mock.calls[0][1]).not.toHaveProperty('id');
+      expect(batch.set.mock.calls[0][1].title).toBe('New Episode');
+      expect(batch.set.mock.calls[0][1].posterUrl).toBeNull();
+      expect(batch.commit).toHaveBeenCalledTimes(1);
+      expect(typeof result).toBe('string');
+      expect(result.startsWith('auto-')).toBe(true);
+    });
+
+    it('should upload poster before batch and embed the resulting URL', async () => {
+      const batch = { set: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      ops.writeBatch.mockReturnValueOnce(batch);
+      mockImageUploadService.uploadPoster.mockResolvedValueOnce(
+        'https://storage.example.com/poster.webp'
+      );
+      const file = new File(['img'], 'p.png', { type: 'image/png' });
+
+      await service.createEpisode(baseEpisode, [], [], [], file);
+
+      expect(mockImageUploadService.uploadPoster).toHaveBeenCalled();
+      expect(batch.set.mock.calls[0][1].posterUrl).toBe(
+        'https://storage.example.com/poster.webp'
+      );
+    });
+
+    it('should rollback the poster upload when the batch commit fails', async () => {
+      const batch = {
+        set: vi.fn(),
+        commit: vi.fn().mockRejectedValueOnce(new Error('write failed')),
+      };
+      ops.writeBatch.mockReturnValueOnce(batch);
+      mockImageUploadService.uploadPoster.mockResolvedValueOnce('url');
+      const file = new File(['img'], 'p.png', { type: 'image/png' });
+
+      await expect(service.createEpisode(baseEpisode, [], [], [], file)).rejects.toThrow(
+        'write failed'
+      );
+
+      expect(mockImageUploadService.deletePoster).toHaveBeenCalled();
+    });
+
+    it('should not attempt to delete a poster when commit fails and no poster was uploaded', async () => {
+      const batch = {
+        set: vi.fn(),
+        commit: vi.fn().mockRejectedValueOnce(new Error('write failed')),
+      };
+      ops.writeBatch.mockReturnValueOnce(batch);
+
+      await expect(service.createEpisode(baseEpisode, [], [], [])).rejects.toThrow('write failed');
+
+      expect(mockImageUploadService.deletePoster).not.toHaveBeenCalled();
     });
   });
 
   describe('updateEpisode', () => {
-    it('should strip the id field before updating', () => {
-      const episode = { id: 'ep1', title: 'Updated Title' };
-      const { id: _id, ...data } = episode;
+    it('should update the episode doc with the supplied fields stripped of id', async () => {
+      const batch = { update: vi.fn(), set: vi.fn(), delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      ops.writeBatch.mockReturnValueOnce(batch);
 
-      expect(data).toEqual({ title: 'Updated Title' });
-      expect(data).not.toHaveProperty('id');
+      await service.updateEpisode('ep1', { id: 'ep1', title: 'Updated' });
+
+      expect(batch.update).toHaveBeenCalledWith({ __doc: 'episodes/ep1' }, { title: 'Updated' });
+      expect(batch.commit).toHaveBeenCalledTimes(1);
+    });
+
+    it('should upload a new poster and include the resulting URL in the update', async () => {
+      const batch = { update: vi.fn(), set: vi.fn(), delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      ops.writeBatch.mockReturnValueOnce(batch);
+      mockImageUploadService.uploadPoster.mockResolvedValueOnce('new-url');
+
+      const file = new File(['img'], 'p.png', { type: 'image/png' });
+      await service.updateEpisode('ep1', { title: 'X' }, undefined, undefined, undefined, file);
+
+      expect(mockImageUploadService.uploadPoster).toHaveBeenCalledWith('ep1', file);
+      expect(batch.update).toHaveBeenCalledWith(
+        { __doc: 'episodes/ep1' },
+        { title: 'X', posterUrl: 'new-url' }
+      );
+    });
+
+    it('should null out posterUrl when removePoster is true', async () => {
+      const batch = { update: vi.fn(), set: vi.fn(), delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      ops.writeBatch.mockReturnValueOnce(batch);
+
+      await service.updateEpisode(
+        'ep1',
+        { title: 'X' },
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        true
+      );
+
+      expect(mockImageUploadService.deletePoster).toHaveBeenCalledWith('ep1');
+      expect(batch.update).toHaveBeenCalledWith(
+        { __doc: 'episodes/ep1' },
+        { title: 'X', posterUrl: null }
+      );
+    });
+
+    it('should delete existing junctions and recreate them when relation arrays are provided', async () => {
+      const batch = { update: vi.fn(), set: vi.fn(), delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      ops.writeBatch.mockReturnValueOnce(batch);
+      ops.getDocs
+        .mockResolvedValueOnce({ docs: [{ ref: 'old-cat' }] }) // categories
+        .mockResolvedValueOnce({ docs: [{ ref: 'old-genre' }] }) // genres
+        .mockResolvedValueOnce({ docs: [] }); // tags
+
+      await service.updateEpisode('ep1', { title: 'X' }, ['c1'], ['g1'], []);
+
+      expect(batch.delete).toHaveBeenCalledWith('old-cat');
+      expect(batch.delete).toHaveBeenCalledWith('old-genre');
+      expect(batch.set).toHaveBeenCalledWith(expect.anything(), {
+        episodeId: 'ep1',
+        categoryId: 'c1',
+      });
+      expect(batch.set).toHaveBeenCalledWith(expect.anything(), {
+        episodeId: 'ep1',
+        genreId: 'g1',
+      });
     });
   });
 
   describe('deleteEpisode', () => {
-    it('should call all junction delete services and image delete', async () => {
-      mockEpisodeCategoryService.deleteEpisodeCategoriesByEpisodeId.mockResolvedValue(undefined);
-      mockEpisodeGenreService.deleteEpisodeGenresByEpisodeId.mockResolvedValue(undefined);
-      mockEpisodeTagService.deleteEpisodeTagsByEpisodeId.mockResolvedValue(undefined);
-      mockImageUploadService.deletePoster.mockResolvedValue(undefined);
+    it('should batch-delete all junctions and the episode doc, then delete the poster', async () => {
+      ops.getDocs
+        .mockResolvedValueOnce({ docs: [{ ref: 'cat1' }, { ref: 'cat2' }] })
+        .mockResolvedValueOnce({ docs: [{ ref: 'gen1' }] })
+        .mockResolvedValueOnce({ docs: [{ ref: 'tag1' }] });
+      const batch = { delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      ops.writeBatch.mockReturnValueOnce(batch);
 
-      await Promise.all([
-        mockEpisodeCategoryService.deleteEpisodeCategoriesByEpisodeId('ep1'),
-        mockEpisodeGenreService.deleteEpisodeGenresByEpisodeId('ep1'),
-        mockEpisodeTagService.deleteEpisodeTagsByEpisodeId('ep1'),
-        mockImageUploadService.deletePoster('ep1'),
-      ]);
+      await service.deleteEpisode('ep1');
 
-      expect(mockEpisodeCategoryService.deleteEpisodeCategoriesByEpisodeId).toHaveBeenCalledWith(
-        'ep1'
-      );
-      expect(mockEpisodeGenreService.deleteEpisodeGenresByEpisodeId).toHaveBeenCalledWith('ep1');
-      expect(mockEpisodeTagService.deleteEpisodeTagsByEpisodeId).toHaveBeenCalledWith('ep1');
+      // 2 categories + 1 genre + 1 tag + 1 episode = 5 deletes
+      expect(batch.delete).toHaveBeenCalledTimes(5);
+      expect(batch.delete).toHaveBeenLastCalledWith({ __doc: 'episodes/ep1' });
+      expect(batch.commit).toHaveBeenCalledTimes(1);
       expect(mockImageUploadService.deletePoster).toHaveBeenCalledWith('ep1');
+    });
+
+    it('should swallow poster deletion errors after the batch succeeds', async () => {
+      ops.getDocs
+        .mockResolvedValueOnce({ docs: [] })
+        .mockResolvedValueOnce({ docs: [] })
+        .mockResolvedValueOnce({ docs: [] });
+      const batch = { delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      ops.writeBatch.mockReturnValueOnce(batch);
+      mockImageUploadService.deletePoster.mockRejectedValueOnce(new Error('storage gone'));
+
+      await expect(service.deleteEpisode('ep1')).resolves.toBeUndefined();
     });
   });
 });

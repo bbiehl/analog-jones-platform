@@ -16,6 +16,7 @@ describe('CategoryService', () => {
       query: vi.fn((coll, ...constraints) => ({ __query: { coll, constraints } })),
       orderBy: vi.fn((field) => ({ __orderBy: field })),
       where: vi.fn((field, op, value) => ({ __where: { field, op, value } })),
+      limit: vi.fn((n) => ({ __limit: n })),
       getDoc: vi.fn(),
       getDocs: vi.fn(),
       addDoc: vi.fn(),

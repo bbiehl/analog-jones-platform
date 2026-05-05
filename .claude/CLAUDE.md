@@ -45,6 +45,12 @@ Provided via injection tokens in each app's `app.config.ts`:
 
 Connects to emulators when `environment.useEmulators` is true.
 
+**Static SDK functions are wrapped in injection tokens.** Because `vi.mock()` is banned (see Testing), services do not call `firebase/firestore` or `firebase/storage` static functions directly. Instead they inject:
+- `FIRESTORE_OPS` — `collection`, `doc`, `query`, `orderBy`, `where`, `limit`, `getDoc`, `getDocs`, `addDoc`, `updateDoc`, `writeBatch`
+- `STORAGE_OPS` — `ref`, `uploadBytes`, `getDownloadURL`, `deleteObject`
+
+Both are defined in `projects/core/src/lib/shared/firebase.token.ts` with default factories that return the real implementations, so app code is unaffected. Tests override them via `TestBed.configureTestingModule({ providers: [{ provide: FIRESTORE_OPS, useValue: ... }] })` to actually exercise service methods. Auth statics (`signInWithPopup`, `onAuthStateChanged`, etc.) are not wrapped yet — UserService's auth methods are intentionally left untested.
+
 ### Shell Layout
 
 Root shell (`layout/shell/`) wraps all routes:

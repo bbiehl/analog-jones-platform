@@ -1,347 +1,182 @@
 /// <reference types="vitest/globals" />
 import { TestBed } from '@angular/core/testing';
-import { FIRESTORE } from '../shared/firebase.token';
+import { FIRESTORE, FIRESTORE_OPS, FirestoreOps } from '../shared/firebase.token';
 import { EpisodeTagService } from './episode-tag.service';
 import type { Firestore } from 'firebase/firestore';
 
 describe('EpisodeTagService', () => {
   let service: EpisodeTagService;
+  let ops: { [K in keyof FirestoreOps]: ReturnType<typeof vi.fn> };
+  const firestore = { __brand: 'fake-firestore' } as unknown as Firestore;
 
   beforeEach(() => {
+    ops = {
+      collection: vi.fn((_db, path) => ({ __collection: path })),
+      doc: vi.fn((arg1, arg2, arg3) =>
+        arg2 === undefined
+          ? { id: 'auto', __collection: (arg1 as { __collection?: string }).__collection }
+          : { __doc: `${arg2}/${arg3}` }
+      ),
+      query: vi.fn((coll, ...constraints) => ({ __query: { coll, constraints } })),
+      orderBy: vi.fn((field) => ({ __orderBy: field })),
+      where: vi.fn((field, op, value) => ({ __where: { field, op, value } })),
+      limit: vi.fn((n) => ({ __limit: n })),
+      getDoc: vi.fn(),
+      getDocs: vi.fn(),
+      addDoc: vi.fn().mockResolvedValue({ id: 'new-id' }),
+      updateDoc: vi.fn().mockResolvedValue(undefined),
+      writeBatch: vi.fn(),
+    };
+
     TestBed.configureTestingModule({
       providers: [
         EpisodeTagService,
-        { provide: FIRESTORE, useValue: {} as Firestore },
+        { provide: FIRESTORE, useValue: firestore },
+        { provide: FIRESTORE_OPS, useValue: ops as unknown as FirestoreOps },
       ],
     });
 
     service = TestBed.inject(EpisodeTagService);
   });
 
-  describe('service injection', () => {
-    it('should be created', () => {
-      expect(service).toBeTruthy();
-    });
-
-    it('should be an instance of EpisodeTagService', () => {
-      expect(service).toBeInstanceOf(EpisodeTagService);
-    });
-  });
-
   describe('createEpisodeTag', () => {
-    it('should produce the correct junction payload', () => {
-      const episodeId = 'ep1';
-      const tagId = 't1';
-      const payload = { episodeId, tagId };
+    it('should add a junction doc with episodeId and tagId', async () => {
+      await service.createEpisodeTag('ep1', 't1');
 
-      expect(payload).toEqual({ episodeId: 'ep1', tagId: 't1' });
+      expect(ops.collection).toHaveBeenCalledWith(firestore, 'episodeTags');
+      expect(ops.addDoc).toHaveBeenCalledWith(
+        { __collection: 'episodeTags' },
+        { episodeId: 'ep1', tagId: 't1' }
+      );
     });
   });
 
   describe('deleteEpisodeTag', () => {
-    it('should batch-delete matching junction docs', () => {
-      const mockDocs = [
-        { ref: 'ref1' },
-        { ref: 'ref2' },
-      ];
-      const deleted: string[] = [];
-      mockDocs.forEach((d) => deleted.push(d.ref));
+    it('should query by both episodeId and tagId and batch-delete', async () => {
+      ops.getDocs.mockResolvedValueOnce({ docs: [{ ref: 'a' }] });
+      const batch = { delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      ops.writeBatch.mockReturnValueOnce(batch);
 
-      expect(deleted).toEqual(['ref1', 'ref2']);
-    });
+      await service.deleteEpisodeTag('ep1', 't1');
 
-    it('should handle empty snapshot with no deletions', () => {
-      const mockDocs: { ref: string }[] = [];
-      const deleted: string[] = [];
-      mockDocs.forEach((d) => deleted.push(d.ref));
-
-      expect(deleted).toEqual([]);
+      expect(ops.where).toHaveBeenCalledWith('episodeId', '==', 'ep1');
+      expect(ops.where).toHaveBeenCalledWith('tagId', '==', 't1');
+      expect(batch.delete).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('deleteEpisodeTagsByTagId', () => {
-    it('should batch-delete all junction docs for a given tagId', () => {
-      const mockDocs = [
-        { ref: 'ref1', data: () => ({ episodeId: 'ep1', tagId: 't1' }) },
-        { ref: 'ref2', data: () => ({ episodeId: 'ep2', tagId: 't1' }) },
-      ];
-      const deleted: string[] = [];
-      mockDocs.forEach((d) => deleted.push(d.ref));
+    it('should batch-delete every junction matching the tagId', async () => {
+      ops.getDocs.mockResolvedValueOnce({ docs: [{ ref: 'a' }, { ref: 'b' }] });
+      const batch = { delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      ops.writeBatch.mockReturnValueOnce(batch);
 
-      expect(deleted).toHaveLength(2);
-      expect(deleted).toEqual(['ref1', 'ref2']);
+      await service.deleteEpisodeTagsByTagId('t1');
+
+      expect(ops.where).toHaveBeenCalledWith('tagId', '==', 't1');
+      expect(batch.delete).toHaveBeenCalledTimes(2);
     });
   });
 
   describe('deleteEpisodeTagsByEpisodeId', () => {
-    it('should batch-delete all junction docs for a given episodeId', () => {
-      const mockDocs = [
-        { ref: 'ref1', data: () => ({ episodeId: 'ep1', tagId: 't1' }) },
-        { ref: 'ref2', data: () => ({ episodeId: 'ep1', tagId: 't2' }) },
-      ];
-      const deleted: string[] = [];
-      mockDocs.forEach((d) => deleted.push(d.ref));
+    it('should batch-delete every junction matching the episodeId', async () => {
+      ops.getDocs.mockResolvedValueOnce({ docs: [{ ref: 'a' }] });
+      const batch = { delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      ops.writeBatch.mockReturnValueOnce(batch);
 
-      expect(deleted).toHaveLength(2);
-      expect(deleted).toEqual(['ref1', 'ref2']);
-    });
-  });
+      await service.deleteEpisodeTagsByEpisodeId('ep1');
 
-  describe('getEpisodeTagsByEpisodeId', () => {
-    it('should resolve tag docs from junction records', () => {
-      const junctionDocs = [
-        { data: () => ({ tagId: 't1' }) },
-        { data: () => ({ tagId: 't2' }) },
-      ];
-      const tagSnaps = [
-        { exists: () => true, id: 't1', data: () => ({ name: 'Vintage', slug: 'vintage' }) },
-        { exists: () => true, id: 't2', data: () => ({ name: 'Analog', slug: 'analog' }) },
-      ];
-
-      const tags = tagSnaps
-        .filter((s) => s.exists())
-        .map((s) => ({ id: s.id, ...s.data() }));
-
-      expect(tags).toEqual([
-        { id: 't1', name: 'Vintage', slug: 'vintage' },
-        { id: 't2', name: 'Analog', slug: 'analog' },
-      ]);
-      expect(junctionDocs[0].data()['tagId']).toBe('t1');
-    });
-
-    it('should skip tags that do not exist', () => {
-      const tagSnaps = [
-        { exists: () => true, id: 't1', data: () => ({ name: 'Vintage', slug: 'vintage' }) },
-        { exists: () => false, id: 't2', data: () => ({}) },
-      ];
-
-      const tags = tagSnaps
-        .filter((s) => s.exists())
-        .map((s) => ({ id: s.id, ...s.data() }));
-
-      expect(tags).toHaveLength(1);
-      expect(tags[0]).toEqual({ id: 't1', name: 'Vintage', slug: 'vintage' });
+      expect(ops.where).toHaveBeenCalledWith('episodeId', '==', 'ep1');
+      expect(batch.delete).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('getEpisodeIdsByTagId', () => {
-    it('should extract episodeId strings from junction docs', () => {
-      const junctionDocs = [
-        { data: () => ({ episodeId: 'ep1', tagId: 't1' }) },
-        { data: () => ({ episodeId: 'ep2', tagId: 't1' }) },
-      ];
+    it('should return unique episodeIds', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          { data: () => ({ episodeId: 'ep1' }) },
+          { data: () => ({ episodeId: 'ep1' }) },
+        ],
+      });
 
-      const ids = junctionDocs.map((d) => d.data()['episodeId']);
-
-      expect(ids).toEqual(['ep1', 'ep2']);
-    });
-
-    it('should return empty array when no junctions exist', () => {
-      const junctionDocs: { data: () => { episodeId: string } }[] = [];
-
-      const ids = junctionDocs.map((d) => d.data()['episodeId']);
-
-      expect(ids).toEqual([]);
-    });
-
-    it('should dedupe episodeId values from duplicate junction docs', () => {
-      const junctionDocs = [
-        { data: () => ({ episodeId: 'ep1', tagId: 't1' }) },
-        { data: () => ({ episodeId: 'ep1', tagId: 't1' }) },
-        { data: () => ({ episodeId: 'ep2', tagId: 't1' }) },
-      ];
-
-      const ids = Array.from(
-        new Set(junctionDocs.map((d) => d.data()['episodeId']))
-      );
-
-      expect(ids).toEqual(['ep1', 'ep2']);
+      expect(await service.getEpisodeIdsByTagId('t1')).toEqual(['ep1']);
     });
   });
 
   describe('setEpisodesForTag', () => {
-    it('should delete removed junctions and create added ones, leaving unchanged alone', () => {
-      const existingJunctions = [
-        { ref: 'ref-a', data: () => ({ episodeId: 'a', tagId: 't1' }) },
-        { ref: 'ref-b', data: () => ({ episodeId: 'b', tagId: 't1' }) },
-        { ref: 'ref-c', data: () => ({ episodeId: 'c', tagId: 't1' }) },
-      ];
-      const desired = new Set(['b', 'c', 'd']);
+    it('should add missing episodes and delete extras', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          { ref: 'ref-ep1', data: () => ({ episodeId: 'ep1' }) },
+          { ref: 'ref-ep2', data: () => ({ episodeId: 'ep2' }) },
+        ],
+      });
+      const batch = { delete: vi.fn(), set: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      ops.writeBatch.mockReturnValueOnce(batch);
 
-      const existing = new Map<string, string>();
-      for (const d of existingJunctions) {
-        existing.set(d.data()['episodeId'], d.ref);
-      }
+      await service.setEpisodesForTag('t1', ['ep1', 'ep3']);
 
-      const deletes: string[] = [];
-      const adds: { episodeId: string; tagId: string }[] = [];
-
-      for (const [episodeId, ref] of existing) {
-        if (!desired.has(episodeId)) deletes.push(ref);
-      }
-      for (const episodeId of desired) {
-        if (!existing.has(episodeId)) {
-          adds.push({ episodeId, tagId: 't1' });
-        }
-      }
-
-      expect(deletes).toEqual(['ref-a']);
-      expect(adds).toEqual([{ episodeId: 'd', tagId: 't1' }]);
+      expect(batch.delete).toHaveBeenCalledWith('ref-ep2');
+      expect(batch.set).toHaveBeenCalledWith(expect.anything(), {
+        episodeId: 'ep3',
+        tagId: 't1',
+      });
     });
+  });
 
-    it('should produce no writes when desired matches existing', () => {
-      const existingJunctions = [
-        { ref: 'ref-a', data: () => ({ episodeId: 'a', tagId: 't1' }) },
-        { ref: 'ref-b', data: () => ({ episodeId: 'b', tagId: 't1' }) },
-      ];
-      const desired = new Set(['a', 'b']);
+  describe('getEpisodeTagsByEpisodeId', () => {
+    it('should hydrate tags that exist and skip missing ones', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          { data: () => ({ tagId: 't1' }) },
+          { data: () => ({ tagId: 'gone' }) },
+        ],
+      });
+      ops.getDoc
+        .mockResolvedValueOnce({
+          exists: () => true,
+          id: 't1',
+          data: () => ({ name: 'Featured', slug: 'featured' }),
+        })
+        .mockResolvedValueOnce({ exists: () => false });
 
-      const existing = new Map<string, string>();
-      for (const d of existingJunctions) {
-        existing.set(d.data()['episodeId'], d.ref);
-      }
-
-      const deletes: string[] = [];
-      const adds: string[] = [];
-      for (const [episodeId, ref] of existing) {
-        if (!desired.has(episodeId)) deletes.push(ref);
-      }
-      for (const episodeId of desired) {
-        if (!existing.has(episodeId)) adds.push(episodeId);
-      }
-
-      expect(deletes).toEqual([]);
-      expect(adds).toEqual([]);
-    });
-
-    it('should delete duplicate refs but keep one when episode is in desired', () => {
-      const existingJunctions = [
-        { ref: 'ref-a1', data: () => ({ episodeId: 'a', tagId: 't1' }) },
-        { ref: 'ref-a2', data: () => ({ episodeId: 'a', tagId: 't1' }) },
-        { ref: 'ref-a3', data: () => ({ episodeId: 'a', tagId: 't1' }) },
-      ];
-      const desired = new Set(['a']);
-
-      const existing = new Map<string, string[]>();
-      for (const d of existingJunctions) {
-        const id = d.data()['episodeId'];
-        const refs = existing.get(id) ?? [];
-        refs.push(d.ref);
-        existing.set(id, refs);
-      }
-
-      const deletes: string[] = [];
-      const adds: string[] = [];
-      for (const [episodeId, refs] of existing) {
-        if (!desired.has(episodeId)) {
-          for (const ref of refs) deletes.push(ref);
-        } else {
-          for (let i = 1; i < refs.length; i++) deletes.push(refs[i]);
-        }
-      }
-      for (const episodeId of desired) {
-        if (!existing.has(episodeId)) adds.push(episodeId);
-      }
-
-      expect(deletes).toEqual(['ref-a2', 'ref-a3']);
-      expect(adds).toEqual([]);
-    });
-
-    it('should delete all duplicate refs when episode is not in desired', () => {
-      const existingJunctions = [
-        { ref: 'ref-a1', data: () => ({ episodeId: 'a', tagId: 't1' }) },
-        { ref: 'ref-a2', data: () => ({ episodeId: 'a', tagId: 't1' }) },
-        { ref: 'ref-b', data: () => ({ episodeId: 'b', tagId: 't1' }) },
-      ];
-      const desired = new Set(['b']);
-
-      const existing = new Map<string, string[]>();
-      for (const d of existingJunctions) {
-        const id = d.data()['episodeId'];
-        const refs = existing.get(id) ?? [];
-        refs.push(d.ref);
-        existing.set(id, refs);
-      }
-
-      const deletes: string[] = [];
-      for (const [episodeId, refs] of existing) {
-        if (!desired.has(episodeId)) {
-          for (const ref of refs) deletes.push(ref);
-        } else {
-          for (let i = 1; i < refs.length; i++) deletes.push(refs[i]);
-        }
-      }
-
-      expect(deletes).toEqual(['ref-a1', 'ref-a2']);
+      expect(await service.getEpisodeTagsByEpisodeId('ep1')).toEqual([
+        { id: 't1', name: 'Featured', slug: 'featured' },
+      ]);
     });
   });
 
   describe('getEpisodesByTagSlug', () => {
-    it('should return empty array when no tag matches the slug', () => {
-      const tagSnapshot = { empty: true, docs: [] };
-
-      let result: unknown[] = [];
-      if (tagSnapshot.empty) {
-        result = [];
-      }
-
-      expect(result).toEqual([]);
+    it('should return [] when no tag matches the slug', async () => {
+      ops.getDocs.mockResolvedValueOnce({ empty: true, docs: [] });
+      expect(await service.getEpisodesByTagSlug('missing')).toEqual([]);
     });
 
-    it('should resolve episode docs from junction records', () => {
-      const tagSnapshot = {
-        empty: false,
-        docs: [{ id: 't1' }],
-      };
-      const junctionDocs = [
-        { data: () => ({ episodeId: 'ep1' }) },
-        { data: () => ({ episodeId: 'ep2' }) },
-      ];
-      const episodeSnaps = [
-        { exists: () => true, id: 'ep1', data: () => ({ title: 'Episode 1', isVisible: true }) },
-        { exists: () => true, id: 'ep2', data: () => ({ title: 'Episode 2', isVisible: true }) },
-      ];
+    it('should return only visible episodes for the matched tag', async () => {
+      ops.getDocs
+        .mockResolvedValueOnce({ empty: false, docs: [{ id: 't1' }] })
+        .mockResolvedValueOnce({
+          docs: [
+            { data: () => ({ episodeId: 'ep1' }) },
+            { data: () => ({ episodeId: 'ep2' }) },
+          ],
+        });
+      ops.getDoc
+        .mockResolvedValueOnce({
+          exists: () => true,
+          id: 'ep1',
+          data: () => ({ title: 'V', isVisible: true }),
+        })
+        .mockResolvedValueOnce({
+          exists: () => true,
+          id: 'ep2',
+          data: () => ({ title: 'H', isVisible: false }),
+        });
 
-      expect(tagSnapshot.empty).toBe(false);
-      expect(tagSnapshot.docs[0].id).toBe('t1');
-
-      const episodes = episodeSnaps
-        .filter((s) => s.exists() && s.data()['isVisible'])
-        .map((s) => ({ id: s.id, ...s.data() }));
-
-      expect(episodes).toEqual([
-        { id: 'ep1', title: 'Episode 1', isVisible: true },
-        { id: 'ep2', title: 'Episode 2', isVisible: true },
+      expect(await service.getEpisodesByTagSlug('featured')).toEqual([
+        { id: 'ep1', title: 'V', isVisible: true },
       ]);
-      expect(junctionDocs[0].data()['episodeId']).toBe('ep1');
-    });
-
-    it('should skip episodes that do not exist', () => {
-      const episodeSnaps = [
-        { exists: () => true, id: 'ep1', data: () => ({ title: 'Episode 1', isVisible: true }) },
-        { exists: () => false, id: 'ep2', data: () => ({ title: 'Episode 2', isVisible: true }) },
-      ];
-
-      const episodes = episodeSnaps
-        .filter((s) => s.exists() && s.data()['isVisible'])
-        .map((s) => ({ id: s.id, ...s.data() }));
-
-      expect(episodes).toHaveLength(1);
-      expect(episodes[0]).toEqual({ id: 'ep1', title: 'Episode 1', isVisible: true });
-    });
-
-    it('should exclude hidden episodes', () => {
-      const episodeSnaps = [
-        { exists: () => true, id: 'ep1', data: () => ({ title: 'Episode 1', isVisible: true }) },
-        { exists: () => true, id: 'ep2', data: () => ({ title: 'Episode 2', isVisible: false }) },
-      ];
-
-      const episodes = episodeSnaps
-        .filter((s) => s.exists() && s.data()['isVisible'])
-        .map((s) => ({ id: s.id, ...s.data() }));
-
-      expect(episodes).toHaveLength(1);
-      expect(episodes[0]).toEqual({ id: 'ep1', title: 'Episode 1', isVisible: true });
     });
   });
 });
