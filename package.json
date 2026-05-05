@@ -3,7 +3,6 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
     "build": "pnpm build:core && ng build $ANGULAR_PROJECT_NAME",
     "build:core": "ng build core",
     "build:public": "pnpm build:core && ng build public-app",
@@ -15,7 +14,7 @@
     "test:core": "ng test core",
     "serve:ssr:public-app": "node dist/public-app/server/server.mjs",
     "serve:ssr:admin-app": "node dist/admin-app/server/server.mjs",
-    "e2e": "ng e2e",
+    "e2e": "pnpm build:core && ng e2e",
     "emulators:save": "firebase emulators:export ./seed-data",
     "emulators:start": "firebase emulators:start",
     "emulators:stop": "lsof -ti:4000,4200,4300,4400,8080,9099,9150,9199 | xargs kill -9 2>/dev/null || true",
