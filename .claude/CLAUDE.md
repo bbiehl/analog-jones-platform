@@ -45,11 +45,12 @@ Provided via injection tokens in each app's `app.config.ts`:
 
 Connects to emulators when `environment.useEmulators` is true.
 
-**Static SDK functions are wrapped in injection tokens.** Because `vi.mock()` is banned (see Testing), services do not call `firebase/firestore` or `firebase/storage` static functions directly. Instead they inject:
+**Static SDK functions are wrapped in injection tokens.** Because `vi.mock()` is banned (see Testing), services do not call `firebase/firestore`, `firebase/storage`, or `firebase/auth` static functions directly. Instead they inject:
 - `FIRESTORE_OPS` — `collection`, `doc`, `query`, `orderBy`, `where`, `limit`, `getDoc`, `getDocs`, `addDoc`, `updateDoc`, `writeBatch`
 - `STORAGE_OPS` — `ref`, `uploadBytes`, `getDownloadURL`, `deleteObject`
+- `AUTH_OPS` — `GoogleAuthProvider`, `signInWithPopup`, `signOut`, `onAuthStateChanged`
 
-Both are defined in `projects/core/src/lib/shared/firebase.token.ts` with default factories that return the real implementations, so app code is unaffected. Tests override them via `TestBed.configureTestingModule({ providers: [{ provide: FIRESTORE_OPS, useValue: ... }] })` to actually exercise service methods. Auth statics (`signInWithPopup`, `onAuthStateChanged`, etc.) are not wrapped yet — UserService's auth methods are intentionally left untested.
+All three are defined in `projects/core/src/lib/shared/firebase.token.ts` with default factories that return the real implementations, so app code is unaffected. Tests override them via `TestBed.configureTestingModule({ providers: [{ provide: <TOKEN>, useValue: ... }] })` to actually exercise service methods. When a service needs an SDK function not yet on the relevant `*Ops` interface, extend both the interface and the default factory together — both must list every op the service uses.
 
 ### Shell Layout
 

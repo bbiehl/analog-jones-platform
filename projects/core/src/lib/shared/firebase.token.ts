@@ -1,5 +1,11 @@
 import { InjectionToken } from '@angular/core';
-import { Auth } from 'firebase/auth';
+import {
+  Auth,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInWithPopup,
+  signOut,
+} from 'firebase/auth';
 import {
   addDoc,
   collection,
@@ -23,6 +29,18 @@ import {
 } from 'firebase/storage';
 
 export const AUTH = new InjectionToken<Auth>('Auth');
+
+export interface AuthOps {
+  GoogleAuthProvider: typeof GoogleAuthProvider;
+  signInWithPopup: typeof signInWithPopup;
+  signOut: typeof signOut;
+  onAuthStateChanged: typeof onAuthStateChanged;
+}
+
+export const AUTH_OPS = new InjectionToken<AuthOps>('AuthOps', {
+  providedIn: 'root',
+  factory: () => ({ GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }),
+});
 export const FIRESTORE = new InjectionToken<Firestore>('Firestore');
 export const STORAGE = new InjectionToken<FirebaseStorage>('Storage');
 

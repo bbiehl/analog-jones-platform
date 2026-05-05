@@ -1,23 +1,24 @@
 import { inject, Injectable } from '@angular/core';
-import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth';
-import { AUTH, FIRESTORE, FIRESTORE_OPS } from '../shared/firebase.token';
+import { User } from 'firebase/auth';
+import { AUTH, AUTH_OPS, FIRESTORE, FIRESTORE_OPS } from '../shared/firebase.token';
 import { AppUser } from './user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
   private auth = inject(AUTH);
+  private authOps = inject(AUTH_OPS);
   private firestore = inject(FIRESTORE);
   private ops = inject(FIRESTORE_OPS);
 
   async signInWithGoogle(): Promise<User> {
-    const provider = new GoogleAuthProvider();
+    const provider = new this.authOps.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
-    const result = await signInWithPopup(this.auth, provider);
+    const result = await this.authOps.signInWithPopup(this.auth, provider);
     return result.user;
   }
 
   async signOutUser(): Promise<void> {
-    await signOut(this.auth);
+    await this.authOps.signOut(this.auth);
   }
 
   async getUserDoc(uid: string): Promise<AppUser | null> {
@@ -29,7 +30,7 @@ export class UserService {
   }
 
   listenToAuthState(callback: (user: User | null) => void): () => void {
-    return onAuthStateChanged(this.auth, callback);
+    return this.authOps.onAuthStateChanged(this.auth, callback);
   }
 
   async getAllUsers(): Promise<AppUser[]> {
