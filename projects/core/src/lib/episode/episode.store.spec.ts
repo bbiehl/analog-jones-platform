@@ -414,5 +414,98 @@ describe('EpisodeStore', () => {
 
       expect(store.selectedEpisode()).toBeNull();
     });
+
+    it('should cancel an in-flight loadEpisodeById so its result is discarded', async () => {
+      let resolve!: (v: EpisodeWithRelations) => void;
+      const pending = new Promise<EpisodeWithRelations>((r) => (resolve = r));
+      mockEpisodeService.getEpisodeById.mockImplementationOnce(() => pending);
+
+      const inFlight = store.loadEpisodeById('ep1');
+      store.clearSelectedEpisode();
+      expect(store.selectedEpisode()).toBeNull();
+
+      resolve(mockEpisodeWithRelations);
+      await inFlight;
+
+      expect(store.selectedEpisode()).toBeNull();
+    });
+  });
+
+  describe('loading state', () => {
+    it('should set loading=true while loadEpisodes is pending', async () => {
+      let resolve!: (v: Episode[]) => void;
+      mockEpisodeService.getAllEpisodes.mockImplementationOnce(
+        () => new Promise<Episode[]>((r) => (resolve = r))
+      );
+
+      const pending = store.loadEpisodes();
+      expect(store.loading()).toBe(true);
+      expect(store.error()).toBeNull();
+
+      resolve(mockEpisodes);
+      await pending;
+      expect(store.loading()).toBe(false);
+    });
+
+    it('should clear a previous error when a subsequent call begins', async () => {
+      mockEpisodeService.getAllEpisodes.mockRejectedValueOnce(new Error('boom'));
+      await store.loadEpisodes();
+      expect(store.error()).toBe('boom');
+
+      let resolve!: (v: Episode[]) => void;
+      mockEpisodeService.getAllEpisodes.mockImplementationOnce(
+        () => new Promise<Episode[]>((r) => (resolve = r))
+      );
+      const pending = store.loadEpisodes();
+      expect(store.error()).toBeNull();
+
+      resolve(mockEpisodes);
+      await pending;
+    });
+  });
+
+  describe('loadVisibleEpisodes edge cases', () => {
+    it('should pass empty string through to the service verbatim', async () => {
+      await store.loadVisibleEpisodes('');
+      expect(mockEpisodeService.getVisibleEpisodes).toHaveBeenCalledWith('');
+    });
+  });
+
+  describe('updateEpisode edge cases', () => {
+    it('should pass removePoster=true through to the service', async () => {
+      await store.updateEpisode(
+        'ep1',
+        { title: 'Updated' },
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        true
+      );
+
+      expect(mockEpisodeService.updateEpisode).toHaveBeenCalledWith(
+        'ep1',
+        { title: 'Updated' },
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        true
+      );
+    });
+
+    it('should accept empty relation arrays', async () => {
+      await store.updateEpisode('ep1', { title: 'Updated' }, [], [], []);
+
+      expect(mockEpisodeService.updateEpisode).toHaveBeenCalledWith(
+        'ep1',
+        { title: 'Updated' },
+        [],
+        [],
+        [],
+        undefined,
+        undefined
+      );
+    });
   });
 });
