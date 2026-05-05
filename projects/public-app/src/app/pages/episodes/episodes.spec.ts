@@ -7,7 +7,7 @@ import { Timestamp } from 'firebase/firestore';
 import { Episodes } from './episodes';
 import { EpisodeScroller } from '../../episode/episode-scroller/episode-scroller';
 import { EpisodeListStore } from '../../episode/episode-list.store';
-import { Episode } from '../../../../../../libs/episode/episode.model';
+import { Episode } from '@aj/core';
 
 function makeEpisode(id: string, title: string): Episode {
   return {

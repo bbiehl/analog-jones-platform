@@ -17,17 +17,23 @@ Angular v21 multi-project workspace with pnpm. Two apps:
 - **Playwright** for e2e testing (Chromium, Firefox, WebKit)
 - **Prettier** for formatting (single quotes, 100 char width)
 
-### Shared Libraries (`libs/`)
+### Core Library (`projects/core/`)
 
-One lib per domain: `category/`, `episode/`, `genre/`, `tag/`, `user/`, `shared/`, `styles/`.
+Single Angular library at `projects/core/` (package name `@aj/core`, generated via `ng generate library`). All domain services, stores, models, and shared infra live here. Apps consume it via the `@aj/core` path alias resolving to `dist/core` — run `pnpm build:core` before app builds (the `build:*`/`dev:*` scripts chain it automatically).
 
-Each domain lib:
+Subfolders under `projects/core/src/lib/`:
+- `category/`, `episode/`, `genre/`, `tag/`, `user/` — each with `<domain>.model.ts`, `<domain>.service.ts`, `<domain>.store.ts` (+ specs)
+- `junction/` — many-to-many services: `episode-category.service.ts`, `episode-genre.service.ts`, `episode-tag.service.ts`
+- `shared/` — cross-cutting infra only: `firebase.token.ts` (injection tokens `AUTH`, `FIRESTORE`, `STORAGE`, `STORAGE_OPS`) and `image-upload.service.ts`
+- `styles/` — `theme.scss`, `theme-public.scss` (consumed via Sass `@use`, not exported from `public-api.ts`)
+
+Each domain follows the same pattern:
 - `<domain>.store.ts` — `signalStore` with `withState`, `withComputed`, `withMethods`
 - `<domain>.service.ts` — Firebase data access
 
-`libs/shared/` has injection tokens (`AUTH`, `FIRESTORE`, `STORAGE`, `STORAGE_OPS`) and junction services for many-to-many relationships.
+**Lib tests have their own target** — run `ng test core` (or `pnpm test:core`). They do NOT run under admin-app or public-app test targets.
 
-**Lib tests run under admin-app only** — `admin-app` test target includes `libs/**/*.spec.ts`. Public-app does not.
+**SEO** lives in `projects/public-app/src/app/seo/` (public-app-only — not part of `@aj/core`).
 
 ### Firebase
 
@@ -49,9 +55,10 @@ Root shell (`layout/shell/`) wraps all routes:
 
 ## Testing
 
-- Do NOT use `vi.mock()` — conflicts with `@angular/build`'s vitest-mock-patch, causes flaky failures. Mock via TestBed injection tokens instead.
-- Mock Firebase by providing fake values for `AUTH`, `FIRESTORE`, `STORAGE`, or `STORAGE_OPS` tokens in `TestBed.configureTestingModule`
+- Do NOT use `vi.mock()` — conflicts with `@angular/build`'s vitest-mock-patch, causes flaky failures. The constraint comes from the unit-test builder, not the project layout, so it applies equally to core, admin-app, and public-app specs. Mock via TestBed injection tokens instead.
+- Mock Firebase by providing fake values for `AUTH`, `FIRESTORE`, `STORAGE`, or `STORAGE_OPS` tokens (imported from `@aj/core`) in `TestBed.configureTestingModule`
 - Use `vi.stubGlobal()` for browser APIs unavailable in jsdom (`OffscreenCanvas`, `createImageBitmap`)
+- Detailed lib testing patterns (domain service / storage service / junction service / store) live in `projects/core/README.md`
 
 ## Angular Rules
 

@@ -8,8 +8,8 @@ import { MatTableHarness } from '@angular/material/table/testing';
 import { MatSlideToggleHarness } from '@angular/material/slide-toggle/testing';
 import { Timestamp } from 'firebase/firestore';
 import { Subject } from 'rxjs';
-import { Episode } from '../../../../../../libs/episode/episode.model';
-import { EpisodeStore } from '../../../../../../libs/episode/episode.store';
+import { Episode } from '@aj/core';
+import { EpisodeStore } from '@aj/core';
 import { Episodes } from './episodes';
 
 function makeEpisode(overrides: Partial<Episode> = {}): Episode {

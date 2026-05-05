@@ -1,9 +1,9 @@
 /// <reference types="vitest/globals" />
 import { TestBed } from '@angular/core/testing';
 import { FIRESTORE } from '../shared/firebase.token';
-import { EpisodeCategoryService } from '../shared/episode-category.service';
-import { EpisodeGenreService } from '../shared/episode-genre.service';
-import { EpisodeTagService } from '../shared/episode-tag.service';
+import { EpisodeCategoryService } from '../junction/episode-category.service';
+import { EpisodeGenreService } from '../junction/episode-genre.service';
+import { EpisodeTagService } from '../junction/episode-tag.service';
 import { ImageUploadService } from '../shared/image-upload.service';
 import { EpisodeService } from './episode.service';
 import type { Firestore } from 'firebase/firestore';

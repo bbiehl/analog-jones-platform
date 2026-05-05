@@ -6,9 +6,9 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
-import { TagStore } from '../../../../../../../libs/tag/tag.store';
-import { EpisodeStore } from '../../../../../../../libs/episode/episode.store';
-import { EpisodeTagService } from '../../../../../../../libs/shared/episode-tag.service';
+import { TagStore } from '@aj/core';
+import { EpisodeStore } from '@aj/core';
+import { EpisodeTagService } from '@aj/core';
 
 @Component({
   selector: 'app-tag-bulk-edit',

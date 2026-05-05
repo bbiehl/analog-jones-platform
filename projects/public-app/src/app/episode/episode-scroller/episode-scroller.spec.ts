@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Timestamp } from 'firebase/firestore';
 
-import { Episode } from '../../../../../../libs/episode/episode.model';
+import { Episode } from '@aj/core';
 import { EpisodeScroller } from './episode-scroller';
 
 function makeEpisode(overrides: Partial<Episode> = {}): Episode {

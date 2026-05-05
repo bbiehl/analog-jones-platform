@@ -4,7 +4,7 @@ import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatTableHarness } from '@angular/material/table/testing';
-import { TagStore } from '../../../../../../libs/tag/tag.store';
+import { TagStore } from '@aj/core';
 import { Tags } from './tags';
 
 describe('Tags', () => {

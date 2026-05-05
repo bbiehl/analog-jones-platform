@@ -3,10 +3,10 @@ import { TestBed } from '@angular/core/testing';
 import { Timestamp } from 'firebase/firestore';
 
 import { EpisodeListService } from './episode-list.service';
-import { GenreService } from '../../../../../libs/genre/genre.service';
-import { EpisodeGenreService } from '../../../../../libs/shared/episode-genre.service';
-import type { Episode } from '../../../../../libs/episode/episode.model';
-import type { Genre } from '../../../../../libs/genre/genre.model';
+import { GenreService } from '@aj/core';
+import { EpisodeGenreService } from '@aj/core';
+import type { Episode } from '@aj/core';
+import type { Genre } from '@aj/core';
 
 function ep(id: string, millis: number, isVisible = true): Episode {
   return {

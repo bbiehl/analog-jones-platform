@@ -10,7 +10,7 @@
     "public-app": {
       "projectType": "application",
       "schematics": {
-          "@schematics/angular:component": {
+        "@schematics/angular:component": {
           "changeDetection": "OnPush",
           "style": "scss"
         }
@@ -107,7 +107,7 @@
     "admin-app": {
       "projectType": "application",
       "schematics": {
-          "@schematics/angular:component": {
+        "@schematics/angular:component": {
           "changeDetection": "OnPush",
           "style": "scss"
         }
@@ -182,7 +182,6 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "include": ["**/*.spec.ts", "../../../libs/**/*.spec.ts"],
             "setupFiles": ["projects/admin-app/src/test-setup.ts"]
           }
         },
@@ -195,6 +194,33 @@
             "production": {
               "devServerTarget": "admin-app:serve:production"
             }
+          }
+        }
+      }
+    },
+    "core": {
+      "projectType": "library",
+      "root": "projects/core",
+      "sourceRoot": "projects/core/src",
+      "prefix": "aj",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:ng-packagr",
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/core/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/core/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "projects/core/tsconfig.spec.json",
+            "setupFiles": ["projects/core/src/test-setup.ts"]
           }
         }
       }

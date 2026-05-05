@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
-import { Episode } from '../../../../../libs/episode/episode.model';
+import { Episode } from '@aj/core';
 import { EpisodeListService } from './episode-list.service';
 
 interface EpisodeListState {

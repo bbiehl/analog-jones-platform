@@ -5,7 +5,7 @@ import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatInputHarness } from '@angular/material/input/testing';
 import { MatButtonHarness } from '@angular/material/button/testing';
-import { GenreStore } from '../../../../../../../libs/genre/genre.store';
+import { GenreStore } from '@aj/core';
 import { GenreEdit } from './genre-edit';
 
 describe('GenreEdit', () => {

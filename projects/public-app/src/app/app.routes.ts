@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import type { RouteSeo } from '../../../../libs/shared/seo/seo-title.strategy';
+import type { RouteSeo } from './seo/seo-title.strategy';
 
 const seo = (data: RouteSeo) => ({ seo: data });
 

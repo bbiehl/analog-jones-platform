@@ -13,8 +13,8 @@ import { DatePipe, UpperCasePipe, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { interval } from 'rxjs';
-import { Episode } from '../../../../../../libs/episode/episode.model';
-import { EpisodeStore } from '../../../../../../libs/episode/episode.store';
+import { Episode } from '@aj/core';
+import { EpisodeStore } from '@aj/core';
 import { EpisodeScroller } from '../../episode/episode-scroller/episode-scroller';
 
 const INTELLIGENCE_PREVIEW_CHARS = 600;

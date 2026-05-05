@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { GenreStore } from '../../../../../../../libs/genre/genre.store';
+import { GenreStore } from '@aj/core';
 
 @Component({
   selector: 'app-genre-add',

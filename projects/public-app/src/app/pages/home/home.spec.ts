@@ -5,8 +5,8 @@ import { provideRouter } from '@angular/router';
 import { Timestamp } from 'firebase/firestore';
 import { marked } from 'marked';
 
-import { Episode, EpisodeWithRelations } from '../../../../../../libs/episode/episode.model';
-import { EpisodeStore } from '../../../../../../libs/episode/episode.store';
+import { Episode, EpisodeWithRelations } from '@aj/core';
+import { EpisodeStore } from '@aj/core';
 import { EpisodeScroller } from '../../episode/episode-scroller/episode-scroller';
 import { Home } from './home';
 

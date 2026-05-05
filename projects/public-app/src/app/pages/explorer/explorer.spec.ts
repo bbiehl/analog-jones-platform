@@ -13,7 +13,7 @@ import { Timestamp } from 'firebase/firestore';
 import { Explorer } from './explorer';
 import { ExploreSearchStore } from '../../explore/explore-search.store';
 import { SearchAutoCompleteOption } from '../../explore/explore.model';
-import { Episode } from '../../../../../../libs/episode/episode.model';
+import { Episode } from '@aj/core';
 
 type MockStore = {
   autoCompleteOptions: WritableSignal<SearchAutoCompleteOption[]>;

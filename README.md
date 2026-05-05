@@ -12,7 +12,7 @@ Angular 21 multi-project workspace powering two SSR apps on Firebase App Hosting
 
 - `projects/public-app` — public-facing SSR site
 - `projects/admin-app` — internal admin SSR app
-- `libs/` — shared domain libraries: `category`, `episode`, `genre`, `tag`, `user`, `shared`, `styles`
+- `projects/core` — shared Angular library exposing all domain services/stores via `@aj/core` (subfolders: `category`, `episode`, `genre`, `tag`, `user`, `junction`, `shared`, `styles`)
 
 ## Getting started
 
@@ -37,8 +37,9 @@ pnpm emulators:stop   # kill processes on emulator ports
 ## Building
 
 ```bash
-pnpm build:public
-pnpm build:admin
+pnpm build:core      # required before either app build (apps consume @aj/core from dist/)
+pnpm build:public    # chains build:core automatically
+pnpm build:admin     # chains build:core automatically
 ```
 
 SSR servers can be run locally from the build output:
@@ -51,10 +52,10 @@ pnpm serve:ssr:admin-app
 ## Testing
 
 ```bash
-pnpm test             # public + admin + libs, in parallel
+pnpm test             # public + admin + core, in parallel
 pnpm test:public
 pnpm test:admin
-pnpm test:libs        # lib specs run under the admin-app test target
+pnpm test:core        # runs the @aj/core library spec target
 pnpm e2e              # Playwright
 ```
 

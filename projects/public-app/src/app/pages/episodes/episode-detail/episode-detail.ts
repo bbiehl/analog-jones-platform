@@ -9,16 +9,16 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
-import { EpisodeStore } from '../../../../../../../libs/episode/episode.store';
-import { SeoService } from '../../../../../../../libs/shared/seo/seo.service';
+import { EpisodeStore } from '@aj/core';
+import { SeoService } from '../../../seo/seo.service';
 import {
   breadcrumbList,
   organization,
   podcastEpisode,
   website,
-} from '../../../../../../../libs/shared/seo/seo.schemas';
-import { ORIGIN } from '../../../../../../../libs/shared/seo/origin.token';
-import { stripMarkdown } from '../../../../../../../libs/shared/seo/seo.text';
+} from '../../../seo/seo.schemas';
+import { ORIGIN } from '../../../seo/origin.token';
+import { stripMarkdown } from '../../../seo/seo.text';
 import { EpisodeProperties } from '../../../episode/episode-detail/episode-properties/episode-properties';
 import { EpisodePropertiesSkeleton } from '../../../episode/episode-detail/episode-properties-skeleton/episode-properties-skeleton';
 import { RelatedEpisodeStore } from '../../../episode/episode-detail/related-episode.store';

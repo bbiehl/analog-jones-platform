@@ -1,21 +1,21 @@
 /// <reference types="vitest/globals" />
 import { TestBed } from '@angular/core/testing';
-import { FIRESTORE } from './firebase.token';
-import { EpisodeTagService } from './episode-tag.service';
+import { FIRESTORE } from '../shared/firebase.token';
+import { EpisodeCategoryService } from './episode-category.service';
 import type { Firestore } from 'firebase/firestore';
 
-describe('EpisodeTagService', () => {
-  let service: EpisodeTagService;
+describe('EpisodeCategoryService', () => {
+  let service: EpisodeCategoryService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        EpisodeTagService,
+        EpisodeCategoryService,
         { provide: FIRESTORE, useValue: {} as Firestore },
       ],
     });
 
-    service = TestBed.inject(EpisodeTagService);
+    service = TestBed.inject(EpisodeCategoryService);
   });
 
   describe('service injection', () => {
@@ -23,22 +23,22 @@ describe('EpisodeTagService', () => {
       expect(service).toBeTruthy();
     });
 
-    it('should be an instance of EpisodeTagService', () => {
-      expect(service).toBeInstanceOf(EpisodeTagService);
+    it('should be an instance of EpisodeCategoryService', () => {
+      expect(service).toBeInstanceOf(EpisodeCategoryService);
     });
   });
 
-  describe('createEpisodeTag', () => {
+  describe('createEpisodeCategory', () => {
     it('should produce the correct junction payload', () => {
       const episodeId = 'ep1';
-      const tagId = 't1';
-      const payload = { episodeId, tagId };
+      const categoryId = 'cat1';
+      const payload = { episodeId, categoryId };
 
-      expect(payload).toEqual({ episodeId: 'ep1', tagId: 't1' });
+      expect(payload).toEqual({ episodeId: 'ep1', categoryId: 'cat1' });
     });
   });
 
-  describe('deleteEpisodeTag', () => {
+  describe('deleteEpisodeCategory', () => {
     it('should batch-delete matching junction docs', () => {
       const mockDocs = [
         { ref: 'ref1' },
@@ -59,11 +59,11 @@ describe('EpisodeTagService', () => {
     });
   });
 
-  describe('deleteEpisodeTagsByTagId', () => {
-    it('should batch-delete all junction docs for a given tagId', () => {
+  describe('deleteEpisodeCategoriesByCategoryId', () => {
+    it('should batch-delete all junction docs for a given categoryId', () => {
       const mockDocs = [
-        { ref: 'ref1', data: () => ({ episodeId: 'ep1', tagId: 't1' }) },
-        { ref: 'ref2', data: () => ({ episodeId: 'ep2', tagId: 't1' }) },
+        { ref: 'ref1', data: () => ({ episodeId: 'ep1', categoryId: 'cat1' }) },
+        { ref: 'ref2', data: () => ({ episodeId: 'ep2', categoryId: 'cat1' }) },
       ];
       const deleted: string[] = [];
       mockDocs.forEach((d) => deleted.push(d.ref));
@@ -73,11 +73,11 @@ describe('EpisodeTagService', () => {
     });
   });
 
-  describe('deleteEpisodeTagsByEpisodeId', () => {
+  describe('deleteEpisodeCategoriesByEpisodeId', () => {
     it('should batch-delete all junction docs for a given episodeId', () => {
       const mockDocs = [
-        { ref: 'ref1', data: () => ({ episodeId: 'ep1', tagId: 't1' }) },
-        { ref: 'ref2', data: () => ({ episodeId: 'ep1', tagId: 't2' }) },
+        { ref: 'ref1', data: () => ({ episodeId: 'ep1', categoryId: 'cat1' }) },
+        { ref: 'ref2', data: () => ({ episodeId: 'ep1', categoryId: 'cat2' }) },
       ];
       const deleted: string[] = [];
       mockDocs.forEach((d) => deleted.push(d.ref));
@@ -87,48 +87,48 @@ describe('EpisodeTagService', () => {
     });
   });
 
-  describe('getEpisodeTagsByEpisodeId', () => {
-    it('should resolve tag docs from junction records', () => {
+  describe('getEpisodeCategoriesByEpisodeId', () => {
+    it('should resolve category docs from junction records', () => {
       const junctionDocs = [
-        { data: () => ({ tagId: 't1' }) },
-        { data: () => ({ tagId: 't2' }) },
+        { data: () => ({ categoryId: 'cat1' }) },
+        { data: () => ({ categoryId: 'cat2' }) },
       ];
-      const tagSnaps = [
-        { exists: () => true, id: 't1', data: () => ({ name: 'Vintage', slug: 'vintage' }) },
-        { exists: () => true, id: 't2', data: () => ({ name: 'Analog', slug: 'analog' }) },
+      const categorySnaps = [
+        { exists: () => true, id: 'cat1', data: () => ({ name: 'Music', slug: 'music' }) },
+        { exists: () => true, id: 'cat2', data: () => ({ name: 'Film', slug: 'film' }) },
       ];
 
-      const tags = tagSnaps
+      const categories = categorySnaps
         .filter((s) => s.exists())
         .map((s) => ({ id: s.id, ...s.data() }));
 
-      expect(tags).toEqual([
-        { id: 't1', name: 'Vintage', slug: 'vintage' },
-        { id: 't2', name: 'Analog', slug: 'analog' },
+      expect(categories).toEqual([
+        { id: 'cat1', name: 'Music', slug: 'music' },
+        { id: 'cat2', name: 'Film', slug: 'film' },
       ]);
-      expect(junctionDocs[0].data()['tagId']).toBe('t1');
+      expect(junctionDocs[0].data()['categoryId']).toBe('cat1');
     });
 
-    it('should skip tags that do not exist', () => {
-      const tagSnaps = [
-        { exists: () => true, id: 't1', data: () => ({ name: 'Vintage', slug: 'vintage' }) },
-        { exists: () => false, id: 't2', data: () => ({}) },
+    it('should skip categories that do not exist', () => {
+      const categorySnaps = [
+        { exists: () => true, id: 'cat1', data: () => ({ name: 'Music', slug: 'music' }) },
+        { exists: () => false, id: 'cat2', data: () => ({}) },
       ];
 
-      const tags = tagSnaps
+      const categories = categorySnaps
         .filter((s) => s.exists())
         .map((s) => ({ id: s.id, ...s.data() }));
 
-      expect(tags).toHaveLength(1);
-      expect(tags[0]).toEqual({ id: 't1', name: 'Vintage', slug: 'vintage' });
+      expect(categories).toHaveLength(1);
+      expect(categories[0]).toEqual({ id: 'cat1', name: 'Music', slug: 'music' });
     });
   });
 
-  describe('getEpisodeIdsByTagId', () => {
+  describe('getEpisodeIdsByCategoryId', () => {
     it('should extract episodeId strings from junction docs', () => {
       const junctionDocs = [
-        { data: () => ({ episodeId: 'ep1', tagId: 't1' }) },
-        { data: () => ({ episodeId: 'ep2', tagId: 't1' }) },
+        { data: () => ({ episodeId: 'ep1', categoryId: 'cat1' }) },
+        { data: () => ({ episodeId: 'ep2', categoryId: 'cat1' }) },
       ];
 
       const ids = junctionDocs.map((d) => d.data()['episodeId']);
@@ -146,9 +146,9 @@ describe('EpisodeTagService', () => {
 
     it('should dedupe episodeId values from duplicate junction docs', () => {
       const junctionDocs = [
-        { data: () => ({ episodeId: 'ep1', tagId: 't1' }) },
-        { data: () => ({ episodeId: 'ep1', tagId: 't1' }) },
-        { data: () => ({ episodeId: 'ep2', tagId: 't1' }) },
+        { data: () => ({ episodeId: 'ep1', categoryId: 'cat1' }) },
+        { data: () => ({ episodeId: 'ep1', categoryId: 'cat1' }) },
+        { data: () => ({ episodeId: 'ep2', categoryId: 'cat1' }) },
       ];
 
       const ids = Array.from(
@@ -159,12 +159,12 @@ describe('EpisodeTagService', () => {
     });
   });
 
-  describe('setEpisodesForTag', () => {
+  describe('setEpisodesForCategory', () => {
     it('should delete removed junctions and create added ones, leaving unchanged alone', () => {
       const existingJunctions = [
-        { ref: 'ref-a', data: () => ({ episodeId: 'a', tagId: 't1' }) },
-        { ref: 'ref-b', data: () => ({ episodeId: 'b', tagId: 't1' }) },
-        { ref: 'ref-c', data: () => ({ episodeId: 'c', tagId: 't1' }) },
+        { ref: 'ref-a', data: () => ({ episodeId: 'a', categoryId: 'cat1' }) },
+        { ref: 'ref-b', data: () => ({ episodeId: 'b', categoryId: 'cat1' }) },
+        { ref: 'ref-c', data: () => ({ episodeId: 'c', categoryId: 'cat1' }) },
       ];
       const desired = new Set(['b', 'c', 'd']);
 
@@ -174,25 +174,25 @@ describe('EpisodeTagService', () => {
       }
 
       const deletes: string[] = [];
-      const adds: { episodeId: string; tagId: string }[] = [];
+      const adds: { episodeId: string; categoryId: string }[] = [];
 
       for (const [episodeId, ref] of existing) {
         if (!desired.has(episodeId)) deletes.push(ref);
       }
       for (const episodeId of desired) {
         if (!existing.has(episodeId)) {
-          adds.push({ episodeId, tagId: 't1' });
+          adds.push({ episodeId, categoryId: 'cat1' });
         }
       }
 
       expect(deletes).toEqual(['ref-a']);
-      expect(adds).toEqual([{ episodeId: 'd', tagId: 't1' }]);
+      expect(adds).toEqual([{ episodeId: 'd', categoryId: 'cat1' }]);
     });
 
     it('should produce no writes when desired matches existing', () => {
       const existingJunctions = [
-        { ref: 'ref-a', data: () => ({ episodeId: 'a', tagId: 't1' }) },
-        { ref: 'ref-b', data: () => ({ episodeId: 'b', tagId: 't1' }) },
+        { ref: 'ref-a', data: () => ({ episodeId: 'a', categoryId: 'cat1' }) },
+        { ref: 'ref-b', data: () => ({ episodeId: 'b', categoryId: 'cat1' }) },
       ];
       const desired = new Set(['a', 'b']);
 
@@ -216,9 +216,9 @@ describe('EpisodeTagService', () => {
 
     it('should delete duplicate refs but keep one when episode is in desired', () => {
       const existingJunctions = [
-        { ref: 'ref-a1', data: () => ({ episodeId: 'a', tagId: 't1' }) },
-        { ref: 'ref-a2', data: () => ({ episodeId: 'a', tagId: 't1' }) },
-        { ref: 'ref-a3', data: () => ({ episodeId: 'a', tagId: 't1' }) },
+        { ref: 'ref-a1', data: () => ({ episodeId: 'a', categoryId: 'cat1' }) },
+        { ref: 'ref-a2', data: () => ({ episodeId: 'a', categoryId: 'cat1' }) },
+        { ref: 'ref-a3', data: () => ({ episodeId: 'a', categoryId: 'cat1' }) },
       ];
       const desired = new Set(['a']);
 
@@ -249,9 +249,9 @@ describe('EpisodeTagService', () => {
 
     it('should delete all duplicate refs when episode is not in desired', () => {
       const existingJunctions = [
-        { ref: 'ref-a1', data: () => ({ episodeId: 'a', tagId: 't1' }) },
-        { ref: 'ref-a2', data: () => ({ episodeId: 'a', tagId: 't1' }) },
-        { ref: 'ref-b', data: () => ({ episodeId: 'b', tagId: 't1' }) },
+        { ref: 'ref-a1', data: () => ({ episodeId: 'a', categoryId: 'cat1' }) },
+        { ref: 'ref-a2', data: () => ({ episodeId: 'a', categoryId: 'cat1' }) },
+        { ref: 'ref-b', data: () => ({ episodeId: 'b', categoryId: 'cat1' }) },
       ];
       const desired = new Set(['b']);
 
@@ -276,12 +276,12 @@ describe('EpisodeTagService', () => {
     });
   });
 
-  describe('getEpisodesByTagSlug', () => {
-    it('should return empty array when no tag matches the slug', () => {
-      const tagSnapshot = { empty: true, docs: [] };
+  describe('getEpisodesByCategorySlug', () => {
+    it('should return empty array when no category matches the slug', () => {
+      const categorySnapshot = { empty: true, docs: [] };
 
       let result: unknown[] = [];
-      if (tagSnapshot.empty) {
+      if (categorySnapshot.empty) {
         result = [];
       }
 
@@ -289,9 +289,9 @@ describe('EpisodeTagService', () => {
     });
 
     it('should resolve episode docs from junction records', () => {
-      const tagSnapshot = {
+      const categorySnapshot = {
         empty: false,
-        docs: [{ id: 't1' }],
+        docs: [{ id: 'cat1' }],
       };
       const junctionDocs = [
         { data: () => ({ episodeId: 'ep1' }) },
@@ -302,8 +302,8 @@ describe('EpisodeTagService', () => {
         { exists: () => true, id: 'ep2', data: () => ({ title: 'Episode 2', isVisible: true }) },
       ];
 
-      expect(tagSnapshot.empty).toBe(false);
-      expect(tagSnapshot.docs[0].id).toBe('t1');
+      expect(categorySnapshot.empty).toBe(false);
+      expect(categorySnapshot.docs[0].id).toBe('cat1');
 
       const episodes = episodeSnaps
         .filter((s) => s.exists() && s.data()['isVisible'])

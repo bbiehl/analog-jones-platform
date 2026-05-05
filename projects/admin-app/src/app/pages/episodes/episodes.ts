@@ -11,8 +11,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { Episode } from '../../../../../../libs/episode/episode.model';
-import { EpisodeStore } from '../../../../../../libs/episode/episode.store';
+import { Episode } from '@aj/core';
+import { EpisodeStore } from '@aj/core';
 
 @Component({
   selector: 'app-episodes',

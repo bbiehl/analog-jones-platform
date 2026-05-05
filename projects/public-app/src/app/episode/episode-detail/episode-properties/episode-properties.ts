@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { DatePipe, UpperCasePipe } from '@angular/common';
 import { marked } from 'marked';
-import { EpisodeWithRelations } from '../../../../../../../libs/episode/episode.model';
+import { EpisodeWithRelations } from '@aj/core';
 
 @Component({
   selector: 'app-episode-properties',

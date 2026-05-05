@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { CategoryStore } from '../../../../../../../libs/category/category.store';
+import { CategoryStore } from '@aj/core';
 
 @Component({
   selector: 'app-category-add',

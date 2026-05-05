@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { UserStore } from '../../../../../../libs/user/user.store';
+import { UserStore } from '@aj/core';
 
 @Component({
   selector: 'app-login',

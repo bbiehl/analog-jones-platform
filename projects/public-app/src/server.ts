@@ -7,7 +7,7 @@ import {
 import express from 'express';
 import { collection, getDocs, orderBy, query, where } from 'firebase/firestore';
 import { join } from 'node:path';
-import { CANONICAL_ORIGIN } from '../../../libs/shared/seo/origin.token';
+import { CANONICAL_ORIGIN } from './app/seo/origin.token';
 import { firestore } from './app/firebase';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');

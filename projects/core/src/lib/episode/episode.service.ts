@@ -12,9 +12,9 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { FIRESTORE } from '../shared/firebase.token';
-import { EpisodeCategoryService } from '../shared/episode-category.service';
-import { EpisodeGenreService } from '../shared/episode-genre.service';
-import { EpisodeTagService } from '../shared/episode-tag.service';
+import { EpisodeCategoryService } from '../junction/episode-category.service';
+import { EpisodeGenreService } from '../junction/episode-genre.service';
+import { EpisodeTagService } from '../junction/episode-tag.service';
 import { ImageUploadService } from '../shared/image-upload.service';
 import { Episode, EpisodeWithRelations } from './episode.model';
 

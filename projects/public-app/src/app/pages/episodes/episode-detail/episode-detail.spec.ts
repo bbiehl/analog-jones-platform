@@ -4,8 +4,8 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { Timestamp } from 'firebase/firestore';
-import { EpisodeStore } from '../../../../../../../libs/episode/episode.store';
-import type { EpisodeWithRelations } from '../../../../../../../libs/episode/episode.model';
+import { EpisodeStore } from '@aj/core';
+import type { EpisodeWithRelations } from '@aj/core';
 import { RelatedEpisodeStore } from '../../../episode/episode-detail/related-episode.store';
 import { EpisodeDetail } from './episode-detail';
 
