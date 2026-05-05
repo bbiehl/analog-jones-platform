@@ -25,10 +25,18 @@ Write unit tests for the file(s) the user provides using Vitest for Angular.
 ## Mocking
 
 - **Do NOT use `vi.mock()`.** This is an Angular toolchain constraint, not a project convention. `@angular/build`'s unit-test builder injects a `vitest-mock-patch` to integrate Vitest with Angular's compilation pipeline; that patch and `vi.mock()`'s module-hoisting/interception mechanism step on each other and produce flaky failures (passes locally, fails in CI, or vice versa). Mock via TestBed providers / injection tokens instead.
-- Mock Firebase by providing fake values for the `AUTH`, `FIRESTORE`, `STORAGE`, and `STORAGE_OPS` injection tokens (imported from `@aj/core`) in `TestBed.configureTestingModule({ providers: [...] })`.
+- Mock Firebase by providing fake values for the `AUTH`, `FIRESTORE`, `FIRESTORE_OPS`, `STORAGE`, and `STORAGE_OPS` injection tokens (imported from `@aj/core`) in `TestBed.configureTestingModule({ providers: [...] })`.
 - Mock other services with `{ provide: SomeService, useValue: { method: vi.fn() } }`.
 - Use `vi.fn()` / `vi.spyOn()` for individual functions.
 - Use `vi.stubGlobal()` for browser APIs unavailable in jsdom (e.g. `OffscreenCanvas`, `createImageBitmap`); reset with `vi.unstubAllGlobals()` in `afterEach` if needed.
+
+### Firestore-backed services
+
+Services that use static `firebase/firestore` functions (`addDoc`, `getDocs`, `writeBatch`, etc.) should inject **both** `FIRESTORE` and `FIRESTORE_OPS`, mirroring the `STORAGE` / `STORAGE_OPS` pair. `FIRESTORE_OPS` is an injection token whose default factory returns the real firestore functions; tests override it with `vi.fn()` stubs to actually exercise the service's methods.
+
+Without this indirection, the static imports cannot be intercepted (because `vi.mock()` is banned), and specs degenerate into shape-assertions that don't run any service code. Reference: `projects/core/src/lib/category/category.service.ts` + `category.service.spec.ts`.
+
+When adding a service that needs a firestore op not yet on `FirestoreOps` (in `projects/core/src/lib/shared/firebase.token.ts`), extend the interface and the default factory together — both must list every op the service uses.
 
 ## Signal stores (`@ngrx/signals`)
 

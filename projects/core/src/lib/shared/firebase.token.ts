@@ -1,6 +1,18 @@
 import { InjectionToken } from '@angular/core';
 import { Auth } from 'firebase/auth';
-import { Firestore } from 'firebase/firestore';
+import {
+  addDoc,
+  collection,
+  doc,
+  Firestore,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  updateDoc,
+  where,
+  writeBatch,
+} from 'firebase/firestore';
 import {
   deleteObject,
   FirebaseStorage,
@@ -23,4 +35,33 @@ export interface StorageOps {
 export const STORAGE_OPS = new InjectionToken<StorageOps>('StorageOps', {
   providedIn: 'root',
   factory: () => ({ ref, uploadBytes, getDownloadURL, deleteObject }),
+});
+
+export interface FirestoreOps {
+  collection: typeof collection;
+  doc: typeof doc;
+  query: typeof query;
+  orderBy: typeof orderBy;
+  where: typeof where;
+  getDoc: typeof getDoc;
+  getDocs: typeof getDocs;
+  addDoc: typeof addDoc;
+  updateDoc: typeof updateDoc;
+  writeBatch: typeof writeBatch;
+}
+
+export const FIRESTORE_OPS = new InjectionToken<FirestoreOps>('FirestoreOps', {
+  providedIn: 'root',
+  factory: () => ({
+    collection,
+    doc,
+    query,
+    orderBy,
+    where,
+    getDoc,
+    getDocs,
+    addDoc,
+    updateDoc,
+    writeBatch,
+  }),
 });

@@ -1,31 +1,23 @@
 import { inject, Injectable } from '@angular/core';
-import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  orderBy,
-  query,
-  updateDoc,
-  where,
-  writeBatch,
-} from 'firebase/firestore';
-import { FIRESTORE } from '../shared/firebase.token';
+import { FIRESTORE, FIRESTORE_OPS } from '../shared/firebase.token';
 import { Category } from './category.model';
 
 @Injectable({ providedIn: 'root' })
 export class CategoryService {
   private firestore = inject(FIRESTORE);
+  private ops = inject(FIRESTORE_OPS);
 
   async getAllCategories(): Promise<Category[]> {
-    const q = query(collection(this.firestore, 'categories'), orderBy('name'));
-    const snapshot = await getDocs(q);
+    const q = this.ops.query(
+      this.ops.collection(this.firestore, 'categories'),
+      this.ops.orderBy('name')
+    );
+    const snapshot = await this.ops.getDocs(q);
     return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Category);
   }
 
   async getCategoryById(id: string): Promise<Category> {
-    const snap = await getDoc(doc(this.firestore, 'categories', id));
+    const snap = await this.ops.getDoc(this.ops.doc(this.firestore, 'categories', id));
     if (!snap.exists()) {
       throw new Error(`Category with id "${id}" not found`);
     }
@@ -33,7 +25,7 @@ export class CategoryService {
   }
 
   async createCategory(category: Omit<Category, 'id'>): Promise<string> {
-    const docRef = await addDoc(collection(this.firestore, 'categories'), {
+    const docRef = await this.ops.addDoc(this.ops.collection(this.firestore, 'categories'), {
       name: category.name,
       slug: category.slug,
     });
@@ -42,19 +34,19 @@ export class CategoryService {
 
   async updateCategory(id: string, category: Partial<Category>): Promise<void> {
     const { id: _id, ...data } = category as Category;
-    await updateDoc(doc(this.firestore, 'categories', id), data);
+    await this.ops.updateDoc(this.ops.doc(this.firestore, 'categories', id), data);
   }
 
   async deleteCategory(id: string): Promise<void> {
-    const q = query(
-      collection(this.firestore, 'episodeCategories'),
-      where('categoryId', '==', id)
+    const q = this.ops.query(
+      this.ops.collection(this.firestore, 'episodeCategories'),
+      this.ops.where('categoryId', '==', id)
     );
-    const snapshot = await getDocs(q);
+    const snapshot = await this.ops.getDocs(q);
 
-    const batch = writeBatch(this.firestore);
+    const batch = this.ops.writeBatch(this.firestore);
     snapshot.docs.forEach((d) => batch.delete(d.ref));
-    batch.delete(doc(this.firestore, 'categories', id));
+    batch.delete(this.ops.doc(this.firestore, 'categories', id));
     await batch.commit();
   }
 }
