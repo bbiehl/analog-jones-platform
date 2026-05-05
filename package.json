@@ -3,7 +3,6 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "postinstall": "pnpm build:core",
     "build": "pnpm build:core && ng build $ANGULAR_PROJECT_NAME",
     "build:core": "ng build core",
     "build:public": "pnpm build:core && ng build public-app",
