@@ -19,9 +19,9 @@
     "emulators:save": "firebase emulators:export ./seed-data",
     "emulators:start": "firebase emulators:start",
     "emulators:stop": "lsof -ti:4000,4200,4300,4400,8080,9099,9150,9199 | xargs kill -9 2>/dev/null || true",
-    "dev:public": "pnpm build:core && concurrently --names core,emulators,app --prefix-colors yellow,blue,green \"ng build core --watch\" \"firebase emulators:start --import=./seed-data\" \"ng serve public-app\"",
-    "dev:admin": "pnpm build:core && concurrently --names core,emulators,app --prefix-colors yellow,blue,green \"ng build core --watch\" \"firebase emulators:start --import=./seed-data\" \"ng serve admin-app\"",
-    "dev:all": "pnpm build:core && concurrently --names core,emulators,public,admin --prefix-colors yellow,blue,green,magenta \"ng build core --watch\" \"firebase emulators:start --import=./seed-data\" \"ng serve public-app --port 4200\" \"ng serve admin-app --port 4300\"",
+    "dev:public": "concurrently --names core,emulators,app --prefix-colors yellow,blue,green --kill-others-on-fail \"ng build core --watch\" \"firebase emulators:start --import=./seed-data\" \"wait-on dist/core/fesm2022/aj-core.mjs && ng serve public-app\"",
+    "dev:admin": "concurrently --names core,emulators,app --prefix-colors yellow,blue,green --kill-others-on-fail \"ng build core --watch\" \"firebase emulators:start --import=./seed-data\" \"wait-on dist/core/fesm2022/aj-core.mjs && ng serve admin-app\"",
+    "dev:all": "concurrently --names core,emulators,public,admin --prefix-colors yellow,blue,green,magenta --kill-others-on-fail \"ng build core --watch\" \"firebase emulators:start --import=./seed-data\" \"wait-on dist/core/fesm2022/aj-core.mjs && ng serve public-app --port 4200\" \"wait-on dist/core/fesm2022/aj-core.mjs && ng serve admin-app --port 4300\"",
     "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes,storage"
   },
   "private": true,
@@ -63,6 +63,7 @@
     "prettier": "^3.8.3",
     "tailwindcss": "^4.2.4",
     "typescript": "~5.9.2",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.5",
+    "wait-on": "^9.0.5"
   }
 }
