@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { DatePipe, UpperCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { Episode } from '../../../../../../libs/episode/episode.model';
+import { Episode } from '@aj/core';
 
 @Component({
   selector: 'app-episode-scroller',

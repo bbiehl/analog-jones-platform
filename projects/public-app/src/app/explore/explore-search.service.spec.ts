@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { Timestamp } from 'firebase/firestore';
-import { EpisodeService } from '../../../../../libs/episode/episode.service';
-import { GenreService } from '../../../../../libs/genre/genre.service';
-import { TagService } from '../../../../../libs/tag/tag.service';
-import { EpisodeGenreService } from '../../../../../libs/shared/episode-genre.service';
-import { EpisodeTagService } from '../../../../../libs/shared/episode-tag.service';
-import { Episode } from '../../../../../libs/episode/episode.model';
-import { Genre } from '../../../../../libs/genre/genre.model';
-import { Tag } from '../../../../../libs/tag/tag.model';
+import { EpisodeService } from '@aj/core';
+import { GenreService } from '@aj/core';
+import { TagService } from '@aj/core';
+import { EpisodeGenreService } from '@aj/core';
+import { EpisodeTagService } from '@aj/core';
+import { Episode } from '@aj/core';
+import { Genre } from '@aj/core';
+import { Tag } from '@aj/core';
 import { ExploreSearchService } from './explore-search.service';
 
 describe('ExploreSearchService', () => {

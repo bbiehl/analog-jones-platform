@@ -6,9 +6,9 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
-import { CategoryStore } from '../../../../../../../libs/category/category.store';
-import { EpisodeStore } from '../../../../../../../libs/episode/episode.store';
-import { EpisodeCategoryService } from '../../../../../../../libs/shared/episode-category.service';
+import { CategoryStore } from '@aj/core';
+import { EpisodeStore } from '@aj/core';
+import { EpisodeCategoryService } from '@aj/core';
 
 @Component({
   selector: 'app-category-bulk-edit',

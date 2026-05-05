@@ -4,10 +4,10 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatButtonHarness } from '@angular/material/button/testing';
-import { CategoryStore } from '../../../../../../../libs/category/category.store';
-import { EpisodeStore } from '../../../../../../../libs/episode/episode.store';
-import { GenreStore } from '../../../../../../../libs/genre/genre.store';
-import { TagStore } from '../../../../../../../libs/tag/tag.store';
+import { CategoryStore } from '@aj/core';
+import { EpisodeStore } from '@aj/core';
+import { GenreStore } from '@aj/core';
+import { TagStore } from '@aj/core';
 import { EpisodeAdd } from './episode-add';
 
 describe('EpisodeAdd', () => {

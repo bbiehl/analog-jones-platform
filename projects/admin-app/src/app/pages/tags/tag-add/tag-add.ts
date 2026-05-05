@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { TagStore } from '../../../../../../../libs/tag/tag.store';
+import { TagStore } from '@aj/core';
 
 @Component({
   selector: 'app-tag-add',

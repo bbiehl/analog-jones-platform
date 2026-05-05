@@ -5,7 +5,7 @@ import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatInputHarness } from '@angular/material/input/testing';
 import { MatButtonHarness } from '@angular/material/button/testing';
-import { CategoryStore } from '../../../../../../../libs/category/category.store';
+import { CategoryStore } from '@aj/core';
 import { CategoryEdit } from './category-edit';
 
 describe('CategoryEdit', () => {

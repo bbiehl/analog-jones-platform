@@ -12,7 +12,7 @@ import {
 } from 'firebase/firestore';
 import { Category } from '../category/category.model';
 import { Episode } from '../episode/episode.model';
-import { FIRESTORE } from './firebase.token';
+import { FIRESTORE } from '../shared/firebase.token';
 
 @Injectable({ providedIn: 'root' })
 export class EpisodeCategoryService {

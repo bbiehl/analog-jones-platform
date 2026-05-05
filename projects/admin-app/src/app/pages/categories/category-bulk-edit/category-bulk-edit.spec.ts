@@ -2,9 +2,9 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CategoryStore } from '../../../../../../../libs/category/category.store';
-import { EpisodeStore } from '../../../../../../../libs/episode/episode.store';
-import { EpisodeCategoryService } from '../../../../../../../libs/shared/episode-category.service';
+import { CategoryStore } from '@aj/core';
+import { EpisodeStore } from '@aj/core';
+import { EpisodeCategoryService } from '@aj/core';
 import { CategoryBulkEdit } from './category-bulk-edit';
 
 describe('CategoryBulkEdit', () => {

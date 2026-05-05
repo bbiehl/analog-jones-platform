@@ -1,10 +1,10 @@
 import { inject, Injectable } from '@angular/core';
-import { EpisodeService } from '../../../../../libs/episode/episode.service';
-import { Episode } from '../../../../../libs/episode/episode.model';
-import { GenreService } from '../../../../../libs/genre/genre.service';
-import { TagService } from '../../../../../libs/tag/tag.service';
-import { EpisodeGenreService } from '../../../../../libs/shared/episode-genre.service';
-import { EpisodeTagService } from '../../../../../libs/shared/episode-tag.service';
+import { EpisodeService } from '@aj/core';
+import { Episode } from '@aj/core';
+import { GenreService } from '@aj/core';
+import { TagService } from '@aj/core';
+import { EpisodeGenreService } from '@aj/core';
+import { EpisodeTagService } from '@aj/core';
 import { SearchAutoCompleteOption } from './explore.model';
 
 @Injectable({ providedIn: 'root' })

@@ -2,9 +2,9 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { GenreStore } from '../../../../../../../libs/genre/genre.store';
-import { EpisodeStore } from '../../../../../../../libs/episode/episode.store';
-import { EpisodeGenreService } from '../../../../../../../libs/shared/episode-genre.service';
+import { GenreStore } from '@aj/core';
+import { EpisodeStore } from '@aj/core';
+import { EpisodeGenreService } from '@aj/core';
 import { GenreBulkEdit } from './genre-bulk-edit';
 
 describe('GenreBulkEdit', () => {

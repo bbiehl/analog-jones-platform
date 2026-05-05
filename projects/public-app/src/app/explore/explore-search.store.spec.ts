@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ExploreSearchService } from './explore-search.service';
 import { ExploreSearchStore } from './explore-search.store';
 import { SearchAutoCompleteOption } from './explore.model';
-import { Episode } from '../../../../../libs/episode/episode.model';
+import { Episode } from '@aj/core';
 import { Timestamp } from 'firebase/firestore';
 
 describe('ExploreSearchStore', () => {

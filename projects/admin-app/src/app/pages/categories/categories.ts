@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
-import { CategoryStore } from '../../../../../../libs/category/category.store';
+import { CategoryStore } from '@aj/core';
 
 @Component({
   selector: 'app-categories',

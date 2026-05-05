@@ -4,7 +4,7 @@ import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatIconHarness } from '@angular/material/icon/testing';
-import { UserStore } from '../../../../../../libs/user/user.store';
+import { UserStore } from '@aj/core';
 import { AccessDenied } from './access-denied';
 
 describe('AccessDenied', () => {

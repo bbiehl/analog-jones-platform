@@ -1,6 +1,6 @@
 /// <reference types="vitest/globals" />
 import { TestBed } from '@angular/core/testing';
-import { FIRESTORE } from './firebase.token';
+import { FIRESTORE } from '../shared/firebase.token';
 import { EpisodeGenreService } from './episode-genre.service';
 import type { Firestore } from 'firebase/firestore';
 

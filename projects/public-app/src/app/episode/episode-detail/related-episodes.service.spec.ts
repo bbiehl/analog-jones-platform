@@ -1,8 +1,8 @@
 /// <reference types="vitest/globals" />
 import { TestBed } from '@angular/core/testing';
 import type { Firestore } from 'firebase/firestore';
-import { FIRESTORE } from '../../../../../../libs/shared/firebase.token';
-import type { EpisodeWithRelations } from '../../../../../../libs/episode/episode.model';
+import { FIRESTORE } from '@aj/core';
+import type { EpisodeWithRelations } from '@aj/core';
 import { RelatedEpisodesService } from './related-episodes.service';
 
 describe('RelatedEpisodesService', () => {

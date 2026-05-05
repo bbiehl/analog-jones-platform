@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Timestamp } from 'firebase/firestore';
-import { Episode, EpisodeWithRelations } from '../../../../../../libs/episode/episode.model';
+import { Episode, EpisodeWithRelations } from '@aj/core';
 import { RelatedEpisodeStore } from './related-episode.store';
 import { RelatedEpisodesService } from './related-episodes.service';
 

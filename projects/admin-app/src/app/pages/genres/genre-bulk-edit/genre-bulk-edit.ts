@@ -6,9 +6,9 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
-import { GenreStore } from '../../../../../../../libs/genre/genre.store';
-import { EpisodeStore } from '../../../../../../../libs/episode/episode.store';
-import { EpisodeGenreService } from '../../../../../../../libs/shared/episode-genre.service';
+import { GenreStore } from '@aj/core';
+import { EpisodeStore } from '@aj/core';
+import { EpisodeGenreService } from '@aj/core';
 
 @Component({
   selector: 'app-genre-bulk-edit',

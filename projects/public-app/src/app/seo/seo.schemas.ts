@@ -1,4 +1,4 @@
-import { EpisodeWithRelations } from '../../episode/episode.model';
+import { EpisodeWithRelations } from '@aj/core';
 import { SITE_NAME } from './origin.token';
 import { absoluteUrl, stripMarkdown } from './seo.text';
 

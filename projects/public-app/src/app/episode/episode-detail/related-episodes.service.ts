@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
-import { FIRESTORE } from '../../../../../../libs/shared/firebase.token';
-import { Episode, EpisodeWithRelations } from '../../../../../../libs/episode/episode.model';
+import { FIRESTORE } from '@aj/core';
+import { Episode, EpisodeWithRelations } from '@aj/core';
 
 @Injectable({ providedIn: 'root' })
 export class RelatedEpisodesService {

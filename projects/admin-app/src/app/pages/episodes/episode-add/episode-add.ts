@@ -14,10 +14,10 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { Timestamp } from 'firebase/firestore';
 import { marked } from 'marked';
-import { CategoryStore } from '../../../../../../../libs/category/category.store';
-import { EpisodeStore } from '../../../../../../../libs/episode/episode.store';
-import { GenreStore } from '../../../../../../../libs/genre/genre.store';
-import { TagStore } from '../../../../../../../libs/tag/tag.store';
+import { CategoryStore } from '@aj/core';
+import { EpisodeStore } from '@aj/core';
+import { GenreStore } from '@aj/core';
+import { TagStore } from '@aj/core';
 
 @Component({
   selector: 'app-episode-add',

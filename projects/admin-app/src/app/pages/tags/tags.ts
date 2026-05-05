@@ -9,8 +9,8 @@ import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { Tag } from '../../../../../../libs/tag/tag.model';
-import { TagStore } from '../../../../../../libs/tag/tag.store';
+import { Tag } from '@aj/core';
+import { TagStore } from '@aj/core';
 
 @Component({
   selector: 'app-tags',

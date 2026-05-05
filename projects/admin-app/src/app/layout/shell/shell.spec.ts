@@ -7,7 +7,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatSidenavHarness } from '@angular/material/sidenav/testing';
 import { BehaviorSubject } from 'rxjs';
-import { UserStore } from '../../../../../../libs/user/user.store';
+import { UserStore } from '@aj/core';
 import { Shell } from './shell';
 
 describe('Shell', () => {

@@ -5,8 +5,8 @@ import {
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { AUTH, FIRESTORE, STORAGE } from '../../../../libs/shared/firebase.token';
-import { UserStore } from '../../../../libs/user/user.store';
+import { AUTH, FIRESTORE, STORAGE } from '@aj/core';
+import { UserStore } from '@aj/core';
 import { routes } from './app.routes';
 import { auth, firestore, storage } from './firebase';
 

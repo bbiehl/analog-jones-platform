@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { UserStore } from '../../../../../../libs/user/user.store';
+import { UserStore } from '@aj/core';
 
 @Component({
   selector: 'app-access-denied',

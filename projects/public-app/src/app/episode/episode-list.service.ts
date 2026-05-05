@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
-import { Episode } from '../../../../../libs/episode/episode.model';
-import { GenreService } from '../../../../../libs/genre/genre.service';
-import { EpisodeGenreService } from '../../../../../libs/shared/episode-genre.service';
+import { Episode } from '@aj/core';
+import { GenreService } from '@aj/core';
+import { EpisodeGenreService } from '@aj/core';
 
 @Injectable({
   providedIn: 'root',

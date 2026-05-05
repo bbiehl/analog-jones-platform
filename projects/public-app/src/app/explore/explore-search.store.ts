@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
-import { Episode } from '../../../../../libs/episode/episode.model';
+import { Episode } from '@aj/core';
 import { ExploreSearchService } from './explore-search.service';
 import { SearchAutoCompleteOption } from './explore.model';
 

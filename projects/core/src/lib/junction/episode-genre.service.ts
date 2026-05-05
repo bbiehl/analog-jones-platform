@@ -11,22 +11,22 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { Episode } from '../episode/episode.model';
-import { Tag } from '../tag/tag.model';
-import { FIRESTORE } from './firebase.token';
+import { Genre } from '../genre/genre.model';
+import { FIRESTORE } from '../shared/firebase.token';
 
 @Injectable({ providedIn: 'root' })
-export class EpisodeTagService {
+export class EpisodeGenreService {
   private firestore = inject(FIRESTORE);
 
-  async createEpisodeTag(episodeId: string, tagId: string): Promise<void> {
-    await addDoc(collection(this.firestore, 'episodeTags'), { episodeId, tagId });
+  async createEpisodeGenre(episodeId: string, genreId: string): Promise<void> {
+    await addDoc(collection(this.firestore, 'episodeGenres'), { episodeId, genreId });
   }
 
-  async deleteEpisodeTag(episodeId: string, tagId: string): Promise<void> {
+  async deleteEpisodeGenre(episodeId: string, genreId: string): Promise<void> {
     const q = query(
-      collection(this.firestore, 'episodeTags'),
+      collection(this.firestore, 'episodeGenres'),
       where('episodeId', '==', episodeId),
-      where('tagId', '==', tagId)
+      where('genreId', '==', genreId)
     );
     const snapshot = await getDocs(q);
     const batch = writeBatch(this.firestore);
@@ -34,20 +34,9 @@ export class EpisodeTagService {
     await batch.commit();
   }
 
-  async deleteEpisodeTagsByTagId(tagId: string): Promise<void> {
+  async deleteEpisodeGenresByEpisodeId(episodeId: string): Promise<void> {
     const q = query(
-      collection(this.firestore, 'episodeTags'),
-      where('tagId', '==', tagId)
-    );
-    const snapshot = await getDocs(q);
-    const batch = writeBatch(this.firestore);
-    snapshot.docs.forEach((d) => batch.delete(d.ref));
-    await batch.commit();
-  }
-
-  async deleteEpisodeTagsByEpisodeId(episodeId: string): Promise<void> {
-    const q = query(
-      collection(this.firestore, 'episodeTags'),
+      collection(this.firestore, 'episodeGenres'),
       where('episodeId', '==', episodeId)
     );
     const snapshot = await getDocs(q);
@@ -56,19 +45,30 @@ export class EpisodeTagService {
     await batch.commit();
   }
 
-  async getEpisodeIdsByTagId(tagId: string): Promise<string[]> {
+  async deleteEpisodeGenresByGenreId(genreId: string): Promise<void> {
     const q = query(
-      collection(this.firestore, 'episodeTags'),
-      where('tagId', '==', tagId)
+      collection(this.firestore, 'episodeGenres'),
+      where('genreId', '==', genreId)
+    );
+    const snapshot = await getDocs(q);
+    const batch = writeBatch(this.firestore);
+    snapshot.docs.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
+
+  async getEpisodeIdsByGenreId(genreId: string): Promise<string[]> {
+    const q = query(
+      collection(this.firestore, 'episodeGenres'),
+      where('genreId', '==', genreId)
     );
     const snapshot = await getDocs(q);
     return Array.from(new Set(snapshot.docs.map((d) => d.data()['episodeId'] as string)));
   }
 
-  async setEpisodesForTag(tagId: string, episodeIds: string[]): Promise<void> {
+  async setEpisodesForGenre(genreId: string, episodeIds: string[]): Promise<void> {
     const q = query(
-      collection(this.firestore, 'episodeTags'),
-      where('tagId', '==', tagId)
+      collection(this.firestore, 'episodeGenres'),
+      where('genreId', '==', genreId)
     );
     const snapshot = await getDocs(q);
 
@@ -91,48 +91,38 @@ export class EpisodeTagService {
     }
     for (const episodeId of desired) {
       if (!existing.has(episodeId)) {
-        batch.set(doc(collection(this.firestore, 'episodeTags')), {
+        batch.set(doc(collection(this.firestore, 'episodeGenres')), {
           episodeId,
-          tagId,
+          genreId,
         });
       }
     }
     await batch.commit();
   }
 
-  async getEpisodeTagsByEpisodeId(episodeId: string): Promise<Tag[]> {
+  async getEpisodeGenresByEpisodeId(episodeId: string): Promise<Genre[]> {
     const q = query(
-      collection(this.firestore, 'episodeTags'),
+      collection(this.firestore, 'episodeGenres'),
       where('episodeId', '==', episodeId)
     );
     const snapshot = await getDocs(q);
-    const tags: Tag[] = [];
+    const genres: Genre[] = [];
 
     for (const junction of snapshot.docs) {
-      const tagId = junction.data()['tagId'];
-      const tagSnap = await getDoc(doc(this.firestore, 'tags', tagId));
-      if (tagSnap.exists()) {
-        tags.push({ id: tagSnap.id, ...tagSnap.data() } as Tag);
+      const genreId = junction.data()['genreId'];
+      const genreSnap = await getDoc(doc(this.firestore, 'genres', genreId));
+      if (genreSnap.exists()) {
+        genres.push({ id: genreSnap.id, ...genreSnap.data() } as Genre);
       }
     }
 
-    return tags;
+    return genres;
   }
 
-  async getEpisodesByTagSlug(slug: string): Promise<Episode[]> {
-    const tagQuery = query(
-      collection(this.firestore, 'tags'),
-      where('slug', '==', slug)
-    );
-    const tagSnapshot = await getDocs(tagQuery);
-    if (tagSnapshot.empty) {
-      return [];
-    }
-
-    const tagId = tagSnapshot.docs[0].id;
+  async getEpisodesByGenreId(genreId: string): Promise<Episode[]> {
     const junctionQuery = query(
-      collection(this.firestore, 'episodeTags'),
-      where('tagId', '==', tagId)
+      collection(this.firestore, 'episodeGenres'),
+      where('genreId', '==', genreId)
     );
     const junctionSnapshot = await getDocs(junctionQuery);
     const episodes: Episode[] = [];
@@ -146,5 +136,18 @@ export class EpisodeTagService {
     }
 
     return episodes;
+  }
+
+  async getEpisodesByGenreSlug(slug: string): Promise<Episode[]> {
+    const genreQuery = query(
+      collection(this.firestore, 'genres'),
+      where('slug', '==', slug)
+    );
+    const genreSnapshot = await getDocs(genreQuery);
+    if (genreSnapshot.empty) {
+      return [];
+    }
+
+    return this.getEpisodesByGenreId(genreSnapshot.docs[0].id);
   }
 }

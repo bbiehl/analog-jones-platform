@@ -4,7 +4,7 @@ import { Timestamp } from 'firebase/firestore';
 
 import { EpisodeListStore } from './episode-list.store';
 import { EpisodeListService } from './episode-list.service';
-import type { Episode } from '../../../../../libs/episode/episode.model';
+import type { Episode } from '@aj/core';
 
 function ep(id: string, millis: number): Episode {
   return {

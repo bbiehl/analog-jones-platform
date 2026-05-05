@@ -2,9 +2,9 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TagStore } from '../../../../../../../libs/tag/tag.store';
-import { EpisodeStore } from '../../../../../../../libs/episode/episode.store';
-import { EpisodeTagService } from '../../../../../../../libs/shared/episode-tag.service';
+import { TagStore } from '@aj/core';
+import { EpisodeStore } from '@aj/core';
+import { EpisodeTagService } from '@aj/core';
 import { TagBulkEdit } from './tag-bulk-edit';
 
 describe('TagBulkEdit', () => {
