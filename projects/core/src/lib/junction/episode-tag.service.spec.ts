@@ -147,21 +147,14 @@ describe('EpisodeTagService', () => {
     });
   });
 
-  describe('getEpisodesByTagSlug', () => {
-    it('should return [] when no tag matches the slug', async () => {
-      ops.getDocs.mockResolvedValueOnce({ empty: true, docs: [] });
-      expect(await service.getEpisodesByTagSlug('missing')).toEqual([]);
-    });
-
-    it('should return only visible episodes for the matched tag', async () => {
-      ops.getDocs
-        .mockResolvedValueOnce({ empty: false, docs: [{ id: 't1' }] })
-        .mockResolvedValueOnce({
-          docs: [
-            { data: () => ({ episodeId: 'ep1' }) },
-            { data: () => ({ episodeId: 'ep2' }) },
-          ],
-        });
+  describe('getEpisodesByTagId', () => {
+    it('should return only visible episodes', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          { data: () => ({ episodeId: 'ep1' }) },
+          { data: () => ({ episodeId: 'ep2' }) },
+        ],
+      });
       ops.getDoc
         .mockResolvedValueOnce({
           exists: () => true,
@@ -174,9 +167,18 @@ describe('EpisodeTagService', () => {
           data: () => ({ title: 'H', isVisible: false }),
         });
 
-      expect(await service.getEpisodesByTagSlug('featured')).toEqual([
+      expect(await service.getEpisodesByTagId('t1')).toEqual([
         { id: 'ep1', title: 'V', isVisible: true },
       ]);
+    });
+
+    it('should skip episodes that do not exist', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [{ data: () => ({ episodeId: 'ep1' }) }],
+      });
+      ops.getDoc.mockResolvedValueOnce({ exists: () => false });
+
+      expect(await service.getEpisodesByTagId('t1')).toEqual([]);
     });
   });
 });

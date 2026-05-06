@@ -197,26 +197,4 @@ describe('EpisodeGenreService', () => {
 
       expect(await service.getEpisodesByGenreId('g1')).toEqual([]);
     });
-  });
-
-  describe('getEpisodesByGenreSlug', () => {
-    it('should return [] when no genre matches the slug', async () => {
-      ops.getDocs.mockResolvedValueOnce({ empty: true, docs: [] });
-      expect(await service.getEpisodesByGenreSlug('missing')).toEqual([]);
-    });
-
-    it('should delegate to getEpisodesByGenreId for the matched genre', async () => {
-      ops.getDocs
-        .mockResolvedValueOnce({ empty: false, docs: [{ id: 'g1' }] })
-        .mockResolvedValueOnce({ docs: [{ data: () => ({ episodeId: 'ep1' }) }] });
-      ops.getDoc.mockResolvedValueOnce({
-        exists: () => true,
-        id: 'ep1',
-        data: () => ({ title: 'V', isVisible: true }),
-      });
-
-      const result = await service.getEpisodesByGenreSlug('action');
-      expect(result).toEqual([{ id: 'ep1', title: 'V', isVisible: true }]);
-    });
-  });
-});
+  });});

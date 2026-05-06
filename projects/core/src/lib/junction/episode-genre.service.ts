@@ -131,18 +131,4 @@ export class EpisodeGenreService {
     }
 
     return episodes;
-  }
-
-  async getEpisodesByGenreSlug(slug: string): Promise<Episode[]> {
-    const genreQuery = this.ops.query(
-      this.ops.collection(this.firestore, 'genres'),
-      this.ops.where('slug', '==', slug)
-    );
-    const genreSnapshot = await this.ops.getDocs(genreQuery);
-    if (genreSnapshot.empty) {
-      return [];
-    }
-
-    return this.getEpisodesByGenreId(genreSnapshot.docs[0].id);
-  }
-}
+  }}

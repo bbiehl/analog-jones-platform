@@ -112,17 +112,7 @@ export class EpisodeTagService {
     return tags;
   }
 
-  async getEpisodesByTagSlug(slug: string): Promise<Episode[]> {
-    const tagQuery = this.ops.query(
-      this.ops.collection(this.firestore, 'tags'),
-      this.ops.where('slug', '==', slug)
-    );
-    const tagSnapshot = await this.ops.getDocs(tagQuery);
-    if (tagSnapshot.empty) {
-      return [];
-    }
-
-    const tagId = tagSnapshot.docs[0].id;
+  async getEpisodesByTagId(tagId: string): Promise<Episode[]> {
     const junctionQuery = this.ops.query(
       this.ops.collection(this.firestore, 'episodeTags'),
       this.ops.where('tagId', '==', tagId)

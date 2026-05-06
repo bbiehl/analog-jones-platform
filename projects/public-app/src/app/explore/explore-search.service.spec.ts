@@ -41,7 +41,7 @@ describe('ExploreSearchService', () => {
   let mockGenreService: { getAllGenres: ReturnType<typeof vi.fn> };
   let mockTagService: { getAllTags: ReturnType<typeof vi.fn> };
   let mockEpisodeGenreService: { getEpisodesByGenreId: ReturnType<typeof vi.fn> };
-  let mockEpisodeTagService: { getEpisodesByTagSlug: ReturnType<typeof vi.fn> };
+  let mockEpisodeTagService: { getEpisodesByTagId: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     mockEpisodeService = {
@@ -51,7 +51,7 @@ describe('ExploreSearchService', () => {
     mockGenreService = { getAllGenres: vi.fn().mockResolvedValue(genres) };
     mockTagService = { getAllTags: vi.fn().mockResolvedValue(tags) };
     mockEpisodeGenreService = { getEpisodesByGenreId: vi.fn().mockResolvedValue([]) };
-    mockEpisodeTagService = { getEpisodesByTagSlug: vi.fn().mockResolvedValue([]) };
+    mockEpisodeTagService = { getEpisodesByTagId: vi.fn().mockResolvedValue([]) };
 
     TestBed.configureTestingModule({
       providers: [
@@ -162,20 +162,20 @@ describe('ExploreSearchService', () => {
       expect(result).toEqual([]);
     });
 
-    it('should look up tag by name and fetch episodes by tag slug', async () => {
-      mockEpisodeTagService.getEpisodesByTagSlug.mockResolvedValueOnce([episodes[1]]);
+    it('should look up tag by name and fetch episodes by tag id', async () => {
+      mockEpisodeTagService.getEpisodesByTagId.mockResolvedValueOnce([episodes[1]]);
 
       const result = await service.searchEpisodes({ type: 'tag', value: 'Live' });
 
       expect(mockTagService.getAllTags).toHaveBeenCalled();
-      expect(mockEpisodeTagService.getEpisodesByTagSlug).toHaveBeenCalledWith('live');
+      expect(mockEpisodeTagService.getEpisodesByTagId).toHaveBeenCalledWith('t1');
       expect(result).toEqual([episodes[1]]);
     });
 
     it('should return empty array when tag name is not found', async () => {
       const result = await service.searchEpisodes({ type: 'tag', value: 'Unknown' });
 
-      expect(mockEpisodeTagService.getEpisodesByTagSlug).not.toHaveBeenCalled();
+      expect(mockEpisodeTagService.getEpisodesByTagId).not.toHaveBeenCalled();
       expect(result).toEqual([]);
     });
 
