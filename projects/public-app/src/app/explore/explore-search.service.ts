@@ -50,8 +50,8 @@ export class ExploreSearchService {
     } else {
       const tags = await this.tagService.getAllTags();
       const tag = tags.find((t) => t.name === option.value);
-      if (tag) {
-        results = await this.episodeTagService.getEpisodesByTagSlug(tag.slug);
+      if (tag?.id) {
+        results = await this.episodeTagService.getEpisodesByTagId(tag.id);
       }
     }
     const deduped = Array.from(new Map(results.map((e) => [e.id, e])).values());

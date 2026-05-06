@@ -58,7 +58,7 @@ describe('CategoryService', () => {
 
   beforeEach(() => {
     mockEpisodeCategoryService = {
-      getEpisodesByCategorySlug: vi.fn(),
+      getEpisodeIdsByCategoryId: vi.fn(),
       deleteEpisodeCategoriesByCategoryId: vi.fn(),
     };
 

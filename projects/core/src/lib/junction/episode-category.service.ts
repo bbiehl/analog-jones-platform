@@ -1,6 +1,5 @@
 import { inject, Injectable } from '@angular/core';
 import { Category } from '../category/category.model';
-import { Episode } from '../episode/episode.model';
 import { FIRESTORE, FIRESTORE_OPS } from '../shared/firebase.token';
 
 @Injectable({ providedIn: 'root' })
@@ -112,36 +111,4 @@ export class EpisodeCategoryService {
     }
 
     return categories;
-  }
-
-  async getEpisodesByCategorySlug(slug: string): Promise<Episode[]> {
-    const categoryQuery = this.ops.query(
-      this.ops.collection(this.firestore, 'categories'),
-      this.ops.where('slug', '==', slug)
-    );
-    const categorySnapshot = await this.ops.getDocs(categoryQuery);
-    if (categorySnapshot.empty) {
-      return [];
-    }
-
-    const categoryId = categorySnapshot.docs[0].id;
-    const junctionQuery = this.ops.query(
-      this.ops.collection(this.firestore, 'episodeCategories'),
-      this.ops.where('categoryId', '==', categoryId)
-    );
-    const junctionSnapshot = await this.ops.getDocs(junctionQuery);
-    const episodes: Episode[] = [];
-
-    for (const junction of junctionSnapshot.docs) {
-      const episodeId = junction.data()['episodeId'];
-      const episodeSnap = await this.ops.getDoc(
-        this.ops.doc(this.firestore, 'episodes', episodeId)
-      );
-      if (episodeSnap.exists() && episodeSnap.data()['isVisible']) {
-        episodes.push({ id: episodeSnap.id, ...episodeSnap.data() } as Episode);
-      }
-    }
-
-    return episodes;
-  }
-}
+  }}
