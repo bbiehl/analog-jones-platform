@@ -217,4 +217,175 @@ describe('EpisodeAdd', () => {
     resolveCreate();
     await firstSubmit;
   });
+
+  it('should not call createEpisode when the form is invalid', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    // title is required and starts empty
+    expect(c.form.invalid).toBe(true);
+
+    await c.onSubmit();
+
+    expect(mockEpisodeStore.createEpisode).not.toHaveBeenCalled();
+  });
+
+  it('should navigate to /episodes after a successful submission', async () => {
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.patchValue({ title: 'Hello' });
+
+    await c.onSubmit();
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/episodes']);
+  });
+
+  it('should map form values to the createEpisode payload', async () => {
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const date = new Date(2025, 0, 15);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.patchValue({
+      title: 'My Title',
+      episodeDate: date,
+      intelligence: '# hi',
+      isVisible: true,
+      spotifyLink: 'https://spotify.example/x',
+      youtubeLink: 'https://youtube.example/y',
+      categoryIds: ['c1'],
+      genreIds: ['g1', 'g2'],
+      tagIds: ['t1'],
+    });
+
+    await c.onSubmit();
+
+    expect(mockEpisodeStore.createEpisode).toHaveBeenCalledTimes(1);
+    const [data, categoryIds, genreIds, tagIds, posterFile] =
+      mockEpisodeStore.createEpisode.mock.calls[0];
+    expect(data).toMatchObject({
+      title: 'My Title',
+      intelligence: '# hi',
+      isVisible: true,
+      links: { spotify: 'https://spotify.example/x', youtube: 'https://youtube.example/y' },
+      posterUrl: null,
+    });
+    expect(data.episodeDate.toDate().getTime()).toBe(date.getTime());
+    expect(categoryIds).toEqual(['c1']);
+    expect(genreIds).toEqual(['g1', 'g2']);
+    expect(tagIds).toEqual(['t1']);
+    expect(posterFile).toBeUndefined();
+  });
+
+  it('should omit empty link fields and send null intelligence when blank', async () => {
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.patchValue({ title: 'Title' });
+
+    await c.onSubmit();
+
+    const [data] = mockEpisodeStore.createEpisode.mock.calls[0];
+    expect(data.links).toEqual({});
+    expect(data.intelligence).toBeNull();
+  });
+
+  it('should toggle markdown preview state', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    expect(c.showMarkdownPreview()).toBe(false);
+    c.togglePreview();
+    expect(c.showMarkdownPreview()).toBe(true);
+    c.togglePreview();
+    expect(c.showMarkdownPreview()).toBe(false);
+  });
+
+  it('should render markdown preview html when toggled on', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.controls.intelligence.setValue('# Heading');
+    await fixture.whenStable();
+    c.togglePreview();
+    fixture.detectChanges();
+
+    const preview = fixture.nativeElement.querySelector('.markdown-preview');
+    expect(preview).not.toBeNull();
+    expect(preview.innerHTML).toContain('<h1');
+    expect(preview.innerHTML).toContain('Heading');
+  });
+
+  it('should clear the poster file and preview when removePoster is called', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.posterFile.set(new File(['x'], 'x.png', { type: 'image/png' }));
+    c.posterPreview.set('data:image/png;base64,abc');
+
+    c.removePoster();
+
+    expect(c.posterFile()).toBeNull();
+    expect(c.posterPreview()).toBeNull();
+  });
+
+  it('should set the poster file and preview when a file is selected', async () => {
+    const dataUrl = 'data:image/png;base64,Zm9v';
+    class FakeFileReader {
+      result: string | null = null;
+      onload: (() => void) | null = null;
+      readAsDataURL(_blob: Blob): void {
+        this.result = dataUrl;
+        queueMicrotask(() => this.onload?.());
+      }
+    }
+    vi.stubGlobal('FileReader', FakeFileReader);
+
+    const file = new File(['x'], 'poster.png', { type: 'image/png' });
+    const event = {
+      target: { files: [file] } as unknown as HTMLInputElement,
+    } as unknown as Event;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.onPosterSelected(event);
+
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(c.posterFile()).toBe(file);
+    expect(c.posterPreview()).toBe(dataUrl);
+
+    vi.unstubAllGlobals();
+  });
+
+  it('should pass the selected poster file to createEpisode', async () => {
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const file = new File(['x'], 'poster.png', { type: 'image/png' });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.posterFile.set(file);
+    c.form.patchValue({ title: 'Title' });
+
+    await c.onSubmit();
+
+    const [, , , , posterFile] = mockEpisodeStore.createEpisode.mock.calls[0];
+    expect(posterFile).toBe(file);
+  });
+
+  it('should disable the Save button when the form is invalid', async () => {
+    // form starts invalid (title required)
+    const saveButton = await loader.getHarness(MatButtonHarness.with({ text: /Save/ }));
+    expect(await saveButton.isDisabled()).toBe(true);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const c = component as any;
+    c.form.patchValue({ title: 'Now valid' });
+    fixture.detectChanges();
+
+    expect(await saveButton.isDisabled()).toBe(false);
+  });
 });

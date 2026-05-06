@@ -1,23 +1,63 @@
 /// <reference types="vitest/globals" />
 import { TestBed } from '@angular/core/testing';
-import { AUTH, FIRESTORE } from '../shared/firebase.token';
+import {
+  AUTH,
+  AUTH_OPS,
+  AuthOps,
+  FIRESTORE,
+  FIRESTORE_OPS,
+  FirestoreOps,
+} from '../shared/firebase.token';
 import { UserService } from './user.service';
 import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 
 describe('UserService', () => {
   let service: UserService;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockAuth: any;
+  let ops: { [K in keyof FirestoreOps]: ReturnType<typeof vi.fn> };
+  let authOps: {
+    GoogleAuthProvider: ReturnType<typeof vi.fn>;
+    signInWithPopup: ReturnType<typeof vi.fn>;
+    signOut: ReturnType<typeof vi.fn>;
+    onAuthStateChanged: ReturnType<typeof vi.fn>;
+  };
+  let providerInstance: { setCustomParameters: ReturnType<typeof vi.fn> };
+  const firestore = { __brand: 'fake-firestore' } as unknown as Firestore;
+  const auth = { __brand: 'fake-auth' } as unknown as Auth;
 
   beforeEach(() => {
-    mockAuth = {};
+    ops = {
+      collection: vi.fn((_db, path) => ({ __collection: path })),
+      doc: vi.fn((_db, path, id) => ({ __doc: `${path}/${id}` })),
+      query: vi.fn((coll, ...constraints) => ({ __query: { coll, constraints } })),
+      orderBy: vi.fn((field) => ({ __orderBy: field })),
+      where: vi.fn((field, op, value) => ({ __where: { field, op, value } })),
+      limit: vi.fn((n) => ({ __limit: n })),
+      getDoc: vi.fn(),
+      getDocs: vi.fn(),
+      addDoc: vi.fn(),
+      updateDoc: vi.fn().mockResolvedValue(undefined),
+      writeBatch: vi.fn(),
+    };
+
+    providerInstance = { setCustomParameters: vi.fn() };
+    const ProviderCtor = vi.fn(function (this: typeof providerInstance) {
+      Object.assign(this, providerInstance);
+    });
+    authOps = {
+      GoogleAuthProvider: ProviderCtor,
+      signInWithPopup: vi.fn(),
+      signOut: vi.fn().mockResolvedValue(undefined),
+      onAuthStateChanged: vi.fn(),
+    };
 
     TestBed.configureTestingModule({
       providers: [
         UserService,
-        { provide: AUTH, useValue: mockAuth as Auth },
-        { provide: FIRESTORE, useValue: {} as Firestore },
+        { provide: AUTH, useValue: auth },
+        { provide: AUTH_OPS, useValue: authOps as unknown as AuthOps },
+        { provide: FIRESTORE, useValue: firestore },
+        { provide: FIRESTORE_OPS, useValue: ops as unknown as FirestoreOps },
       ],
     });
 
@@ -26,109 +66,120 @@ describe('UserService', () => {
 
   describe('service injection', () => {
     it('should be created', () => {
-      expect(service).toBeTruthy();
-    });
-
-    it('should be an instance of UserService', () => {
       expect(service).toBeInstanceOf(UserService);
     });
   });
 
+  describe('signInWithGoogle', () => {
+    it('should construct a GoogleAuthProvider, set the account-prompt param, and return the user', async () => {
+      const user = { uid: 'u1', displayName: 'Alice' };
+      authOps.signInWithPopup.mockResolvedValueOnce({ user });
+
+      const result = await service.signInWithGoogle();
+
+      expect(authOps.GoogleAuthProvider).toHaveBeenCalledTimes(1);
+      expect(providerInstance.setCustomParameters).toHaveBeenCalledWith({
+        prompt: 'select_account',
+      });
+      expect(authOps.signInWithPopup).toHaveBeenCalledWith(auth, expect.any(Object));
+      expect(result).toBe(user);
+    });
+
+    it('should propagate errors from signInWithPopup', async () => {
+      authOps.signInWithPopup.mockRejectedValueOnce(new Error('popup-closed'));
+
+      await expect(service.signInWithGoogle()).rejects.toThrow('popup-closed');
+    });
+  });
+
+  describe('signOutUser', () => {
+    it('should call signOut with the auth handle', async () => {
+      await service.signOutUser();
+      expect(authOps.signOut).toHaveBeenCalledWith(auth);
+    });
+
+    it('should propagate errors from signOut', async () => {
+      authOps.signOut.mockRejectedValueOnce(new Error('network'));
+      await expect(service.signOutUser()).rejects.toThrow('network');
+    });
+  });
+
+  describe('listenToAuthState', () => {
+    it('should subscribe via onAuthStateChanged and return its unsubscribe function', () => {
+      const unsubscribe = vi.fn();
+      authOps.onAuthStateChanged.mockReturnValueOnce(unsubscribe);
+      const callback = vi.fn();
+
+      const result = service.listenToAuthState(callback);
+
+      expect(authOps.onAuthStateChanged).toHaveBeenCalledWith(auth, callback);
+      expect(result).toBe(unsubscribe);
+    });
+  });
+
   describe('getUserDoc', () => {
-    it('should combine snapshot id and data into an AppUser', () => {
-      const snap = {
+    it('should return the user when the snapshot exists', async () => {
+      ops.getDoc.mockResolvedValueOnce({
         exists: () => true,
         id: 'uid1',
         data: () => ({
           avatarUrl: null,
           createdAt: { seconds: 1000, nanoseconds: 0 },
-          email: 'test@example.com',
-          name: 'Test User',
+          email: 'alice@example.com',
+          name: 'Alice',
           role: 'admin',
         }),
-      };
+      });
 
-      const result = { id: snap.id, ...snap.data() };
+      const result = await service.getUserDoc('uid1');
+
+      expect(ops.doc).toHaveBeenCalledWith(firestore, 'users', 'uid1');
       expect(result).toEqual({
         id: 'uid1',
         avatarUrl: null,
         createdAt: { seconds: 1000, nanoseconds: 0 },
-        email: 'test@example.com',
-        name: 'Test User',
+        email: 'alice@example.com',
+        name: 'Alice',
         role: 'admin',
       });
     });
 
-    it('should return null when snapshot does not exist', () => {
-      const snap = { exists: () => false };
+    it('should return null when the snapshot does not exist', async () => {
+      ops.getDoc.mockResolvedValueOnce({ exists: () => false });
 
-      const result = snap.exists() ? { id: 'uid1' } : null;
+      const result = await service.getUserDoc('missing');
+
       expect(result).toBeNull();
+    });
+
+    it('should propagate getDoc errors', async () => {
+      ops.getDoc.mockRejectedValueOnce(new Error('permission-denied'));
+      await expect(service.getUserDoc('uid1')).rejects.toThrow('permission-denied');
     });
   });
 
   describe('getAllUsers', () => {
-    it('should map snapshot docs to AppUser objects', () => {
-      const mockDocs = [
-        {
-          id: 'u1',
-          data: () => ({
-            avatarUrl: null,
-            createdAt: { seconds: 1000, nanoseconds: 0 },
-            email: 'alice@example.com',
-            name: 'Alice',
-            role: 'admin',
-          }),
-        },
-        {
-          id: 'u2',
-          data: () => ({
-            avatarUrl: 'https://example.com/avatar.jpg',
-            createdAt: { seconds: 2000, nanoseconds: 0 },
-            email: 'bob@example.com',
-            name: 'Bob',
-            role: 'member',
-          }),
-        },
-      ];
+    it('should query users ordered by name and map docs to AppUser objects', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          { id: 'u1', data: () => ({ email: 'a@x.com', name: 'A', role: 'admin' }) },
+          { id: 'u2', data: () => ({ email: 'b@x.com', name: 'B', role: 'member' }) },
+        ],
+      });
 
-      const result = mockDocs.map((d) => ({ id: d.id, ...d.data() }));
+      const result = await service.getAllUsers();
 
+      expect(ops.collection).toHaveBeenCalledWith(firestore, 'users');
+      expect(ops.orderBy).toHaveBeenCalledWith('name');
       expect(result).toEqual([
-        {
-          id: 'u1',
-          avatarUrl: null,
-          createdAt: { seconds: 1000, nanoseconds: 0 },
-          email: 'alice@example.com',
-          name: 'Alice',
-          role: 'admin',
-        },
-        {
-          id: 'u2',
-          avatarUrl: 'https://example.com/avatar.jpg',
-          createdAt: { seconds: 2000, nanoseconds: 0 },
-          email: 'bob@example.com',
-          name: 'Bob',
-          role: 'member',
-        },
+        { id: 'u1', email: 'a@x.com', name: 'A', role: 'admin' },
+        { id: 'u2', email: 'b@x.com', name: 'B', role: 'member' },
       ]);
     });
 
-    it('should include the id field from each doc', () => {
-      const mockDoc = {
-        id: 'u1',
-        data: () => ({ email: 'test@example.com', name: 'Test', role: 'free' }),
-      };
-
-      const result = { id: mockDoc.id, ...mockDoc.data() };
-      expect(result.id).toBe('u1');
-    });
-  });
-
-  describe('listenToAuthState', () => {
-    it('should accept a callback function', () => {
-      const callback = vi.fn();
-      expect(typeof callback).toBe('function');
+    it('should return [] when there are no users', async () => {
+      ops.getDocs.mockResolvedValueOnce({ docs: [] });
+      expect(await service.getAllUsers()).toEqual([]);
     });
   });
 });

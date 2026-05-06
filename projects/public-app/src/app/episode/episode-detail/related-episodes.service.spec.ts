@@ -1,18 +1,37 @@
 /// <reference types="vitest/globals" />
 import { TestBed } from '@angular/core/testing';
 import type { Firestore } from 'firebase/firestore';
-import { FIRESTORE } from '@aj/core';
+import { FIRESTORE, FIRESTORE_OPS, FirestoreOps } from '@aj/core';
 import type { EpisodeWithRelations } from '@aj/core';
 import { RelatedEpisodesService } from './related-episodes.service';
 
+type Stubs = { [K in keyof FirestoreOps]: ReturnType<typeof vi.fn> };
+
 describe('RelatedEpisodesService', () => {
   let service: RelatedEpisodesService;
+  let ops: Stubs;
+  const firestore = { __brand: 'fake-firestore' } as unknown as Firestore;
 
   beforeEach(() => {
+    ops = {
+      collection: vi.fn((_db, path) => ({ __collection: path })),
+      doc: vi.fn((_db, path, id) => ({ __doc: `${path}/${id}` })),
+      query: vi.fn((coll, ...constraints) => ({ __query: { coll, constraints } })),
+      orderBy: vi.fn(),
+      where: vi.fn((field, op, value) => ({ __where: { field, op, value } })),
+      limit: vi.fn(),
+      getDoc: vi.fn(),
+      getDocs: vi.fn(),
+      addDoc: vi.fn(),
+      updateDoc: vi.fn(),
+      writeBatch: vi.fn(),
+    };
+
     TestBed.configureTestingModule({
       providers: [
         RelatedEpisodesService,
-        { provide: FIRESTORE, useValue: {} as Firestore },
+        { provide: FIRESTORE, useValue: firestore },
+        { provide: FIRESTORE_OPS, useValue: ops as unknown as FirestoreOps },
       ],
     });
     service = TestBed.inject(RelatedEpisodesService);
@@ -427,6 +446,144 @@ describe('RelatedEpisodesService', () => {
       const result = await service.getRelatedEpisodes(episode, 5);
 
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('getRelatedEpisodes (firestore-driven)', () => {
+    const ts = (ms: number) => ({ toMillis: () => ms });
+    const junctionDoc = (episodeId: string) => ({ data: () => ({ episodeId }) });
+    const epSnap = (id: string, data: Record<string, unknown> | null) => ({
+      id,
+      exists: () => data !== null,
+      data: () => data ?? {},
+    });
+    const makeEpisode = (
+      overrides: Partial<EpisodeWithRelations> = {}
+    ): EpisodeWithRelations =>
+      ({
+        id: 'ep-source',
+        tags: [{ id: 't1' }],
+        genres: [{ id: 'g1' }],
+        categories: [],
+        ...overrides,
+      }) as unknown as EpisodeWithRelations;
+
+    it('should return tag-matched visible episodes sorted by date desc', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [junctionDoc('ep-a'), junctionDoc('ep-b')],
+      });
+      ops.getDoc
+        .mockResolvedValueOnce(epSnap('ep-a', { isVisible: true, episodeDate: ts(100) }))
+        .mockResolvedValueOnce(epSnap('ep-b', { isVisible: true, episodeDate: ts(300) }));
+
+      const result = await service.getRelatedEpisodes(
+        makeEpisode({ genres: [] as unknown as EpisodeWithRelations['genres'] })
+      );
+
+      expect(result.map((e) => e.id)).toEqual(['ep-b', 'ep-a']);
+      expect(ops.collection).toHaveBeenCalledWith(firestore, 'episodeTags');
+      expect(ops.where).toHaveBeenCalledWith('tagId', '==', 't1');
+    });
+
+    it('should skip the source episode and dedupe within tag results', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [junctionDoc('ep-source'), junctionDoc('ep-a'), junctionDoc('ep-a')],
+      });
+      ops.getDoc.mockResolvedValueOnce(
+        epSnap('ep-a', { isVisible: true, episodeDate: ts(10) })
+      );
+
+      const result = await service.getRelatedEpisodes(
+        makeEpisode({ genres: [] as unknown as EpisodeWithRelations['genres'] })
+      );
+
+      expect(result.map((e) => e.id)).toEqual(['ep-a']);
+      expect(ops.getDoc).toHaveBeenCalledTimes(1);
+    });
+
+    it('should skip non-visible and non-existent episode snapshots', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [junctionDoc('ep-hidden'), junctionDoc('ep-missing')],
+      });
+      ops.getDoc
+        .mockResolvedValueOnce(epSnap('ep-hidden', { isVisible: false, episodeDate: ts(10) }))
+        .mockResolvedValueOnce(epSnap('ep-missing', null));
+
+      const result = await service.getRelatedEpisodes(
+        makeEpisode({ genres: [] as unknown as EpisodeWithRelations['genres'] })
+      );
+
+      expect(result).toEqual([]);
+    });
+
+    it('should skip the genre lookup when tag results already meet max', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [junctionDoc('ep-a'), junctionDoc('ep-b')],
+      });
+      ops.getDoc
+        .mockResolvedValueOnce(epSnap('ep-a', { isVisible: true, episodeDate: ts(20) }))
+        .mockResolvedValueOnce(epSnap('ep-b', { isVisible: true, episodeDate: ts(10) }));
+
+      const result = await service.getRelatedEpisodes(makeEpisode(), 2);
+
+      expect(result.map((e) => e.id)).toEqual(['ep-a', 'ep-b']);
+      expect(ops.getDocs).toHaveBeenCalledTimes(1);
+    });
+
+    it('should fall back to genres and remove tag-matched ids from the genre set', async () => {
+      ops.getDocs.mockResolvedValueOnce({ docs: [junctionDoc('ep-shared')] });
+      ops.getDoc.mockResolvedValueOnce(
+        epSnap('ep-shared', { isVisible: true, episodeDate: ts(50) })
+      );
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [junctionDoc('ep-shared'), junctionDoc('ep-genre-only')],
+      });
+      ops.getDoc
+        .mockResolvedValueOnce(epSnap('ep-shared', { isVisible: true, episodeDate: ts(50) }))
+        .mockResolvedValueOnce(
+          epSnap('ep-genre-only', { isVisible: true, episodeDate: ts(20) })
+        );
+
+      const result = await service.getRelatedEpisodes(makeEpisode());
+
+      expect(result.map((e) => e.id)).toEqual(['ep-shared', 'ep-genre-only']);
+      expect(ops.collection).toHaveBeenCalledWith(firestore, 'episodeGenres');
+      expect(ops.where).toHaveBeenCalledWith('genreId', '==', 'g1');
+    });
+
+    it('should slice the merged tag+genre list to max', async () => {
+      ops.getDocs.mockResolvedValueOnce({ docs: [junctionDoc('ep-a')] });
+      ops.getDoc.mockResolvedValueOnce(
+        epSnap('ep-a', { isVisible: true, episodeDate: ts(100) })
+      );
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [junctionDoc('ep-b'), junctionDoc('ep-c')],
+      });
+      ops.getDoc
+        .mockResolvedValueOnce(epSnap('ep-b', { isVisible: true, episodeDate: ts(80) }))
+        .mockResolvedValueOnce(epSnap('ep-c', { isVisible: true, episodeDate: ts(60) }));
+
+      const result = await service.getRelatedEpisodes(makeEpisode(), 2);
+
+      expect(result.map((e) => e.id)).toEqual(['ep-a', 'ep-b']);
+    });
+
+    it('should issue no firestore reads when episode has no tag/genre ids', async () => {
+      const result = await service.getRelatedEpisodes(
+        makeEpisode({
+          tags: [] as unknown as EpisodeWithRelations['tags'],
+          genres: [] as unknown as EpisodeWithRelations['genres'],
+        })
+      );
+
+      expect(result).toEqual([]);
+      expect(ops.getDocs).not.toHaveBeenCalled();
+    });
+
+    it('should propagate firestore errors', async () => {
+      ops.getDocs.mockRejectedValueOnce(new Error('boom'));
+
+      await expect(service.getRelatedEpisodes(makeEpisode())).rejects.toThrow('boom');
     });
   });
 

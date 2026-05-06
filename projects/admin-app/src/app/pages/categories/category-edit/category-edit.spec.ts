@@ -76,4 +76,121 @@ describe('CategoryEdit', () => {
     fixture.destroy();
     expect(mockCategoryStore.clearSelectedCategory).toHaveBeenCalled();
   });
+
+  it('should show a spinner and no form while loading', async () => {
+    mockCategoryStore.loading = vi.fn(() => true);
+    fixture = TestBed.createComponent(CategoryEdit);
+    loader = TestbedHarnessEnvironment.loader(fixture);
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('mat-spinner')).toBeTruthy();
+    expect(await loader.getAllHarnesses(MatInputHarness)).toHaveLength(0);
+  });
+
+  it('should show the error text and no form when the store reports an error', async () => {
+    mockCategoryStore.error = vi.fn(() => 'kaboom');
+    fixture = TestBed.createComponent(CategoryEdit);
+    loader = TestbedHarnessEnvironment.loader(fixture);
+    await fixture.whenStable();
+
+    const err = fixture.nativeElement.querySelector('p.text-red-400');
+    expect(err?.textContent).toContain('kaboom');
+    expect(await loader.getAllHarnesses(MatInputHarness)).toHaveLength(0);
+  });
+
+  it('should patch the form when selectedCategory becomes available', async () => {
+    mockCategoryStore.selectedCategory = vi.fn(() => ({
+      id: 'c1',
+      name: 'Vinyl',
+      slug: 'vinyl',
+    }));
+    fixture = TestBed.createComponent(CategoryEdit);
+    loader = TestbedHarnessEnvironment.loader(fixture);
+    await fixture.whenStable();
+
+    const inputs = await loader.getAllHarnesses(MatInputHarness);
+    expect(await inputs[0].getValue()).toBe('Vinyl');
+    expect(await inputs[1].getValue()).toBe('vinyl');
+  });
+
+  it('should auto-populate slug from name on input', async () => {
+    const inputs = await loader.getAllHarnesses(MatInputHarness);
+    await inputs[0].setValue('Hello World!');
+    expect(await inputs[1].getValue()).toBe('hello-world');
+  });
+
+  it('should strip leading and trailing hyphens when slugifying', async () => {
+    const inputs = await loader.getAllHarnesses(MatInputHarness);
+    await inputs[0].setValue('  !!Cool Stuff!!  ');
+    expect(await inputs[1].getValue()).toBe('cool-stuff');
+  });
+
+  it('should produce an empty slug when name has no alphanumerics', async () => {
+    const inputs = await loader.getAllHarnesses(MatInputHarness);
+    await inputs[0].setValue('!!!');
+    expect(await inputs[1].getValue()).toBe('');
+  });
+
+  it('should disable the save button when the form is invalid', async () => {
+    const inputs = await loader.getAllHarnesses(MatInputHarness);
+    await inputs[0].setValue('');
+    await inputs[1].setValue('');
+    const saveButton = await loader.getHarness(MatButtonHarness.with({ text: /Save/ }));
+    expect(await saveButton.isDisabled()).toBe(true);
+  });
+
+  it('should update the category and navigate on submit', async () => {
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const inputs = await loader.getAllHarnesses(MatInputHarness);
+    await inputs[0].setValue('Updated');
+    await inputs[1].setValue('updated');
+
+    const saveButton = await loader.getHarness(MatButtonHarness.with({ text: /Save/ }));
+    expect(await saveButton.isDisabled()).toBe(false);
+    await saveButton.click();
+    await fixture.whenStable();
+
+    expect(mockCategoryStore.updateCategory).toHaveBeenCalledWith('c1', {
+      name: 'Updated',
+      slug: 'updated',
+    });
+    expect(navigateSpy).toHaveBeenCalledWith(['/categories']);
+  });
+
+  it('should not update or navigate when the form is invalid', async () => {
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    await component['onSubmit']();
+
+    expect(mockCategoryStore.updateCategory).not.toHaveBeenCalled();
+    expect(navigateSpy).not.toHaveBeenCalled();
+  });
+
+  it('should not navigate when the store reports an error after submit', async () => {
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const inputs = await loader.getAllHarnesses(MatInputHarness);
+    await inputs[0].setValue('Updated');
+    await inputs[1].setValue('updated');
+
+    mockCategoryStore.error = vi.fn(() => 'boom');
+    await component['onSubmit']();
+
+    expect(mockCategoryStore.updateCategory).toHaveBeenCalled();
+    expect(navigateSpy).not.toHaveBeenCalled();
+  });
+
+  it('should not navigate when updateCategory rejects', async () => {
+    mockCategoryStore.updateCategory = vi.fn().mockRejectedValue(new Error('fail'));
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const inputs = await loader.getAllHarnesses(MatInputHarness);
+    await inputs[0].setValue('Updated');
+    await inputs[1].setValue('updated');
+
+    await expect(component['onSubmit']()).rejects.toThrow('fail');
+    expect(navigateSpy).not.toHaveBeenCalled();
+  });
 });

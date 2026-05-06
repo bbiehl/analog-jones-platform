@@ -18,6 +18,7 @@ describe('GenreAdd', () => {
   beforeEach(async () => {
     mockGenreStore = {
       createGenre: vi.fn().mockResolvedValue(undefined),
+      error: vi.fn(() => null),
     };
 
     await TestBed.configureTestingModule({
@@ -62,5 +63,86 @@ describe('GenreAdd', () => {
     await cancelButton.click();
 
     expect(navigateSpy).toHaveBeenCalledWith(['/genres']);
+  });
+
+  it('should auto-populate slug from name on input', async () => {
+    const nameInput = (await loader.getAllHarnesses(MatInputHarness))[0];
+    await nameInput.setValue('Hello World!');
+
+    const slugInput = (await loader.getAllHarnesses(MatInputHarness))[1];
+    expect(await slugInput.getValue()).toBe('hello-world');
+  });
+
+  it('should strip leading and trailing hyphens when slugifying', async () => {
+    const nameInput = (await loader.getAllHarnesses(MatInputHarness))[0];
+    await nameInput.setValue('  !!Cool Stuff!!  ');
+
+    const slugInput = (await loader.getAllHarnesses(MatInputHarness))[1];
+    expect(await slugInput.getValue()).toBe('cool-stuff');
+  });
+
+  it('should produce an empty slug when name has no alphanumerics', async () => {
+    const nameInput = (await loader.getAllHarnesses(MatInputHarness))[0];
+    await nameInput.setValue('!!!');
+
+    const slugInput = (await loader.getAllHarnesses(MatInputHarness))[1];
+    expect(await slugInput.getValue()).toBe('');
+  });
+
+  it('should create the genre and navigate on submit', async () => {
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const inputs = await loader.getAllHarnesses(MatInputHarness);
+    await inputs[0].setValue('My Genre');
+    await inputs[1].setValue('my-genre');
+
+    const saveButton = await loader.getHarness(MatButtonHarness.with({ text: /Save/ }));
+    expect(await saveButton.isDisabled()).toBe(false);
+    await saveButton.click();
+    await fixture.whenStable();
+
+    expect(mockGenreStore.createGenre).toHaveBeenCalledWith({
+      name: 'My Genre',
+      slug: 'my-genre',
+    });
+    expect(navigateSpy).toHaveBeenCalledWith(['/genres']);
+  });
+
+  it('should not create or navigate when form is invalid', async () => {
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    await component['onSubmit']();
+
+    expect(mockGenreStore.createGenre).not.toHaveBeenCalled();
+    expect(navigateSpy).not.toHaveBeenCalled();
+  });
+
+  it('should not navigate when the store reports an error after submit', async () => {
+    mockGenreStore.error = vi.fn(() => 'boom');
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const inputs = await loader.getAllHarnesses(MatInputHarness);
+    await inputs[0].setValue('My Genre');
+    await inputs[1].setValue('my-genre');
+
+    const saveButton = await loader.getHarness(MatButtonHarness.with({ text: /Save/ }));
+    await saveButton.click();
+    await fixture.whenStable();
+
+    expect(mockGenreStore.createGenre).toHaveBeenCalled();
+    expect(navigateSpy).not.toHaveBeenCalled();
+  });
+
+  it('should not navigate when createGenre rejects', async () => {
+    mockGenreStore.createGenre = vi.fn().mockRejectedValue(new Error('fail'));
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const inputs = await loader.getAllHarnesses(MatInputHarness);
+    await inputs[0].setValue('My Genre');
+    await inputs[1].setValue('my-genre');
+
+    await expect(component['onSubmit']()).rejects.toThrow('fail');
+    expect(navigateSpy).not.toHaveBeenCalled();
   });
 });

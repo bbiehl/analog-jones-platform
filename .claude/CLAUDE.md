@@ -45,6 +45,13 @@ Provided via injection tokens in each app's `app.config.ts`:
 
 Connects to emulators when `environment.useEmulators` is true.
 
+**Static SDK functions are wrapped in injection tokens.** Because `vi.mock()` is banned (see Testing), services do not call `firebase/firestore`, `firebase/storage`, or `firebase/auth` static functions directly. Instead they inject:
+- `FIRESTORE_OPS` — `collection`, `doc`, `query`, `orderBy`, `where`, `limit`, `getDoc`, `getDocs`, `addDoc`, `updateDoc`, `writeBatch`
+- `STORAGE_OPS` — `ref`, `uploadBytes`, `getDownloadURL`, `deleteObject`
+- `AUTH_OPS` — `GoogleAuthProvider`, `signInWithPopup`, `signOut`, `onAuthStateChanged`
+
+All three are defined in `projects/core/src/lib/shared/firebase.token.ts` with default factories that return the real implementations, so app code is unaffected. Tests override them via `TestBed.configureTestingModule({ providers: [{ provide: <TOKEN>, useValue: ... }] })` to actually exercise service methods. When a service needs an SDK function not yet on the relevant `*Ops` interface, extend both the interface and the default factory together — both must list every op the service uses.
+
 ### Shell Layout
 
 Root shell (`layout/shell/`) wraps all routes:
@@ -55,7 +62,7 @@ Root shell (`layout/shell/`) wraps all routes:
 
 ## Testing
 
-- Do NOT use `vi.mock()` — conflicts with `@angular/build`'s vitest-mock-patch, causes flaky failures. The constraint comes from the unit-test builder, not the project layout, so it applies equally to core, admin-app, and public-app specs. Mock via TestBed injection tokens instead.
+- Do NOT use `vi.mock()` — this is an Angular toolchain constraint, not a project convention. `@angular/build`'s unit-test builder (used by `ng test`) injects a `vitest-mock-patch` to integrate Vitest with Angular's compilation pipeline; that patch and `vi.mock()`'s module-hoisting/interception mechanism step on each other and produce flaky failures (passes locally, fails in CI, or vice versa). Any Angular project using `@angular/build` + Vitest hits the same issue — it would only go away by switching to Jest or running Vitest outside the Angular builder. Applies equally to core, admin-app, and public-app specs. Mock via TestBed injection tokens instead.
 - Mock Firebase by providing fake values for `AUTH`, `FIRESTORE`, `STORAGE`, or `STORAGE_OPS` tokens (imported from `@aj/core`) in `TestBed.configureTestingModule`
 - Use `vi.stubGlobal()` for browser APIs unavailable in jsdom (`OffscreenCanvas`, `createImageBitmap`)
 - Detailed lib testing patterns (domain service / storage service / junction service / store) live in `projects/core/README.md`
