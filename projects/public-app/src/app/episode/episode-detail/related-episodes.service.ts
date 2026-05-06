@@ -1,11 +1,11 @@
 import { inject, Injectable } from '@angular/core';
-import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
-import { FIRESTORE } from '@aj/core';
+import { FIRESTORE, FIRESTORE_OPS } from '@aj/core';
 import { Episode, EpisodeWithRelations } from '@aj/core';
 
 @Injectable({ providedIn: 'root' })
 export class RelatedEpisodesService {
   private firestore = inject(FIRESTORE);
+  private ops = inject(FIRESTORE_OPS);
 
   async getRelatedEpisodes(episode: EpisodeWithRelations, max = 12): Promise<Episode[]> {
     const byDateDesc = (a: Episode, b: Episode) =>
@@ -48,6 +48,7 @@ export class RelatedEpisodesService {
     junctionField: string,
     ids: string[]
   ): Promise<void> {
+    const { collection, doc, getDoc, getDocs, query, where } = this.ops;
     for (const id of ids) {
       const junctionSnap = await getDocs(
         query(collection(this.firestore, junctionCollection), where(junctionField, '==', id))
