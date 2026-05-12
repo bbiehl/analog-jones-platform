@@ -67,6 +67,14 @@ Both apps deploy via Firebase App Hosting using `apphosting.public.yaml` and `ap
 pnpm deploy:rules
 ```
 
+## Operational checks
+
+```bash
+pnpm probe:appcheck   # verify Firebase App Check enforcement on prod Firestore + Storage
+```
+
+Sends token-less REST calls to publicly-readable endpoints; exits 0 only if every probe is rejected (enforcement live). Set `APPCHECK_PROBE_STORAGE_OBJECT=<path>` to add a probe against a specific Storage object.
+
 ## Public client config in this repo
 
 `projects/*/src/environments/environment*.ts` contains two values that look sensitive but are intentionally committed:
