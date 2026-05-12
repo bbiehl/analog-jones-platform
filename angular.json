@@ -37,7 +37,11 @@
             "server": "projects/public-app/src/main.server.ts",
             "outputMode": "server",
             "security": {
-              "allowedHosts": []
+              "allowedHosts": [
+                "analogjonestof.com",
+                "www.analogjonestof.com",
+                "public--analog-jones-v2.us-central1.hosted.app"
+              ]
             },
             "ssr": {
               "entry": "projects/public-app/src/server.ts"
@@ -133,6 +137,11 @@
             },
             "server": "projects/admin-app/src/main.server.ts",
             "outputMode": "server",
+            "security": {
+              "allowedHosts": [
+                "analog-jones-platform--analog-jones-v2.us-central1.hosted.app"
+              ]
+            },
             "ssr": {
               "entry": "projects/admin-app/src/server.ts"
             }
