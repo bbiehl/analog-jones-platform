@@ -40,7 +40,8 @@
               "allowedHosts": [
                 "analogjonestof.com",
                 "www.analogjonestof.com",
-                "public--analog-jones-v2.us-central1.hosted.app"
+                "public--analog-jones-v2.us-central1.hosted.app",
+                "*.run.app"
               ]
             },
             "ssr": {
@@ -139,7 +140,8 @@
             "outputMode": "server",
             "security": {
               "allowedHosts": [
-                "analog-jones-platform--analog-jones-v2.us-central1.hosted.app"
+                "analog-jones-platform--analog-jones-v2.us-central1.hosted.app",
+                "*.run.app"
               ]
             },
             "ssr": {

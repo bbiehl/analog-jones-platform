@@ -13,7 +13,7 @@ import { firestore } from './app/firebase';
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
-const angularApp = new AngularNodeAppEngine();
+const angularApp = new AngularNodeAppEngine({ trustProxyHeaders: true });
 
 app.get('/sitemap-episodes.xml', async (_req, res, next) => {
   try {
