@@ -289,11 +289,14 @@ describe('Home', () => {
       expect(cta?.textContent ?? '').toContain('ENTER THE ARCHIVE');
     });
 
-    it('renders padded TAPES CATALOGED count', async () => {
+    it('renders padded TAPES CATALOGED count from totalVisible', async () => {
       const eps = Array.from({ length: 7 }, (_, i) => makeEpisode({ id: `e${i}` }));
-      const { fixture } = await setup({ episodes: signal(eps) });
+      const { fixture } = await setup({
+        episodes: signal(eps),
+        totalVisible: signal(42),
+      });
       const value = fixture.nativeElement.querySelector('.hero-meta .m .v')?.textContent ?? '';
-      expect(value).toContain('07');
+      expect(value).toContain('42');
     });
 
     it('renders monitor with title, formatted date, and glow style when featured', async () => {
