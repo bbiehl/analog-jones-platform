@@ -3,6 +3,9 @@ import { TestBed } from '@angular/core/testing';
 import { Timestamp } from 'firebase/firestore';
 import { EpisodeStore } from './episode.store';
 import { EpisodeService } from './episode.service';
+import { EpisodeCategoryService } from '../junction/episode-category.service';
+import { EpisodeGenreService } from '../junction/episode-genre.service';
+import { EpisodeTagService } from '../junction/episode-tag.service';
 import { Episode, EpisodeWithRelations } from './episode.model';
 
 describe('EpisodeStore', () => {
@@ -50,9 +53,25 @@ describe('EpisodeStore', () => {
     deleteEpisode: vi.fn().mockResolvedValue(undefined),
   };
 
+  const mockEpisodeCategoryService = {
+    getEpisodeCategoriesByEpisodeId: vi.fn().mockResolvedValue([]),
+  };
+  const mockEpisodeGenreService = {
+    getEpisodeGenresByEpisodeId: vi.fn().mockResolvedValue([]),
+  };
+  const mockEpisodeTagService = {
+    getEpisodeTagsByEpisodeId: vi.fn().mockResolvedValue([]),
+  };
+
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [EpisodeStore, { provide: EpisodeService, useValue: mockEpisodeService }],
+      providers: [
+        EpisodeStore,
+        { provide: EpisodeService, useValue: mockEpisodeService },
+        { provide: EpisodeCategoryService, useValue: mockEpisodeCategoryService },
+        { provide: EpisodeGenreService, useValue: mockEpisodeGenreService },
+        { provide: EpisodeTagService, useValue: mockEpisodeTagService },
+      ],
     });
     store = TestBed.inject(EpisodeStore);
     vi.clearAllMocks();
