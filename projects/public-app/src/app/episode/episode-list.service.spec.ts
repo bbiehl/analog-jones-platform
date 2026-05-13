@@ -3,10 +3,14 @@ import { TestBed } from '@angular/core/testing';
 import { Timestamp } from 'firebase/firestore';
 
 import { EpisodeListService } from './episode-list.service';
-import { GenreService } from '@aj/core';
-import { EpisodeGenreService } from '@aj/core';
-import type { Episode } from '@aj/core';
-import type { Genre } from '@aj/core';
+import {
+  EpisodeService,
+  FIRESTORE,
+  FIRESTORE_OPS,
+  GenreService,
+  TransferCacheService,
+} from '@aj/core';
+import type { Episode, Genre } from '@aj/core';
 
 function ep(id: string, millis: number, isVisible = true): Episode {
   return {
@@ -21,20 +25,43 @@ function ep(id: string, millis: number, isVisible = true): Episode {
   };
 }
 
+type Junction = { genreId: string; episodeId: string };
+
+function junctionSnap(rows: Junction[]) {
+  return {
+    docs: rows.map((data) => ({ data: () => data })),
+  };
+}
+
 describe('EpisodeListService', () => {
   let service: EpisodeListService;
   let mockGenreService: { getAllGenres: ReturnType<typeof vi.fn> };
-  let mockEpisodeGenreService: { getEpisodesByGenreId: ReturnType<typeof vi.fn> };
+  let mockEpisodeService: { getVisibleEpisodes: ReturnType<typeof vi.fn> };
+  let mockOps: {
+    collection: ReturnType<typeof vi.fn>;
+    getDocs: ReturnType<typeof vi.fn>;
+  };
+  let mockTransferCache: { cached: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     mockGenreService = { getAllGenres: vi.fn() };
-    mockEpisodeGenreService = { getEpisodesByGenreId: vi.fn() };
+    mockEpisodeService = { getVisibleEpisodes: vi.fn().mockResolvedValue([]) };
+    mockOps = {
+      collection: vi.fn().mockReturnValue('episodeGenres-ref'),
+      getDocs: vi.fn().mockResolvedValue(junctionSnap([])),
+    };
+    mockTransferCache = {
+      cached: vi.fn((_key: string, fetcher: () => Promise<unknown>) => fetcher()),
+    };
 
     TestBed.configureTestingModule({
       providers: [
         EpisodeListService,
         { provide: GenreService, useValue: mockGenreService },
-        { provide: EpisodeGenreService, useValue: mockEpisodeGenreService },
+        { provide: EpisodeService, useValue: mockEpisodeService },
+        { provide: FIRESTORE, useValue: {} },
+        { provide: FIRESTORE_OPS, useValue: mockOps },
+        { provide: TransferCacheService, useValue: mockTransferCache },
       ],
     });
 
@@ -58,7 +85,6 @@ describe('EpisodeListService', () => {
       const result = await service.getEpisodesByGenre();
 
       expect(result).toEqual({});
-      expect(mockEpisodeGenreService.getEpisodesByGenreId).not.toHaveBeenCalled();
     });
 
     it('should group episodes by genre name keyed in genre order', async () => {
@@ -67,11 +93,16 @@ describe('EpisodeListService', () => {
         { id: 'g2', name: 'Rock', slug: 'rock' },
       ];
       mockGenreService.getAllGenres.mockResolvedValue(genres);
-      mockEpisodeGenreService.getEpisodesByGenreId.mockImplementation((id: string) => {
-        if (id === 'g1') return Promise.resolve([ep('a', 100)]);
-        if (id === 'g2') return Promise.resolve([ep('b', 200)]);
-        return Promise.resolve([]);
-      });
+      mockEpisodeService.getVisibleEpisodes.mockResolvedValue([
+        ep('a', 100),
+        ep('b', 200),
+      ]);
+      mockOps.getDocs.mockResolvedValue(
+        junctionSnap([
+          { genreId: 'g1', episodeId: 'a' },
+          { genreId: 'g2', episodeId: 'b' },
+        ]),
+      );
 
       const result = await service.getEpisodesByGenre();
 
@@ -84,11 +115,18 @@ describe('EpisodeListService', () => {
       mockGenreService.getAllGenres.mockResolvedValue([
         { id: 'g1', name: 'Rock', slug: 'rock' },
       ]);
-      mockEpisodeGenreService.getEpisodesByGenreId.mockResolvedValue([
+      mockEpisodeService.getVisibleEpisodes.mockResolvedValue([
         ep('old', 100),
         ep('new', 500),
         ep('mid', 300),
       ]);
+      mockOps.getDocs.mockResolvedValue(
+        junctionSnap([
+          { genreId: 'g1', episodeId: 'old' },
+          { genreId: 'g1', episodeId: 'new' },
+          { genreId: 'g1', episodeId: 'mid' },
+        ]),
+      );
 
       const result = await service.getEpisodesByGenre();
 
@@ -100,10 +138,10 @@ describe('EpisodeListService', () => {
         { id: 'g1', name: 'Empty', slug: 'empty' },
         { id: 'g2', name: 'Rock', slug: 'rock' },
       ]);
-      mockEpisodeGenreService.getEpisodesByGenreId.mockImplementation((id: string) => {
-        if (id === 'g1') return Promise.resolve([]);
-        return Promise.resolve([ep('a', 100)]);
-      });
+      mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100)]);
+      mockOps.getDocs.mockResolvedValue(
+        junctionSnap([{ genreId: 'g2', episodeId: 'a' }]),
+      );
 
       const result = await service.getEpisodesByGenre();
 
@@ -115,13 +153,14 @@ describe('EpisodeListService', () => {
         { name: 'Orphan', slug: 'orphan' },
         { id: 'g2', name: 'Rock', slug: 'rock' },
       ] as Genre[]);
-      mockEpisodeGenreService.getEpisodesByGenreId.mockResolvedValue([ep('a', 100)]);
+      mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100)]);
+      mockOps.getDocs.mockResolvedValue(
+        junctionSnap([{ genreId: 'g2', episodeId: 'a' }]),
+      );
 
       const result = await service.getEpisodesByGenre();
 
       expect(Object.keys(result)).toEqual(['Rock']);
-      expect(mockEpisodeGenreService.getEpisodesByGenreId).toHaveBeenCalledTimes(1);
-      expect(mockEpisodeGenreService.getEpisodesByGenreId).toHaveBeenCalledWith('g2');
     });
 
     it('should propagate errors from the genre service', async () => {
