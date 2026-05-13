@@ -19,6 +19,7 @@ describe('TagService', () => {
       limit: vi.fn((n) => ({ __limit: n })),
       getDoc: vi.fn(),
       getDocs: vi.fn(),
+      getCountFromServer: vi.fn(),
       addDoc: vi.fn(),
       updateDoc: vi.fn().mockResolvedValue(undefined),
       writeBatch: vi.fn(),

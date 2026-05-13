@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { Episode, EpisodeService, GenreService } from '@aj/core';
+import { Episode, EpisodeService, GenreService, TransferCacheService } from '@aj/core';
 import { FIRESTORE, FIRESTORE_OPS } from '@aj/core';
 
 @Injectable({
@@ -10,8 +10,13 @@ export class EpisodeListService {
   private ops = inject(FIRESTORE_OPS);
   private genreService = inject(GenreService);
   private episodeService = inject(EpisodeService);
+  private transferCache = inject(TransferCacheService);
 
   async getEpisodesByGenre(): Promise<Record<string, Episode[]>> {
+    return this.transferCache.cached('episodes.byGenre', () => this.fetchEpisodesByGenre());
+  }
+
+  private async fetchEpisodesByGenre(): Promise<Record<string, Episode[]>> {
     const [genres, episodes, junctionSnap] = await Promise.all([
       this.genreService.getAllGenres(),
       this.episodeService.getVisibleEpisodes(),

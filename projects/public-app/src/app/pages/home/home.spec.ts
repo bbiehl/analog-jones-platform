@@ -15,10 +15,10 @@ interface MockStore {
   currentEpisode: WritableSignal<Episode | null>;
   recentEpisodes: WritableSignal<Episode[]>;
   selectedEpisode: WritableSignal<EpisodeWithRelations | null>;
+  totalVisible: WritableSignal<number>;
   loading: WritableSignal<boolean>;
   error: WritableSignal<string | null>;
-  loadVisibleEpisodes: ReturnType<typeof vi.fn>;
-  loadEpisodeById: ReturnType<typeof vi.fn>;
+  loadHomeData: ReturnType<typeof vi.fn>;
 }
 
 function makeEpisode(overrides: Partial<Episode> = {}): Episode {
@@ -56,10 +56,10 @@ async function setup(initial: Partial<MockStore> = {}): Promise<{
     currentEpisode: signal<Episode | null>(null),
     recentEpisodes: signal<Episode[]>([]),
     selectedEpisode: signal<EpisodeWithRelations | null>(null),
+    totalVisible: signal(0),
     loading: signal(false),
     error: signal<string | null>(null),
-    loadVisibleEpisodes: vi.fn().mockResolvedValue(undefined),
-    loadEpisodeById: vi.fn().mockResolvedValue(undefined),
+    loadHomeData: vi.fn().mockResolvedValue(undefined),
     ...initial,
   };
 
@@ -133,17 +133,14 @@ describe('Home', () => {
   });
 
   describe('ngOnInit wiring', () => {
-    it('calls loadVisibleEpisodes and loadEpisodeById with featured id when episodes present', async () => {
-      const ep = makeEpisode({ id: 'feat-1' });
-      const { store } = await setup({ episodes: signal([ep]) });
-      expect(store.loadVisibleEpisodes).toHaveBeenCalledTimes(1);
-      expect(store.loadEpisodeById).toHaveBeenCalledWith('feat-1');
+    it('calls loadHomeData once on init', async () => {
+      const { store } = await setup({ episodes: signal([makeEpisode({ id: 'feat-1' })]) });
+      expect(store.loadHomeData).toHaveBeenCalledTimes(1);
     });
 
-    it('does not call loadEpisodeById when episodes is empty', async () => {
+    it('calls loadHomeData even when episodes is empty', async () => {
       const { store } = await setup();
-      expect(store.loadVisibleEpisodes).toHaveBeenCalledTimes(1);
-      expect(store.loadEpisodeById).not.toHaveBeenCalled();
+      expect(store.loadHomeData).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -313,9 +310,12 @@ describe('Home', () => {
   });
 
   describe('Drop section see-all + intelligence', () => {
-    it('renders padded ALL XX TAPES link with episode count', async () => {
-      const eps = Array.from({ length: 12 }, (_, i) => makeEpisode({ id: `e${i}` }));
-      const { fixture } = await setup({ episodes: signal(eps) });
+    it('renders padded ALL XX TAPES link with totalVisible count', async () => {
+      const eps = Array.from({ length: 9 }, (_, i) => makeEpisode({ id: `e${i}` }));
+      const { fixture } = await setup({
+        episodes: signal(eps),
+        totalVisible: signal(12),
+      });
       const seeAll = fixture.nativeElement.querySelector('#drop .see-all') as HTMLAnchorElement;
       expect(seeAll.textContent).toContain('ALL 12 TAPES');
       expect(seeAll.getAttribute('href')).toBe('/episodes');

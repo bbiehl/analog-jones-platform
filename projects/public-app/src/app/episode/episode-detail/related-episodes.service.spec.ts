@@ -22,6 +22,7 @@ describe('RelatedEpisodesService', () => {
       limit: vi.fn(),
       getDoc: vi.fn(),
       getDocs: vi.fn(),
+      getCountFromServer: vi.fn(),
       addDoc: vi.fn(),
       updateDoc: vi.fn(),
       writeBatch: vi.fn(),

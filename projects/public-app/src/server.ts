@@ -62,7 +62,7 @@ app.use(
 );
 
 app.use((req, res, next) => {
-  if (req.method === 'GET' && /^\/episodes(\/[^/]+)?\/?$/.test(req.path)) {
+  if (req.method === 'GET' && /^\/(episodes(\/[^/]+)?)?\/?$/.test(req.path)) {
     res.setHeader(
       'Cache-Control',
       'public, max-age=0, s-maxage=300, stale-while-revalidate=86400',
