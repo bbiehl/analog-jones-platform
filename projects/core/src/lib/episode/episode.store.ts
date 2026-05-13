@@ -1,8 +1,5 @@
 import { inject } from '@angular/core';
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
-import { EpisodeCategoryService } from '../junction/episode-category.service';
-import { EpisodeGenreService } from '../junction/episode-genre.service';
-import { EpisodeTagService } from '../junction/episode-tag.service';
 import { Episode, EpisodeWithRelations } from './episode.model';
 import { EpisodeService } from './episode.service';
 
@@ -31,31 +28,17 @@ export const EpisodeStore = signalStore(
   withState(initialState),
   withMethods((store) => {
     const episodeService = inject(EpisodeService);
-    const episodeCategoryService = inject(EpisodeCategoryService);
-    const episodeGenreService = inject(EpisodeGenreService);
-    const episodeTagService = inject(EpisodeTagService);
     let loadEpisodeByIdToken = 0;
 
     return {
       async loadHomeData() {
         patchState(store, { loading: true, error: null });
         try {
-          const { episodes, total } = await episodeService.getHomeEpisodes();
-          const featured = episodes[0] ?? null;
-          let selectedEpisode: EpisodeWithRelations | null = null;
-          if (featured?.id) {
-            const featuredId = featured.id;
-            const [categories, genres, tags] = await Promise.all([
-              episodeCategoryService.getEpisodeCategoriesByEpisodeId(featuredId),
-              episodeGenreService.getEpisodeGenresByEpisodeId(featuredId),
-              episodeTagService.getEpisodeTagsByEpisodeId(featuredId),
-            ]);
-            selectedEpisode = { ...featured, categories, genres, tags };
-          }
+          const { episodes, total, featured } = await episodeService.getHomeEpisodes();
           patchState(store, {
             episodes,
             totalVisible: total,
-            selectedEpisode,
+            selectedEpisode: featured,
             loading: false,
           });
         } catch (e) {

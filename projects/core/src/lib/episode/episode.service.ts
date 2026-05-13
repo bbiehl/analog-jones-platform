@@ -17,7 +17,9 @@ export class EpisodeService {
   private imageUploadService = inject(ImageUploadService);
   private transferCache = inject(TransferCacheService);
 
-  async getHomeEpisodes(max = 9): Promise<{ episodes: Episode[]; total: number }> {
+  async getHomeEpisodes(
+    max = 9
+  ): Promise<{ episodes: Episode[]; total: number; featured: EpisodeWithRelations | null }> {
     return this.transferCache.cached(`episodes.home.${max}`, async () => {
       const collectionRef = this.ops.collection(this.firestore, 'episodes');
       const baseFilter = this.ops.where('isVisible', '==', true);
@@ -34,7 +36,19 @@ export class EpisodeService {
       ]);
       const episodes = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Episode);
       const total = countSnap.data().count;
-      return { episodes, total };
+
+      const featuredBase = episodes[0] ?? null;
+      let featured: EpisodeWithRelations | null = null;
+      if (featuredBase?.id) {
+        const [categories, genres, tags] = await Promise.all([
+          this.episodeCategoryService.getEpisodeCategoriesByEpisodeId(featuredBase.id),
+          this.episodeGenreService.getEpisodeGenresByEpisodeId(featuredBase.id),
+          this.episodeTagService.getEpisodeTagsByEpisodeId(featuredBase.id),
+        ]);
+        featured = { ...featuredBase, categories, genres, tags };
+      }
+
+      return { episodes, total, featured };
     });
   }
 
