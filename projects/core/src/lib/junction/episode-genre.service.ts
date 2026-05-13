@@ -99,17 +99,16 @@ export class EpisodeGenreService {
       this.ops.where('episodeId', '==', episodeId)
     );
     const snapshot = await this.ops.getDocs(q);
-    const genres: Genre[] = [];
-
-    for (const junction of snapshot.docs) {
-      const genreId = junction.data()['genreId'];
-      const genreSnap = await this.ops.getDoc(this.ops.doc(this.firestore, 'genres', genreId));
-      if (genreSnap.exists()) {
-        genres.push({ id: genreSnap.id, ...genreSnap.data() } as Genre);
-      }
-    }
-
-    return genres;
+    const genres = await Promise.all(
+      snapshot.docs.map(async (junction) => {
+        const genreId = junction.data()['genreId'];
+        const genreSnap = await this.ops.getDoc(this.ops.doc(this.firestore, 'genres', genreId));
+        return genreSnap.exists()
+          ? ({ id: genreSnap.id, ...genreSnap.data() } as Genre)
+          : null;
+      })
+    );
+    return genres.filter((g): g is Genre => g !== null);
   }
 
   async getEpisodesByGenreId(genreId: string): Promise<Episode[]> {
@@ -118,17 +117,18 @@ export class EpisodeGenreService {
       this.ops.where('genreId', '==', genreId)
     );
     const junctionSnapshot = await this.ops.getDocs(junctionQuery);
-    const episodes: Episode[] = [];
-
-    for (const junction of junctionSnapshot.docs) {
-      const episodeId = junction.data()['episodeId'];
-      const episodeSnap = await this.ops.getDoc(
-        this.ops.doc(this.firestore, 'episodes', episodeId)
-      );
-      if (episodeSnap.exists() && episodeSnap.data()['isVisible']) {
-        episodes.push({ id: episodeSnap.id, ...episodeSnap.data() } as Episode);
-      }
-    }
-
-    return episodes;
-  }}
+    const episodes = await Promise.all(
+      junctionSnapshot.docs.map(async (junction) => {
+        const episodeId = junction.data()['episodeId'];
+        const episodeSnap = await this.ops.getDoc(
+          this.ops.doc(this.firestore, 'episodes', episodeId)
+        );
+        if (episodeSnap.exists() && episodeSnap.data()['isVisible']) {
+          return { id: episodeSnap.id, ...episodeSnap.data() } as Episode;
+        }
+        return null;
+      })
+    );
+    return episodes.filter((e): e is Episode => e !== null);
+  }
+}

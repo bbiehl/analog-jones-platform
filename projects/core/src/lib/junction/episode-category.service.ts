@@ -98,17 +98,17 @@ export class EpisodeCategoryService {
       this.ops.where('episodeId', '==', episodeId)
     );
     const snapshot = await this.ops.getDocs(q);
-    const categories: Category[] = [];
-
-    for (const junction of snapshot.docs) {
-      const categoryId = junction.data()['categoryId'];
-      const categorySnap = await this.ops.getDoc(
-        this.ops.doc(this.firestore, 'categories', categoryId)
-      );
-      if (categorySnap.exists()) {
-        categories.push({ id: categorySnap.id, ...categorySnap.data() } as Category);
-      }
-    }
-
-    return categories;
-  }}
+    const categories = await Promise.all(
+      snapshot.docs.map(async (junction) => {
+        const categoryId = junction.data()['categoryId'];
+        const categorySnap = await this.ops.getDoc(
+          this.ops.doc(this.firestore, 'categories', categoryId)
+        );
+        return categorySnap.exists()
+          ? ({ id: categorySnap.id, ...categorySnap.data() } as Category)
+          : null;
+      })
+    );
+    return categories.filter((c): c is Category => c !== null);
+  }
+}
