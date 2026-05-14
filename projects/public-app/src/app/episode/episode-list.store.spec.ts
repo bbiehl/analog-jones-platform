@@ -100,6 +100,46 @@ describe('EpisodeListStore', () => {
     expect(store.isLoading()).toBe(false);
   });
 
+  it('clears isLoading after genre shelves arrive, before category shelves resolve', async () => {
+    const grouped = { Rock: [ep('a', 100)] };
+    let resolveCategories!: (value: Record<string, Episode[]>) => void;
+    const categoryPromise = new Promise<Record<string, Episode[]>>((resolve) => {
+      resolveCategories = resolve;
+    });
+    mockService.getShelves.mockResolvedValue({
+      episodesByGenre: grouped,
+      episodesByCategory: categoryPromise,
+    });
+
+    const loadPromise = store.load();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(store.isLoading()).toBe(false);
+    expect(store.episodesByGenre()).toEqual(grouped);
+    expect(store.episodesByCategory()).toEqual({});
+
+    resolveCategories({ 'Nerd News': [ep('c', 300)] });
+    await loadPromise;
+
+    expect(store.episodesByCategory()).toEqual({ 'Nerd News': [ep('c', 300)] });
+  });
+
+  it('keeps genre shelves and no error when the category branch rejects', async () => {
+    const grouped = { Rock: [ep('a', 100)] };
+    mockService.getShelves.mockResolvedValue({
+      episodesByGenre: grouped,
+      episodesByCategory: Promise.reject(new Error('category boom')),
+    });
+
+    await store.load();
+
+    expect(store.isLoading()).toBe(false);
+    expect(store.error()).toBeNull();
+    expect(store.episodesByGenre()).toEqual(grouped);
+    expect(store.episodesByCategory()).toEqual({});
+  });
+
   it('should clear a prior error when a subsequent load succeeds', async () => {
     mockService.getShelves.mockRejectedValueOnce(new Error('boom'));
     await store.load();

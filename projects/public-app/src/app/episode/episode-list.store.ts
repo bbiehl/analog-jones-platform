@@ -26,16 +26,27 @@ export const EpisodeListStore = signalStore(
     return {
       async load() {
         patchState(store, { isLoading: true, error: null });
+        let categoryPromise: Promise<Record<string, Episode[]>>;
         try {
-          const { episodesByCategory, episodesByGenre } = await episodeListService.getShelves();
-          patchState(store, { episodesByGenre, episodesByCategory: {} });
-          const categoryShelves = await episodesByCategory;
-          patchState(store, { episodesByCategory: categoryShelves, isLoading: false });
+          const shelves = await episodeListService.getShelves();
+          categoryPromise = shelves.episodesByCategory;
+          patchState(store, {
+            episodesByGenre: shelves.episodesByGenre,
+            episodesByCategory: {},
+            isLoading: false,
+          });
         } catch (e) {
           patchState(store, {
             isLoading: false,
             error: e instanceof Error ? e.message : 'Failed to load episodes',
           });
+          return;
+        }
+        try {
+          const categoryShelves = await categoryPromise;
+          patchState(store, { episodesByCategory: categoryShelves });
+        } catch {
+          // Category shelves are ancillary; failures shouldn't disturb genre shelves or surface an error.
         }
       },
     };
