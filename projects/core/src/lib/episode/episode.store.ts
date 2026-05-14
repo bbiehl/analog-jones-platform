@@ -8,6 +8,7 @@ interface EpisodeState {
   currentEpisode: Episode | null;
   recentEpisodes: Episode[];
   selectedEpisode: EpisodeWithRelations | null;
+  totalVisible: number;
   loading: boolean;
   error: string | null;
 }
@@ -17,6 +18,7 @@ const initialState: EpisodeState = {
   currentEpisode: null,
   recentEpisodes: [],
   selectedEpisode: null,
+  totalVisible: 0,
   loading: false,
   error: null,
 };
@@ -29,6 +31,21 @@ export const EpisodeStore = signalStore(
     let loadEpisodeByIdToken = 0;
 
     return {
+      async loadHomeData() {
+        patchState(store, { loading: true, error: null });
+        try {
+          const { episodes, total, featured } = await episodeService.getHomeEpisodes();
+          patchState(store, {
+            episodes,
+            totalVisible: total,
+            selectedEpisode: featured,
+            loading: false,
+          });
+        } catch (e) {
+          patchState(store, { loading: false, error: (e as Error).message });
+        }
+      },
+
       async loadEpisodes() {
         patchState(store, { loading: true, error: null });
         try {

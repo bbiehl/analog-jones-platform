@@ -23,6 +23,7 @@ describe('EpisodeGenreService', () => {
       limit: vi.fn((n) => ({ __limit: n })),
       getDoc: vi.fn(),
       getDocs: vi.fn(),
+      getCountFromServer: vi.fn(),
       addDoc: vi.fn().mockResolvedValue({ id: 'new-id' }),
       updateDoc: vi.fn().mockResolvedValue(undefined),
       writeBatch: vi.fn(),

@@ -30,7 +30,7 @@
       <div class="hero-meta">
         <div class="m">
           <div class="k">TAPES CATALOGED</div>
-          <div class="v">{{ pad(episodes().length, 2) }} <small>/ and counting</small></div>
+          <div class="v">{{ pad(totalVisible(), 2) }} <small>/ and counting</small></div>
         </div>
         <div class="m tape-rolling" aria-label="Session runtime">
           <div class="k">
@@ -73,7 +73,7 @@
   <div class="page">
     <div class="section-head">
       <h2><small>/ THIS WEEK IN THE MUSEUM</small>The Drop</h2>
-      <a class="see-all" routerLink="/episodes">ALL {{ pad(episodes().length, 2) }} TAPES →</a>
+      <a class="see-all" routerLink="/episodes">ALL {{ pad(totalVisible(), 2) }} TAPES →</a>
     </div>
     <div class="drop">
       @if (featured(); as f) {

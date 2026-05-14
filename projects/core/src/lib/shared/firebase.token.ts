@@ -11,6 +11,7 @@ import {
   collection,
   doc,
   Firestore,
+  getCountFromServer,
   getDoc,
   getDocs,
   limit,
@@ -65,6 +66,7 @@ export interface FirestoreOps {
   limit: typeof limit;
   getDoc: typeof getDoc;
   getDocs: typeof getDocs;
+  getCountFromServer: typeof getCountFromServer;
   addDoc: typeof addDoc;
   updateDoc: typeof updateDoc;
   writeBatch: typeof writeBatch;
@@ -81,6 +83,7 @@ export const FIRESTORE_OPS = new InjectionToken<FirestoreOps>('FirestoreOps', {
     limit,
     getDoc,
     getDocs,
+    getCountFromServer,
     addDoc,
     updateDoc,
     writeBatch,

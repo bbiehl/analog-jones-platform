@@ -38,7 +38,14 @@ describe('EpisodeStore', () => {
     tags: [{ id: 't1', name: 'WWII', slug: 'wwii' }],
   };
 
+  const mockHomeBundle = {
+    episodes: mockEpisodes,
+    total: mockEpisodes.length,
+    featured: mockEpisodeWithRelations,
+  };
+
   const mockEpisodeService = {
+    getHomeEpisodes: vi.fn().mockResolvedValue(mockHomeBundle),
     getAllEpisodes: vi.fn().mockResolvedValue(mockEpisodes),
     getCurrentEpisode: vi.fn().mockResolvedValue(mockEpisodes[0]),
     getRecentEpisodes: vi.fn().mockResolvedValue(mockEpisodes),
@@ -52,11 +59,15 @@ describe('EpisodeStore', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [EpisodeStore, { provide: EpisodeService, useValue: mockEpisodeService }],
+      providers: [
+        EpisodeStore,
+        { provide: EpisodeService, useValue: mockEpisodeService },
+      ],
     });
     store = TestBed.inject(EpisodeStore);
     vi.clearAllMocks();
     // Re-set default resolved values after clearAllMocks
+    mockEpisodeService.getHomeEpisodes.mockResolvedValue(mockHomeBundle);
     mockEpisodeService.getAllEpisodes.mockResolvedValue(mockEpisodes);
     mockEpisodeService.getCurrentEpisode.mockResolvedValue(mockEpisodes[0]);
     mockEpisodeService.getRecentEpisodes.mockResolvedValue(mockEpisodes);
@@ -112,6 +123,41 @@ describe('EpisodeStore', () => {
       expect(store.error()).toBe('Network error');
       expect(store.loading()).toBe(false);
       expect(store.episodes()).toEqual([]);
+    });
+  });
+
+  describe('loadHomeData', () => {
+    it('should hydrate episodes, total, and selectedEpisode from a single service call', async () => {
+      await store.loadHomeData();
+
+      expect(mockEpisodeService.getHomeEpisodes).toHaveBeenCalledTimes(1);
+      expect(store.episodes()).toEqual(mockEpisodes);
+      expect(store.totalVisible()).toBe(mockEpisodes.length);
+      expect(store.selectedEpisode()).toEqual(mockEpisodeWithRelations);
+      expect(store.loading()).toBe(false);
+    });
+
+    it('should leave selectedEpisode null when the bundle has no featured', async () => {
+      mockEpisodeService.getHomeEpisodes.mockResolvedValueOnce({
+        episodes: [],
+        total: 0,
+        featured: null,
+      });
+
+      await store.loadHomeData();
+
+      expect(store.selectedEpisode()).toBeNull();
+      expect(store.episodes()).toEqual([]);
+      expect(store.totalVisible()).toBe(0);
+    });
+
+    it('should set error on failure', async () => {
+      mockEpisodeService.getHomeEpisodes.mockRejectedValueOnce(new Error('home failed'));
+
+      await store.loadHomeData();
+
+      expect(store.error()).toBe('home failed');
+      expect(store.loading()).toBe(false);
     });
   });
 

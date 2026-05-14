@@ -41,6 +41,7 @@ describe('EpisodeService', () => {
       limit: vi.fn((n) => ({ __limit: n })),
       getDoc: vi.fn(),
       getDocs: vi.fn(),
+      getCountFromServer: vi.fn(),
       addDoc: vi.fn(),
       updateDoc: vi.fn().mockResolvedValue(undefined),
       writeBatch: vi.fn(),
@@ -79,6 +80,55 @@ describe('EpisodeService', () => {
     });
 
     service = TestBed.inject(EpisodeService);
+  });
+
+  describe('getHomeEpisodes', () => {
+    it('should bundle episodes, total, and featured-with-relations under one cache call', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          { id: 'ep1', data: () => ({ title: 'Featured' }) },
+          { id: 'ep2', data: () => ({ title: 'Second' }) },
+        ],
+      });
+      ops.getCountFromServer.mockResolvedValueOnce({ data: () => ({ count: 12 }) });
+      mockEpisodeCategoryService.getEpisodeCategoriesByEpisodeId.mockResolvedValueOnce([
+        { id: 'c1', name: 'History', slug: 'history' },
+      ]);
+      mockEpisodeGenreService.getEpisodeGenresByEpisodeId.mockResolvedValueOnce([
+        { id: 'g1', name: 'Action', slug: 'action' },
+      ]);
+      mockEpisodeTagService.getEpisodeTagsByEpisodeId.mockResolvedValueOnce([
+        { id: 't1', name: 'Featured', slug: 'featured' },
+      ]);
+
+      const result = await service.getHomeEpisodes();
+
+      expect(ops.limit).toHaveBeenCalledWith(9);
+      expect(mockEpisodeCategoryService.getEpisodeCategoriesByEpisodeId).toHaveBeenCalledWith('ep1');
+      expect(mockEpisodeGenreService.getEpisodeGenresByEpisodeId).toHaveBeenCalledWith('ep1');
+      expect(mockEpisodeTagService.getEpisodeTagsByEpisodeId).toHaveBeenCalledWith('ep1');
+      expect(result.total).toBe(12);
+      expect(result.episodes.map((e) => e.id)).toEqual(['ep1', 'ep2']);
+      expect(result.featured).toEqual({
+        id: 'ep1',
+        title: 'Featured',
+        categories: [{ id: 'c1', name: 'History', slug: 'history' }],
+        genres: [{ id: 'g1', name: 'Action', slug: 'action' }],
+        tags: [{ id: 't1', name: 'Featured', slug: 'featured' }],
+      });
+    });
+
+    it('should return featured=null when there are no episodes', async () => {
+      ops.getDocs.mockResolvedValueOnce({ docs: [] });
+      ops.getCountFromServer.mockResolvedValueOnce({ data: () => ({ count: 0 }) });
+
+      const result = await service.getHomeEpisodes();
+
+      expect(result.featured).toBeNull();
+      expect(result.episodes).toEqual([]);
+      expect(result.total).toBe(0);
+      expect(mockEpisodeCategoryService.getEpisodeCategoriesByEpisodeId).not.toHaveBeenCalled();
+    });
   });
 
   describe('getAllEpisodes', () => {

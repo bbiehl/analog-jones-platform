@@ -35,3 +35,4 @@ export * from './lib/junction/episode-tag.service';
 // Shared infra
 export * from './lib/shared/firebase.token';
 export * from './lib/shared/image-upload.service';
+export * from './lib/shared/transfer-state.helpers';

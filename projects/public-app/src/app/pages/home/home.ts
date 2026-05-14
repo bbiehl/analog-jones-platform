@@ -43,6 +43,7 @@ export class Home implements OnInit {
   private readonly markedParse = signal<((src: string) => string) | null>(null);
 
   protected readonly episodes = computed(() => this.episodeStore.episodes());
+  protected readonly totalVisible = computed(() => this.episodeStore.totalVisible());
   protected readonly featured = computed<Episode | null>(() => this.episodes()[0] ?? null);
   protected readonly shelfEpisodes = computed(() => this.episodes().slice(1, 9));
   protected readonly featuredDetails = computed(() => {
@@ -89,10 +90,7 @@ export class Home implements OnInit {
   });
 
   ngOnInit(): void {
-    this.episodeStore.loadVisibleEpisodes().then(() => {
-      const f = this.featured();
-      if (f?.id) this.episodeStore.loadEpisodeById(f.id);
-    });
+    this.episodeStore.loadHomeData();
 
     if (!this.isBrowser) return;
     interval(1000)
