@@ -6,17 +6,17 @@ import { environment } from '../environments/environment';
 
 const app = initializeApp(environment.firebaseConfig);
 
+if (typeof window !== 'undefined' && !environment.useEmulators && environment.recaptchaSiteKey) {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaEnterpriseProvider(environment.recaptchaSiteKey),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
+
 export const firestore = getFirestore(app);
 export const storage = getStorage(app);
 
 if (environment.useEmulators) {
   connectFirestoreEmulator(firestore, 'localhost', 8080);
   connectStorageEmulator(storage, 'localhost', 9199);
-}
-
-if (typeof window !== 'undefined' && !environment.useEmulators && environment.recaptchaSiteKey) {
-  initializeAppCheck(app, {
-    provider: new ReCaptchaEnterpriseProvider(environment.recaptchaSiteKey),
-    isTokenAutoRefreshEnabled: true,
-  });
 }
