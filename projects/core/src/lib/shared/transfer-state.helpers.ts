@@ -1,4 +1,11 @@
-import { inject, Injectable, makeStateKey, PLATFORM_ID, TransferState } from '@angular/core';
+import {
+  inject,
+  Injectable,
+  makeStateKey,
+  PendingTasks,
+  PLATFORM_ID,
+  TransferState,
+} from '@angular/core';
 import { isPlatformServer } from '@angular/common';
 import { Timestamp } from 'firebase/firestore';
 
@@ -38,6 +45,7 @@ function reviveTimestamps(value: unknown): unknown {
 @Injectable({ providedIn: 'root' })
 export class TransferCacheService {
   private readonly transferState = inject(TransferState);
+  private readonly pendingTasks = inject(PendingTasks);
   private readonly isServer = isPlatformServer(inject(PLATFORM_ID));
   private readonly memo = new Map<string, unknown>();
 
@@ -45,9 +53,18 @@ export class TransferCacheService {
     const stateKey = makeStateKey<unknown>(`aj:${key}`);
 
     if (this.isServer) {
-      const result = await fetcher();
-      this.transferState.set(stateKey, replaceTimestamps(result));
-      return result;
+      // Firebase SDK uses raw fetch (not HttpClient), so its promises don't
+      // register with Angular's stability tracking. Without an explicit pending
+      // task, SSR can serialize before the fetcher resolves and the
+      // transfer-state key is never written — forcing the browser to re-fetch.
+      const removeTask = this.pendingTasks.add();
+      try {
+        const result = await fetcher();
+        this.transferState.set(stateKey, replaceTimestamps(result));
+        return result;
+      } finally {
+        removeTask();
+      }
     }
 
     if (this.memo.has(key)) {
