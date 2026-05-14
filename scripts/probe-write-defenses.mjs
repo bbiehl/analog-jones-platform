@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// Black-box probe: verify unauthorized create/update/delete attempts against prod
-// Firestore + Storage are blocked end-to-end. Sends token-less write requests against
-// sentinel paths and expects 401/403 on every probe. The denial source is opaque
-// (security rules vs. App Check enforcement) and that's intentional — what matters
-// is the combined defense holds.
+// Black-box write-defense probe: verify unauthorized create/update/delete attempts
+// against prod Firestore + Storage are blocked end-to-end. Sends token-less write
+// requests against sentinel paths and expects 401/403 on every probe. The denial
+// source is opaque (security rules vs. App Check enforcement, where enforced) and
+// that's intentional — what matters is the combined write defense holds.
 //
 // PASS = every write attempt was rejected.
 // FAIL = a write attempt returned 2xx; investigate Firestore/Storage rules and

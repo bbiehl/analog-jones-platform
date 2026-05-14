@@ -70,10 +70,10 @@ pnpm deploy:rules
 ## Operational checks
 
 ```bash
-pnpm probe:appcheck   # verify Firebase App Check enforcement on prod Firestore + Storage
+pnpm probe:write-defenses   # verify unauthorized writes to prod Firestore + Storage are rejected
 ```
 
-Sends token-less REST calls to publicly-readable endpoints; exits 0 only if every probe is rejected (enforcement live). Set `APPCHECK_PROBE_STORAGE_OBJECT=<path>` to add a probe against a specific Storage object.
+Sends token-less create/update/delete REST calls against sentinel paths; exits 0 only if every probe is rejected (rules + any App Check enforcement holding). The denial source (rules vs. App Check) is intentionally opaque — what matters is the combined write defense.
 
 ## Public client config in this repo
 
