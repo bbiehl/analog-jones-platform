@@ -22,7 +22,7 @@
     "dev:admin": "rm -rf dist/core && concurrently --names core,emulators,app --prefix-colors yellow,blue,green --kill-others-on-fail \"ng build core --watch\" \"firebase emulators:start --import=./seed-data\" \"wait-on dist/core/fesm2022/aj-core.mjs && ng serve admin-app\"",
     "dev:all": "rm -rf dist/core && concurrently --names core,emulators,public,admin --prefix-colors yellow,blue,green,magenta --kill-others-on-fail \"ng build core --watch\" \"firebase emulators:start --import=./seed-data\" \"wait-on dist/core/fesm2022/aj-core.mjs && ng serve public-app --port 4200\" \"wait-on dist/core/fesm2022/aj-core.mjs && ng serve admin-app --port 4300\"",
     "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes,storage",
-    "probe:appcheck": "node scripts/probe-appcheck.mjs"
+    "probe:write-defenses": "node scripts/probe-write-defenses.mjs"
   },
   "private": true,
   "packageManager": "pnpm@10.28.2",
