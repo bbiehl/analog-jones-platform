@@ -14,21 +14,9 @@ if (environment.useEmulators) {
   connectStorageEmulator(storage, 'localhost', 9199);
 }
 
-// Defer App Check off the critical path. The home route hydrates from
-// TransferState, so it does not need a token to render. Initializing inline
-// blocks first paint on iOS Safari, where reCAPTCHA Enterprise's token
-// exchange can stall for tens of seconds under ITP.
 if (typeof window !== 'undefined' && !environment.useEmulators && environment.recaptchaSiteKey) {
-  const init = () => {
-    initializeAppCheck(app, {
-      provider: new ReCaptchaEnterpriseProvider(environment.recaptchaSiteKey),
-      isTokenAutoRefreshEnabled: true,
-    });
-  };
-  const w = window as Window & { requestIdleCallback?: (cb: () => void) => void };
-  if (typeof w.requestIdleCallback === 'function') {
-    w.requestIdleCallback(init);
-  } else {
-    setTimeout(init, 0);
-  }
+  initializeAppCheck(app, {
+    provider: new ReCaptchaEnterpriseProvider(environment.recaptchaSiteKey),
+    isTokenAutoRefreshEnabled: true,
+  });
 }
