@@ -25,7 +25,30 @@ export class EpisodeListService {
     episodesByCategory: Record<string, Episode[]>;
     episodesByGenre: Record<string, Episode[]>;
   }> {
-    return this.transferCache.cached('episodes.shelves', () => this.fetchShelves());
+    const episodes = await this.episodeService.getVisibleEpisodes();
+    const [byGenreResult, byCategoryResult] = await Promise.allSettled([
+      this.transferCache.cached('episodes.byGenre', () => this.buildEpisodesByGenre(episodes)),
+      this.transferCache.cached('episodes.byFeaturedCategory', () =>
+        this.buildEpisodesByFeaturedCategory(episodes)
+      ),
+    ]);
+
+    if (byGenreResult.status === 'rejected') {
+      throw byGenreResult.reason;
+    }
+
+    if (byCategoryResult.status === 'rejected') {
+      // Featured-category shelves are ancillary; let the page render the
+      // genre shelves even if categories/episodeCategories reads fail. The
+      // failed branch is not cached, so a later navigation will retry.
+      console.error('Failed to load featured-category shelves', byCategoryResult.reason);
+    }
+
+    return {
+      episodesByGenre: byGenreResult.value,
+      episodesByCategory:
+        byCategoryResult.status === 'fulfilled' ? byCategoryResult.value : {},
+    };
   }
 
   async getEpisodesByGenre(): Promise<Record<string, Episode[]>> {
@@ -40,33 +63,6 @@ export class EpisodeListService {
       const episodes = await this.episodeService.getVisibleEpisodes();
       return this.buildEpisodesByFeaturedCategory(episodes);
     });
-  }
-
-  private async fetchShelves(): Promise<{
-    episodesByCategory: Record<string, Episode[]>;
-    episodesByGenre: Record<string, Episode[]>;
-  }> {
-    const episodes = await this.episodeService.getVisibleEpisodes();
-    const [byGenreResult, byCategoryResult] = await Promise.allSettled([
-      this.buildEpisodesByGenre(episodes),
-      this.buildEpisodesByFeaturedCategory(episodes),
-    ]);
-
-    if (byGenreResult.status === 'rejected') {
-      throw byGenreResult.reason;
-    }
-
-    if (byCategoryResult.status === 'rejected') {
-      // Featured-category shelves are ancillary; let the page render the
-      // genre shelves even if categories/episodeCategories reads fail.
-      console.error('Failed to load featured-category shelves', byCategoryResult.reason);
-    }
-
-    return {
-      episodesByGenre: byGenreResult.value,
-      episodesByCategory:
-        byCategoryResult.status === 'fulfilled' ? byCategoryResult.value : {},
-    };
   }
 
   private async buildEpisodesByGenre(episodes: Episode[]): Promise<Record<string, Episode[]>> {
