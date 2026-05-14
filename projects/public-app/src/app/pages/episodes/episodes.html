@@ -13,19 +13,19 @@
   } @else if (!hasEpisodes()) {
     <p class="page-frame mt-6">No episodes found.</p>
   } @else {
-    @for (entry of genreEntries(); track entry[0]; let idx = $index) {
+    @for (entry of entries(); track entry.key; let idx = $index) {
       @if (idx < 2) {
         <app-episode-scroller
-          [episodes]="entry[1]"
-          [heading]="entry[0]"
-          [ariaLabel]="entry[0]"
+          [episodes]="entry.episodes"
+          [heading]="entry.heading"
+          [ariaLabel]="entry.heading"
         />
       } @else {
         @defer (on viewport; prefetch on idle) {
           <app-episode-scroller
-            [episodes]="entry[1]"
-            [heading]="entry[0]"
-            [ariaLabel]="entry[0]"
+            [episodes]="entry.episodes"
+            [heading]="entry.heading"
+            [ariaLabel]="entry.heading"
           />
         } @placeholder (minimum 0ms) {
           <div class="defer-shelf" aria-hidden="true"></div>

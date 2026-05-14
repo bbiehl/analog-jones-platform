@@ -4,12 +4,14 @@ import { Episode } from '@aj/core';
 import { EpisodeListService } from './episode-list.service';
 
 interface EpisodeListState {
+  episodesByCategory: { [category: string]: Episode[] };
   episodesByGenre: { [genre: string]: Episode[] };
   isLoading: boolean;
   error: string | null;
 }
 
 const initialState: EpisodeListState = {
+  episodesByCategory: {},
   episodesByGenre: {},
   isLoading: false,
   error: null,
@@ -22,11 +24,14 @@ export const EpisodeListStore = signalStore(
     const episodeListService = inject(EpisodeListService);
 
     return {
-      async loadEpisodesByGenre() {
+      async load() {
         patchState(store, { isLoading: true, error: null });
         try {
-          const episodesByGenre = await episodeListService.getEpisodesByGenre();
-          patchState(store, { episodesByGenre, isLoading: false });
+          const [episodesByCategory, episodesByGenre] = await Promise.all([
+            episodeListService.getEpisodesByFeaturedCategory(),
+            episodeListService.getEpisodesByGenre(),
+          ]);
+          patchState(store, { episodesByCategory, episodesByGenre, isLoading: false });
         } catch (e) {
           patchState(store, {
             isLoading: false,
