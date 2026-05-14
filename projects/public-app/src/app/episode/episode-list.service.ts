@@ -25,11 +25,14 @@ export class EpisodeListService {
     episodesByCategory: Record<string, Episode[]>;
     episodesByGenre: Record<string, Episode[]>;
   }> {
-    const episodes = await this.episodeService.getVisibleEpisodes();
+    let episodesPromise: Promise<Episode[]> | undefined;
+    const getEpisodes = () =>
+      (episodesPromise ??= this.episodeService.getVisibleEpisodes());
+
     const [byGenreResult, byCategoryResult] = await Promise.allSettled([
-      this.transferCache.cached('episodes.byGenre', () => this.buildEpisodesByGenre(episodes)),
+      this.transferCache.cached('episodes.byGenre', () => this.buildEpisodesByGenre(getEpisodes)),
       this.transferCache.cached('episodes.byFeaturedCategory', () =>
-        this.buildEpisodesByFeaturedCategory(episodes)
+        this.buildEpisodesByFeaturedCategory(getEpisodes)
       ),
     ]);
 
@@ -52,21 +55,22 @@ export class EpisodeListService {
   }
 
   async getEpisodesByGenre(): Promise<Record<string, Episode[]>> {
-    return this.transferCache.cached('episodes.byGenre', async () => {
-      const episodes = await this.episodeService.getVisibleEpisodes();
-      return this.buildEpisodesByGenre(episodes);
-    });
+    return this.transferCache.cached('episodes.byGenre', () =>
+      this.buildEpisodesByGenre(() => this.episodeService.getVisibleEpisodes())
+    );
   }
 
   async getEpisodesByFeaturedCategory(): Promise<Record<string, Episode[]>> {
-    return this.transferCache.cached('episodes.byFeaturedCategory', async () => {
-      const episodes = await this.episodeService.getVisibleEpisodes();
-      return this.buildEpisodesByFeaturedCategory(episodes);
-    });
+    return this.transferCache.cached('episodes.byFeaturedCategory', () =>
+      this.buildEpisodesByFeaturedCategory(() => this.episodeService.getVisibleEpisodes())
+    );
   }
 
-  private async buildEpisodesByGenre(episodes: Episode[]): Promise<Record<string, Episode[]>> {
-    const [genres, junctionSnap] = await Promise.all([
+  private async buildEpisodesByGenre(
+    getEpisodes: () => Promise<Episode[]>
+  ): Promise<Record<string, Episode[]>> {
+    const [episodes, genres, junctionSnap] = await Promise.all([
+      getEpisodes(),
       this.genreService.getAllGenres(),
       this.ops.getDocs(this.ops.collection(this.firestore, 'episodeGenres')),
     ]);
@@ -98,9 +102,10 @@ export class EpisodeListService {
   }
 
   private async buildEpisodesByFeaturedCategory(
-    episodes: Episode[]
+    getEpisodes: () => Promise<Episode[]>
   ): Promise<Record<string, Episode[]>> {
-    const [categories, junctionSnap] = await Promise.all([
+    const [episodes, categories, junctionSnap] = await Promise.all([
+      getEpisodes(),
       this.categoryService.getAllCategories(),
       this.ops.getDocs(this.ops.collection(this.firestore, 'episodeCategories')),
     ]);
