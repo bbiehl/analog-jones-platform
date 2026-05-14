@@ -28,11 +28,15 @@ const sentinelBody = JSON.stringify({
 
 const writeProbes = [];
 
-for (const collection of ['episodes', 'tags', 'genres']) {
+// `users` is included because firestore.rules carves out a self-write exception
+// for `/users/{uid}` (auth-required, role-escalation blocked). Unauthenticated
+// probes against `/users/{SENTINEL_DOC}` must still be rejected — if they ever
+// succeed, the exception has regressed into a public write.
+for (const collection of ['episodes', 'tags', 'genres', 'users']) {
   writeProbes.push({
-    name: `Firestore CREATE ${collection}`,
+    name: `Firestore CREATE ${collection}/${SENTINEL_DOC}`,
     method: 'POST',
-    url: `${firestoreBase}/${collection}`,
+    url: `${firestoreBase}/${collection}?documentId=${SENTINEL_DOC}`,
     headers: { 'Content-Type': 'application/json' },
     body: sentinelBody,
   });
