@@ -28,6 +28,18 @@ const sentinelBody = JSON.stringify({
 
 const writeProbes = [];
 
+// Discover an existing doc per collection so the UPDATE probe actually exercises
+// update rules. Firestore's REST PATCH is an upsert, so PATCH against a
+// non-existent sentinel only re-tests create rules — it would miss a regression
+// where creates stay blocked but updates on existing docs open up.
+async function findExistingDocId(collection) {
+  const res = await fetch(`${firestoreBase}/${collection}?pageSize=1`);
+  if (!res.ok) return null;
+  const data = await res.json();
+  const name = data.documents?.[0]?.name;
+  return name ? name.split('/').pop() : null;
+}
+
 // `users` is included because firestore.rules carves out a self-write exception
 // for `/users/{uid}` (auth-required, role-escalation blocked). Unauthenticated
 // probes against `/users/{SENTINEL_DOC}` must still be rejected — if they ever
@@ -40,13 +52,22 @@ for (const collection of ['episodes', 'tags', 'genres', 'users']) {
     headers: { 'Content-Type': 'application/json' },
     body: sentinelBody,
   });
-  writeProbes.push({
-    name: `Firestore UPDATE ${collection}/${SENTINEL_DOC}`,
-    method: 'PATCH',
-    url: `${firestoreBase}/${collection}/${SENTINEL_DOC}?updateMask.fieldPaths=_probe`,
-    headers: { 'Content-Type': 'application/json' },
-    body: sentinelBody,
-  });
+
+  const existingId = await findExistingDocId(collection);
+  if (existingId) {
+    writeProbes.push({
+      name: `Firestore UPDATE ${collection}/${existingId}`,
+      method: 'PATCH',
+      url: `${firestoreBase}/${collection}/${existingId}?updateMask.fieldPaths=_probe&currentDocument.exists=true`,
+      headers: { 'Content-Type': 'application/json' },
+      body: sentinelBody,
+    });
+  } else {
+    console.log(
+      `WARN — could not discover an existing doc in ${collection}; UPDATE probe skipped (rules-layer update coverage missing for this collection).`,
+    );
+  }
+
   writeProbes.push({
     name: `Firestore DELETE ${collection}/${SENTINEL_DOC}`,
     method: 'DELETE',
