@@ -22,36 +22,29 @@ export class EpisodeListService {
   private transferCache = inject(TransferCacheService);
 
   async getShelves(): Promise<{
-    episodesByCategory: Record<string, Episode[]>;
+    episodesByCategory: Promise<Record<string, Episode[]>>;
     episodesByGenre: Record<string, Episode[]>;
   }> {
     let episodesPromise: Promise<Episode[]> | undefined;
     const getEpisodes = () =>
       (episodesPromise ??= this.episodeService.getVisibleEpisodes());
 
-    const [byGenreResult, byCategoryResult] = await Promise.allSettled([
-      this.transferCache.cached('episodes.byGenre', () => this.buildEpisodesByGenre(getEpisodes)),
-      this.transferCache.cached('episodes.byFeaturedCategory', () =>
-        this.buildEpisodesByFeaturedCategory(getEpisodes)
-      ),
-    ]);
+    // Featured-category shelves are ancillary; resolve to {} on failure so a
+    // slow or broken category branch can't block the primary genre shelves
+    // from rendering. The failed branch is not cached, so a later navigation
+    // will retry.
+    const episodesByCategory = this.transferCache
+      .cached('episodes.byFeaturedCategory', () => this.buildEpisodesByFeaturedCategory(getEpisodes))
+      .catch((reason): Record<string, Episode[]> => {
+        console.error('Failed to load featured-category shelves', reason);
+        return {};
+      });
 
-    if (byGenreResult.status === 'rejected') {
-      throw byGenreResult.reason;
-    }
+    const episodesByGenre = await this.transferCache.cached('episodes.byGenre', () =>
+      this.buildEpisodesByGenre(getEpisodes)
+    );
 
-    if (byCategoryResult.status === 'rejected') {
-      // Featured-category shelves are ancillary; let the page render the
-      // genre shelves even if categories/episodeCategories reads fail. The
-      // failed branch is not cached, so a later navigation will retry.
-      console.error('Failed to load featured-category shelves', byCategoryResult.reason);
-    }
-
-    return {
-      episodesByGenre: byGenreResult.value,
-      episodesByCategory:
-        byCategoryResult.status === 'fulfilled' ? byCategoryResult.value : {},
-    };
+    return { episodesByGenre, episodesByCategory };
   }
 
   async getEpisodesByGenre(): Promise<Record<string, Episode[]>> {

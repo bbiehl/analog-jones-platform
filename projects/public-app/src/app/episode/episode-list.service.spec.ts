@@ -270,10 +270,34 @@ describe('EpisodeListService', () => {
       categoryJunctionRows = [{ categoryId: 'c1', episodeId: 'a' }];
 
       const result = await service.getShelves();
+      const categoryShelves = await result.episodesByCategory;
 
       expect(mockEpisodeService.getVisibleEpisodes).toHaveBeenCalledTimes(1);
       expect(Object.keys(result.episodesByGenre)).toEqual(['Rock']);
-      expect(Object.keys(result.episodesByCategory)).toEqual(['Nerd News']);
+      expect(Object.keys(categoryShelves)).toEqual(['Nerd News']);
+    });
+
+    it('should return genre shelves before the featured-category branch resolves', async () => {
+      mockGenreService.getAllGenres.mockResolvedValue([
+        { id: 'g1', name: 'Rock', slug: 'rock' },
+      ]);
+      let resolveCategories: (value: Category[]) => void;
+      mockCategoryService.getAllCategories.mockReturnValue(
+        new Promise<Category[]>((resolve) => {
+          resolveCategories = resolve;
+        })
+      );
+      mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100)]);
+      genreJunctionRows = [{ genreId: 'g1', episodeId: 'a' }];
+      categoryJunctionRows = [{ categoryId: 'c1', episodeId: 'a' }];
+
+      const result = await service.getShelves();
+
+      expect(result.episodesByGenre['Rock'][0].id).toBe('a');
+
+      resolveCategories!(featured);
+      const categoryShelves = await result.episodesByCategory;
+      expect(categoryShelves['Nerd News'][0].id).toBe('a');
     });
 
     it('should still return genre shelves when the featured-category branch fails', async () => {
@@ -286,8 +310,9 @@ describe('EpisodeListService', () => {
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       const result = await service.getShelves();
+      const categoryShelves = await result.episodesByCategory;
 
-      expect(result.episodesByCategory).toEqual({});
+      expect(categoryShelves).toEqual({});
       expect(result.episodesByGenre['Rock'][0].id).toBe('a');
       errorSpy.mockRestore();
     });

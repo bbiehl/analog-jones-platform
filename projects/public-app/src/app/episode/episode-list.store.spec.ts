@@ -34,7 +34,10 @@ describe('EpisodeListStore', () => {
     });
     store = TestBed.inject(EpisodeListStore);
     vi.clearAllMocks();
-    mockService.getShelves.mockResolvedValue({ episodesByCategory: {}, episodesByGenre: {} });
+    mockService.getShelves.mockResolvedValue({
+      episodesByCategory: Promise.resolve({}),
+      episodesByGenre: {},
+    });
   });
 
   it('should have correct initial state', () => {
@@ -49,7 +52,7 @@ describe('EpisodeListStore', () => {
     const categorized = { 'Nerd News': [ep('c', 300)] };
     mockService.getShelves.mockResolvedValue({
       episodesByGenre: grouped,
-      episodesByCategory: categorized,
+      episodesByCategory: Promise.resolve(categorized),
     });
 
     await store.load();
@@ -65,7 +68,10 @@ describe('EpisodeListStore', () => {
     let loadingDuringCall: boolean | null = null;
     mockService.getShelves.mockImplementation(() => {
       loadingDuringCall = store.isLoading();
-      return Promise.resolve({ episodesByCategory: {}, episodesByGenre: {} });
+      return Promise.resolve({
+        episodesByCategory: Promise.resolve({}),
+        episodesByGenre: {},
+      });
     });
 
     await store.load();
@@ -101,7 +107,7 @@ describe('EpisodeListStore', () => {
 
     mockService.getShelves.mockResolvedValueOnce({
       episodesByGenre: { Rock: [ep('a', 100)] },
-      episodesByCategory: {},
+      episodesByCategory: Promise.resolve({}),
     });
     await store.load();
 
