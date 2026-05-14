@@ -129,13 +129,15 @@ describe('Episodes', () => {
       expect(fixture.nativeElement.querySelector('app-episode-scroller')).toBeNull();
     });
 
-    it('hides the empty message while category shelves are still resolving', () => {
+    it('renders skeletons (not the empty message) while category shelves are still resolving', () => {
       episodesByCategory.set({});
       episodesByGenre.set({});
       categoryLoaded.set(false);
       fixture.detectChanges();
 
       expect(fixture.nativeElement.textContent).not.toContain('No episodes found.');
+      const skeletons = fixture.nativeElement.querySelectorAll('app-episode-scroller-skeleton');
+      expect(skeletons.length).toBe(2);
     });
   });
 

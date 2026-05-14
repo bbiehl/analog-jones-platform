@@ -10,8 +10,14 @@
     }
   } @else if (error(); as err) {
     <p class="page-frame mt-6" role="alert">{{ err }}</p>
-  } @else if (categoryLoaded() && !hasEpisodes()) {
-    <p class="page-frame mt-6">No episodes found.</p>
+  } @else if (!hasEpisodes()) {
+    @if (categoryLoaded()) {
+      <p class="page-frame mt-6">No episodes found.</p>
+    } @else {
+      @for (i of skeletonScrollers; track i) {
+        <app-episode-scroller-skeleton />
+      }
+    }
   } @else {
     @for (entry of entries(); track entry.key; let idx = $index) {
       @if (idx < 2) {

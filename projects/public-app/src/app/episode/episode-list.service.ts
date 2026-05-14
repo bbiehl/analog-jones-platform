@@ -1,4 +1,5 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { isPlatformServer } from '@angular/common';
 import {
   CategoryService,
   Episode,
@@ -20,6 +21,7 @@ export class EpisodeListService {
   private categoryService = inject(CategoryService);
   private episodeService = inject(EpisodeService);
   private transferCache = inject(TransferCacheService);
+  private readonly isServer = isPlatformServer(inject(PLATFORM_ID));
 
   async getShelves(): Promise<{
     episodesByCategory: Promise<Record<string, Episode[]>>;
@@ -29,16 +31,20 @@ export class EpisodeListService {
     const getEpisodes = () =>
       (episodesPromise ??= this.episodeService.getVisibleEpisodes());
 
-    // Featured-category shelves are ancillary; resolve to {} on failure so a
-    // slow or broken category branch can't block the primary genre shelves
-    // from rendering. The failed branch is not cached, so a later navigation
-    // will retry.
-    const episodesByCategory = this.transferCache
-      .cached('episodes.byFeaturedCategory', () => this.buildEpisodesByFeaturedCategory(getEpisodes))
-      .catch((reason): Record<string, Episode[]> => {
-        console.error('Failed to load featured-category shelves', reason);
-        return {};
-      });
+    // Featured-category shelves are ancillary; skip them entirely on the
+    // server so a slow or broken category branch can't register an SSR
+    // pending task and stall page serialization. The browser fetches them
+    // fresh after hydration.
+    const episodesByCategory: Promise<Record<string, Episode[]>> = this.isServer
+      ? Promise.resolve({})
+      : this.transferCache
+          .cached('episodes.byFeaturedCategory', () =>
+            this.buildEpisodesByFeaturedCategory(getEpisodes)
+          )
+          .catch((reason): Record<string, Episode[]> => {
+            console.error('Failed to load featured-category shelves', reason);
+            return {};
+          });
 
     const episodesByGenre = await this.transferCache.cached('episodes.byGenre', () =>
       this.buildEpisodesByGenre(getEpisodes)
