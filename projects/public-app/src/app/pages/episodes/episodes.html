@@ -10,7 +10,7 @@
     }
   } @else if (error(); as err) {
     <p class="page-frame mt-6" role="alert">{{ err }}</p>
-  } @else if (!hasEpisodes()) {
+  } @else if (categoryLoaded() && !hasEpisodes()) {
     <p class="page-frame mt-6">No episodes found.</p>
   } @else {
     @for (entry of entries(); track entry.key; let idx = $index) {

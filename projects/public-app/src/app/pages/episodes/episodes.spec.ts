@@ -29,12 +29,14 @@ describe('Episodes', () => {
   const episodesByCategory = signal<{ [category: string]: Episode[] }>({});
   const episodesByGenre = signal<{ [genre: string]: Episode[] }>({});
   const isLoading = signal(false);
+  const categoryLoaded = signal(true);
   const error = signal<string | null>(null);
 
   const mockStore = {
     episodesByCategory,
     episodesByGenre,
     isLoading,
+    categoryLoaded,
     error,
     load: vi.fn().mockResolvedValue(undefined),
   };
@@ -43,6 +45,7 @@ describe('Episodes', () => {
     episodesByCategory.set({});
     episodesByGenre.set({});
     isLoading.set(false);
+    categoryLoaded.set(true);
     error.set(null);
     mockStore.load.mockClear();
 
@@ -124,6 +127,15 @@ describe('Episodes', () => {
 
       expect(fixture.nativeElement.textContent).toContain('No episodes found.');
       expect(fixture.nativeElement.querySelector('app-episode-scroller')).toBeNull();
+    });
+
+    it('hides the empty message while category shelves are still resolving', () => {
+      episodesByCategory.set({});
+      episodesByGenre.set({});
+      categoryLoaded.set(false);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).not.toContain('No episodes found.');
     });
   });
 

@@ -21,6 +21,7 @@ export class Episodes implements OnInit {
   private store = inject(EpisodeListStore);
 
   protected readonly isLoading = this.store.isLoading;
+  protected readonly categoryLoaded = this.store.categoryLoaded;
   protected readonly error = this.store.error;
   protected readonly entries = computed<ShelfEntry[]>(() => {
     const categoryEntries = Object.entries(this.store.episodesByCategory()).map(
