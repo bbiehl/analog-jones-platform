@@ -21,20 +21,57 @@ export class EpisodeListService {
   private episodeService = inject(EpisodeService);
   private transferCache = inject(TransferCacheService);
 
+  async getShelves(): Promise<{
+    episodesByCategory: Record<string, Episode[]>;
+    episodesByGenre: Record<string, Episode[]>;
+  }> {
+    return this.transferCache.cached('episodes.shelves', () => this.fetchShelves());
+  }
+
   async getEpisodesByGenre(): Promise<Record<string, Episode[]>> {
-    return this.transferCache.cached('episodes.byGenre', () => this.fetchEpisodesByGenre());
+    return this.transferCache.cached('episodes.byGenre', async () => {
+      const episodes = await this.episodeService.getVisibleEpisodes();
+      return this.buildEpisodesByGenre(episodes);
+    });
   }
 
   async getEpisodesByFeaturedCategory(): Promise<Record<string, Episode[]>> {
-    return this.transferCache.cached('episodes.byFeaturedCategory', () =>
-      this.fetchEpisodesByFeaturedCategory()
-    );
+    return this.transferCache.cached('episodes.byFeaturedCategory', async () => {
+      const episodes = await this.episodeService.getVisibleEpisodes();
+      return this.buildEpisodesByFeaturedCategory(episodes);
+    });
   }
 
-  private async fetchEpisodesByGenre(): Promise<Record<string, Episode[]>> {
-    const [genres, episodes, junctionSnap] = await Promise.all([
+  private async fetchShelves(): Promise<{
+    episodesByCategory: Record<string, Episode[]>;
+    episodesByGenre: Record<string, Episode[]>;
+  }> {
+    const episodes = await this.episodeService.getVisibleEpisodes();
+    const [byGenreResult, byCategoryResult] = await Promise.allSettled([
+      this.buildEpisodesByGenre(episodes),
+      this.buildEpisodesByFeaturedCategory(episodes),
+    ]);
+
+    if (byGenreResult.status === 'rejected') {
+      throw byGenreResult.reason;
+    }
+
+    if (byCategoryResult.status === 'rejected') {
+      // Featured-category shelves are ancillary; let the page render the
+      // genre shelves even if categories/episodeCategories reads fail.
+      console.error('Failed to load featured-category shelves', byCategoryResult.reason);
+    }
+
+    return {
+      episodesByGenre: byGenreResult.value,
+      episodesByCategory:
+        byCategoryResult.status === 'fulfilled' ? byCategoryResult.value : {},
+    };
+  }
+
+  private async buildEpisodesByGenre(episodes: Episode[]): Promise<Record<string, Episode[]>> {
+    const [genres, junctionSnap] = await Promise.all([
       this.genreService.getAllGenres(),
-      this.episodeService.getVisibleEpisodes(),
       this.ops.getDocs(this.ops.collection(this.firestore, 'episodeGenres')),
     ]);
 
@@ -64,10 +101,11 @@ export class EpisodeListService {
     return result;
   }
 
-  private async fetchEpisodesByFeaturedCategory(): Promise<Record<string, Episode[]>> {
-    const [categories, episodes, junctionSnap] = await Promise.all([
+  private async buildEpisodesByFeaturedCategory(
+    episodes: Episode[]
+  ): Promise<Record<string, Episode[]>> {
+    const [categories, junctionSnap] = await Promise.all([
       this.categoryService.getAllCategories(),
-      this.episodeService.getVisibleEpisodes(),
       this.ops.getDocs(this.ops.collection(this.firestore, 'episodeCategories')),
     ]);
 

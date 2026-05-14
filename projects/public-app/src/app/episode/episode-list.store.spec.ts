@@ -22,8 +22,7 @@ function ep(id: string, millis: number): Episode {
 describe('EpisodeListStore', () => {
   let store: InstanceType<typeof EpisodeListStore>;
   const mockService = {
-    getEpisodesByGenre: vi.fn(),
-    getEpisodesByFeaturedCategory: vi.fn(),
+    getShelves: vi.fn(),
   };
 
   beforeEach(() => {
@@ -35,8 +34,7 @@ describe('EpisodeListStore', () => {
     });
     store = TestBed.inject(EpisodeListStore);
     vi.clearAllMocks();
-    mockService.getEpisodesByGenre.mockResolvedValue({});
-    mockService.getEpisodesByFeaturedCategory.mockResolvedValue({});
+    mockService.getShelves.mockResolvedValue({ episodesByCategory: {}, episodesByGenre: {} });
   });
 
   it('should have correct initial state', () => {
@@ -49,13 +47,14 @@ describe('EpisodeListStore', () => {
   it('should load episodes grouped by category and genre', async () => {
     const grouped = { Rock: [ep('a', 100)], Jazz: [ep('b', 200)] };
     const categorized = { 'Nerd News': [ep('c', 300)] };
-    mockService.getEpisodesByGenre.mockResolvedValue(grouped);
-    mockService.getEpisodesByFeaturedCategory.mockResolvedValue(categorized);
+    mockService.getShelves.mockResolvedValue({
+      episodesByGenre: grouped,
+      episodesByCategory: categorized,
+    });
 
     await store.load();
 
-    expect(mockService.getEpisodesByGenre).toHaveBeenCalled();
-    expect(mockService.getEpisodesByFeaturedCategory).toHaveBeenCalled();
+    expect(mockService.getShelves).toHaveBeenCalled();
     expect(store.episodesByGenre()).toEqual(grouped);
     expect(store.episodesByCategory()).toEqual(categorized);
     expect(store.isLoading()).toBe(false);
@@ -64,9 +63,9 @@ describe('EpisodeListStore', () => {
 
   it('should set isLoading during the call and clear it on success', async () => {
     let loadingDuringCall: boolean | null = null;
-    mockService.getEpisodesByGenre.mockImplementation(() => {
+    mockService.getShelves.mockImplementation(() => {
       loadingDuringCall = store.isLoading();
-      return Promise.resolve({});
+      return Promise.resolve({ episodesByCategory: {}, episodesByGenre: {} });
     });
 
     await store.load();
@@ -76,7 +75,7 @@ describe('EpisodeListStore', () => {
   });
 
   it('should set error and clear isLoading on Error failure', async () => {
-    mockService.getEpisodesByGenre.mockRejectedValue(new Error('Network error'));
+    mockService.getShelves.mockRejectedValue(new Error('Network error'));
 
     await store.load();
 
@@ -87,7 +86,7 @@ describe('EpisodeListStore', () => {
   });
 
   it('should set a fallback message when a non-Error is thrown', async () => {
-    mockService.getEpisodesByGenre.mockRejectedValue('nope');
+    mockService.getShelves.mockRejectedValue('nope');
 
     await store.load();
 
@@ -96,11 +95,14 @@ describe('EpisodeListStore', () => {
   });
 
   it('should clear a prior error when a subsequent load succeeds', async () => {
-    mockService.getEpisodesByGenre.mockRejectedValueOnce(new Error('boom'));
+    mockService.getShelves.mockRejectedValueOnce(new Error('boom'));
     await store.load();
     expect(store.error()).toBe('boom');
 
-    mockService.getEpisodesByGenre.mockResolvedValueOnce({ Rock: [ep('a', 100)] });
+    mockService.getShelves.mockResolvedValueOnce({
+      episodesByGenre: { Rock: [ep('a', 100)] },
+      episodesByCategory: {},
+    });
     await store.load();
 
     expect(store.error()).toBeNull();

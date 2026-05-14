@@ -253,4 +253,51 @@ describe('EpisodeListService', () => {
       expect(result).toEqual({});
     });
   });
+
+  describe('getShelves', () => {
+    const featured: Category[] = [
+      { id: 'c1', name: 'Nerd News', slug: 'nerd-news' },
+      { id: 'c2', name: 'Interviews', slug: 'interviews' },
+    ];
+
+    it('should fetch visible episodes only once across both shelves', async () => {
+      mockGenreService.getAllGenres.mockResolvedValue([
+        { id: 'g1', name: 'Rock', slug: 'rock' },
+      ]);
+      mockCategoryService.getAllCategories.mockResolvedValue(featured);
+      mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100)]);
+      genreJunctionRows = [{ genreId: 'g1', episodeId: 'a' }];
+      categoryJunctionRows = [{ categoryId: 'c1', episodeId: 'a' }];
+
+      const result = await service.getShelves();
+
+      expect(mockEpisodeService.getVisibleEpisodes).toHaveBeenCalledTimes(1);
+      expect(Object.keys(result.episodesByGenre)).toEqual(['Rock']);
+      expect(Object.keys(result.episodesByCategory)).toEqual(['Nerd News']);
+    });
+
+    it('should still return genre shelves when the featured-category branch fails', async () => {
+      mockGenreService.getAllGenres.mockResolvedValue([
+        { id: 'g1', name: 'Rock', slug: 'rock' },
+      ]);
+      mockCategoryService.getAllCategories.mockRejectedValue(new Error('cat-down'));
+      mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100)]);
+      genreJunctionRows = [{ genreId: 'g1', episodeId: 'a' }];
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const result = await service.getShelves();
+
+      expect(result.episodesByCategory).toEqual({});
+      expect(result.episodesByGenre['Rock'][0].id).toBe('a');
+      errorSpy.mockRestore();
+    });
+
+    it('should reject when the genre branch fails', async () => {
+      mockGenreService.getAllGenres.mockRejectedValue(new Error('genre-down'));
+      mockCategoryService.getAllCategories.mockResolvedValue(featured);
+      mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100)]);
+
+      await expect(service.getShelves()).rejects.toThrow('genre-down');
+    });
+  });
 });

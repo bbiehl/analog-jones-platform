@@ -27,10 +27,7 @@ export const EpisodeListStore = signalStore(
       async load() {
         patchState(store, { isLoading: true, error: null });
         try {
-          const [episodesByCategory, episodesByGenre] = await Promise.all([
-            episodeListService.getEpisodesByFeaturedCategory(),
-            episodeListService.getEpisodesByGenre(),
-          ]);
+          const { episodesByCategory, episodesByGenre } = await episodeListService.getShelves();
           patchState(store, { episodesByCategory, episodesByGenre, isLoading: false });
         } catch (e) {
           patchState(store, {
