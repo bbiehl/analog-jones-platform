@@ -19,6 +19,7 @@ describe('EpisodeGenreService', () => {
       ),
       query: vi.fn((coll, ...constraints) => ({ __query: { coll, constraints } })),
       orderBy: vi.fn((field) => ({ __orderBy: field })),
+      documentId: vi.fn(() => '__name__'),
       where: vi.fn((field, op, value) => ({ __where: { field, op, value } })),
       limit: vi.fn((n) => ({ __limit: n })),
       getDoc: vi.fn(),
@@ -167,35 +168,47 @@ describe('EpisodeGenreService', () => {
   });
 
   describe('getEpisodesByGenreId', () => {
-    it('should return only visible episodes', async () => {
-      ops.getDocs.mockResolvedValueOnce({
-        docs: [
-          { data: () => ({ episodeId: 'ep1' }) },
-          { data: () => ({ episodeId: 'ep2' }) },
-        ],
-      });
-      ops.getDoc
+    it('should batch-query episodes by documentId and return server-filtered results', async () => {
+      ops.getDocs
         .mockResolvedValueOnce({
-          exists: () => true,
-          id: 'ep1',
-          data: () => ({ title: 'V', isVisible: true }),
+          docs: [
+            { data: () => ({ episodeId: 'ep1' }) },
+            { data: () => ({ episodeId: 'ep2' }) },
+            { data: () => ({ episodeId: 'ep1' }) },
+          ],
         })
         .mockResolvedValueOnce({
-          exists: () => true,
-          id: 'ep2',
-          data: () => ({ title: 'H', isVisible: false }),
+          docs: [
+            { id: 'ep1', data: () => ({ title: 'V', isVisible: true }) },
+          ],
         });
 
       const result = await service.getEpisodesByGenreId('g1');
+
+      expect(ops.where).toHaveBeenCalledWith('genreId', '==', 'g1');
+      expect(ops.where).toHaveBeenCalledWith('__name__', 'in', ['ep1', 'ep2']);
+      expect(ops.where).toHaveBeenCalledWith('isVisible', '==', true);
       expect(result).toEqual([{ id: 'ep1', title: 'V', isVisible: true }]);
     });
 
-    it('should skip episodes that do not exist', async () => {
-      ops.getDocs.mockResolvedValueOnce({
-        docs: [{ data: () => ({ episodeId: 'ep1' }) }],
-      });
-      ops.getDoc.mockResolvedValueOnce({ exists: () => false });
+    it('should return [] without a second query when there are no junctions', async () => {
+      ops.getDocs.mockResolvedValueOnce({ docs: [] });
 
       expect(await service.getEpisodesByGenreId('g1')).toEqual([]);
+      expect(ops.getDocs).toHaveBeenCalledTimes(1);
+    });
+
+    it('should chunk episode ids into batches of 30', async () => {
+      const docs = Array.from({ length: 35 }, (_, i) => ({
+        data: () => ({ episodeId: `ep${i}` }),
+      }));
+      ops.getDocs
+        .mockResolvedValueOnce({ docs })
+        .mockResolvedValueOnce({ docs: [] })
+        .mockResolvedValueOnce({ docs: [] });
+
+      await service.getEpisodesByGenreId('g1');
+
+      expect(ops.getDocs).toHaveBeenCalledTimes(3);
     });
   });});

@@ -37,6 +37,7 @@ describe('EpisodeService', () => {
       }),
       query: vi.fn((coll, ...constraints) => ({ __query: { coll, constraints } })),
       orderBy: vi.fn((field, dir) => ({ __orderBy: { field, dir } })),
+      documentId: vi.fn(() => '__name__'),
       where: vi.fn((field, op, value) => ({ __where: { field, op, value } })),
       limit: vi.fn((n) => ({ __limit: n })),
       getDoc: vi.fn(),

@@ -9,6 +9,7 @@ import {
   addDoc,
   collection,
   doc,
+  documentId,
   getDoc,
   getDocs,
   limit,
@@ -114,6 +115,7 @@ describe('FIRESTORE_OPS default factory', () => {
     const ops = TestBed.inject(FIRESTORE_OPS);
     expect(ops.collection).toBe(collection);
     expect(ops.doc).toBe(doc);
+    expect(ops.documentId).toBe(documentId);
     expect(ops.query).toBe(query);
     expect(ops.orderBy).toBe(orderBy);
     expect(ops.where).toBe(where);

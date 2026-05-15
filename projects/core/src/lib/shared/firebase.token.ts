@@ -10,6 +10,7 @@ import {
   addDoc,
   collection,
   doc,
+  documentId,
   Firestore,
   getCountFromServer,
   getDoc,
@@ -60,6 +61,7 @@ export const STORAGE_OPS = new InjectionToken<StorageOps>('StorageOps', {
 export interface FirestoreOps {
   collection: typeof collection;
   doc: typeof doc;
+  documentId: typeof documentId;
   query: typeof query;
   orderBy: typeof orderBy;
   where: typeof where;
@@ -77,6 +79,7 @@ export const FIRESTORE_OPS = new InjectionToken<FirestoreOps>('FirestoreOps', {
   factory: () => ({
     collection,
     doc,
+    documentId,
     query,
     orderBy,
     where,
