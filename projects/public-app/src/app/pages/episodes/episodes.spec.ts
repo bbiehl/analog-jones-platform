@@ -26,22 +26,28 @@ describe('Episodes', () => {
   let component: Episodes;
   let fixture: ComponentFixture<Episodes>;
 
+  const episodesByCategory = signal<{ [category: string]: Episode[] }>({});
   const episodesByGenre = signal<{ [genre: string]: Episode[] }>({});
   const isLoading = signal(false);
+  const categoryLoaded = signal(true);
   const error = signal<string | null>(null);
 
   const mockStore = {
+    episodesByCategory,
     episodesByGenre,
     isLoading,
+    categoryLoaded,
     error,
-    loadEpisodesByGenre: vi.fn().mockResolvedValue(undefined),
+    load: vi.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
+    episodesByCategory.set({});
     episodesByGenre.set({});
     isLoading.set(false);
+    categoryLoaded.set(true);
     error.set(null);
-    mockStore.loadEpisodesByGenre.mockClear();
+    mockStore.load.mockClear();
 
     await TestBed.configureTestingModule({
       imports: [Episodes],
@@ -58,8 +64,8 @@ describe('Episodes', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should trigger loadEpisodesByGenre on init', () => {
-    expect(mockStore.loadEpisodesByGenre).toHaveBeenCalled();
+  it('should trigger load on init', () => {
+    expect(mockStore.load).toHaveBeenCalled();
   });
 
   it('should render the page heading and intro copy', () => {
@@ -114,12 +120,24 @@ describe('Episodes', () => {
   });
 
   describe('empty state', () => {
-    it('shows the empty message when there are no genres', () => {
+    it('shows the empty message when there are no genres or categories', () => {
+      episodesByCategory.set({});
       episodesByGenre.set({});
       fixture.detectChanges();
 
       expect(fixture.nativeElement.textContent).toContain('No episodes found.');
       expect(fixture.nativeElement.querySelector('app-episode-scroller')).toBeNull();
+    });
+
+    it('renders skeletons (not the empty message) while category shelves are still resolving', () => {
+      episodesByCategory.set({});
+      episodesByGenre.set({});
+      categoryLoaded.set(false);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).not.toContain('No episodes found.');
+      const skeletons = fixture.nativeElement.querySelectorAll('app-episode-scroller-skeleton');
+      expect(skeletons.length).toBe(2);
     });
   });
 
@@ -143,7 +161,7 @@ describe('Episodes', () => {
       ).map((el) => (el as HTMLElement).querySelector('h2,h3,header')?.textContent ?? '');
       // We don't assert exact heading template — only that the store-provided
       // genre order is preserved by checking the underlying entries.
-      expect(component['genreEntries']().map(([g]) => g)).toEqual(['Rock', 'Jazz']);
+      expect(component['entries']().map((e) => e.heading)).toEqual(['Rock', 'Jazz']);
       expect(headings.length).toBe(2);
     });
 
@@ -245,7 +263,8 @@ describe('Episodes', () => {
   });
 
   describe('computed signals', () => {
-    it('hasEpisodes is false when episodesByGenre is empty', () => {
+    it('hasEpisodes is false when both maps are empty', () => {
+      episodesByCategory.set({});
       episodesByGenre.set({});
       expect(component['hasEpisodes']()).toBe(false);
     });
@@ -255,9 +274,25 @@ describe('Episodes', () => {
       expect(component['hasEpisodes']()).toBe(true);
     });
 
-    it('genreEntries reflects updates from the store', () => {
+    it('hasEpisodes is true when at least one category has episodes', () => {
+      episodesByCategory.set({ 'Nerd News': [makeEpisode('e1', 'A')] });
+      expect(component['hasEpisodes']()).toBe(true);
+    });
+
+    it('entries reflects updates from the store', () => {
       episodesByGenre.set({ Pop: [makeEpisode('e1', 'A')] });
-      expect(component['genreEntries']()).toEqual([['Pop', [makeEpisode('e1', 'A')]]]);
+      expect(component['entries']()).toEqual([
+        { key: 'gen:Pop', heading: 'Pop', episodes: [makeEpisode('e1', 'A')] },
+      ]);
+    });
+
+    it('entries renders category rows before genre rows', () => {
+      const nerd = makeEpisode('e1', 'Nerd');
+      const rock = makeEpisode('e2', 'Rock');
+      episodesByCategory.set({ 'Nerd News': [nerd] });
+      episodesByGenre.set({ Rock: [rock] });
+
+      expect(component['entries']().map((e) => e.heading)).toEqual(['Nerd News', 'Rock']);
     });
   });
 });

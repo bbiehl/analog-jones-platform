@@ -1,16 +1,18 @@
 /// <reference types="vitest/globals" />
+import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Timestamp } from 'firebase/firestore';
 
 import { EpisodeListService } from './episode-list.service';
 import {
+  CategoryService,
   EpisodeService,
   FIRESTORE,
   FIRESTORE_OPS,
   GenreService,
   TransferCacheService,
 } from '@aj/core';
-import type { Episode, Genre } from '@aj/core';
+import type { Category, Episode, Genre } from '@aj/core';
 
 function ep(id: string, millis: number, isVisible = true): Episode {
   return {
@@ -25,9 +27,10 @@ function ep(id: string, millis: number, isVisible = true): Episode {
   };
 }
 
-type Junction = { genreId: string; episodeId: string };
+type GenreJunction = { genreId: string; episodeId: string };
+type CategoryJunction = { categoryId: string; episodeId: string };
 
-function junctionSnap(rows: Junction[]) {
+function snap<T>(rows: T[]) {
   return {
     docs: rows.map((data) => ({ data: () => data })),
   };
@@ -36,19 +39,28 @@ function junctionSnap(rows: Junction[]) {
 describe('EpisodeListService', () => {
   let service: EpisodeListService;
   let mockGenreService: { getAllGenres: ReturnType<typeof vi.fn> };
+  let mockCategoryService: { getAllCategories: ReturnType<typeof vi.fn> };
   let mockEpisodeService: { getVisibleEpisodes: ReturnType<typeof vi.fn> };
   let mockOps: {
     collection: ReturnType<typeof vi.fn>;
     getDocs: ReturnType<typeof vi.fn>;
   };
   let mockTransferCache: { cached: ReturnType<typeof vi.fn> };
+  let genreJunctionRows: GenreJunction[];
+  let categoryJunctionRows: CategoryJunction[];
 
   beforeEach(() => {
-    mockGenreService = { getAllGenres: vi.fn() };
+    mockGenreService = { getAllGenres: vi.fn().mockResolvedValue([]) };
+    mockCategoryService = { getAllCategories: vi.fn().mockResolvedValue([]) };
     mockEpisodeService = { getVisibleEpisodes: vi.fn().mockResolvedValue([]) };
+    genreJunctionRows = [];
+    categoryJunctionRows = [];
     mockOps = {
-      collection: vi.fn().mockReturnValue('episodeGenres-ref'),
-      getDocs: vi.fn().mockResolvedValue(junctionSnap([])),
+      collection: vi.fn((_db: unknown, name: string) => `${name}-ref`),
+      getDocs: vi.fn((ref: string) => {
+        if (ref === 'episodeCategories-ref') return Promise.resolve(snap(categoryJunctionRows));
+        return Promise.resolve(snap(genreJunctionRows));
+      }),
     };
     mockTransferCache = {
       cached: vi.fn((_key: string, fetcher: () => Promise<unknown>) => fetcher()),
@@ -58,6 +70,7 @@ describe('EpisodeListService', () => {
       providers: [
         EpisodeListService,
         { provide: GenreService, useValue: mockGenreService },
+        { provide: CategoryService, useValue: mockCategoryService },
         { provide: EpisodeService, useValue: mockEpisodeService },
         { provide: FIRESTORE, useValue: {} },
         { provide: FIRESTORE_OPS, useValue: mockOps },
@@ -97,12 +110,10 @@ describe('EpisodeListService', () => {
         ep('a', 100),
         ep('b', 200),
       ]);
-      mockOps.getDocs.mockResolvedValue(
-        junctionSnap([
-          { genreId: 'g1', episodeId: 'a' },
-          { genreId: 'g2', episodeId: 'b' },
-        ]),
-      );
+      genreJunctionRows = [
+        { genreId: 'g1', episodeId: 'a' },
+        { genreId: 'g2', episodeId: 'b' },
+      ];
 
       const result = await service.getEpisodesByGenre();
 
@@ -120,13 +131,11 @@ describe('EpisodeListService', () => {
         ep('new', 500),
         ep('mid', 300),
       ]);
-      mockOps.getDocs.mockResolvedValue(
-        junctionSnap([
-          { genreId: 'g1', episodeId: 'old' },
-          { genreId: 'g1', episodeId: 'new' },
-          { genreId: 'g1', episodeId: 'mid' },
-        ]),
-      );
+      genreJunctionRows = [
+        { genreId: 'g1', episodeId: 'old' },
+        { genreId: 'g1', episodeId: 'new' },
+        { genreId: 'g1', episodeId: 'mid' },
+      ];
 
       const result = await service.getEpisodesByGenre();
 
@@ -139,9 +148,7 @@ describe('EpisodeListService', () => {
         { id: 'g2', name: 'Rock', slug: 'rock' },
       ]);
       mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100)]);
-      mockOps.getDocs.mockResolvedValue(
-        junctionSnap([{ genreId: 'g2', episodeId: 'a' }]),
-      );
+      genreJunctionRows = [{ genreId: 'g2', episodeId: 'a' }];
 
       const result = await service.getEpisodesByGenre();
 
@@ -154,9 +161,7 @@ describe('EpisodeListService', () => {
         { id: 'g2', name: 'Rock', slug: 'rock' },
       ] as Genre[]);
       mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100)]);
-      mockOps.getDocs.mockResolvedValue(
-        junctionSnap([{ genreId: 'g2', episodeId: 'a' }]),
-      );
+      genreJunctionRows = [{ genreId: 'g2', episodeId: 'a' }];
 
       const result = await service.getEpisodesByGenre();
 
@@ -167,6 +172,215 @@ describe('EpisodeListService', () => {
       mockGenreService.getAllGenres.mockRejectedValue(new Error('boom'));
 
       await expect(service.getEpisodesByGenre()).rejects.toThrow('boom');
+    });
+  });
+
+  describe('getEpisodesByFeaturedCategory', () => {
+    const featured: Category[] = [
+      { id: 'c1', name: 'Nerd News', slug: 'nerd-news' },
+      { id: 'c2', name: 'Interviews', slug: 'interviews' },
+    ];
+
+    it('should return empty object when no featured categories exist', async () => {
+      mockCategoryService.getAllCategories.mockResolvedValue([]);
+
+      const result = await service.getEpisodesByFeaturedCategory();
+
+      expect(result).toEqual({});
+    });
+
+    it('should return rows keyed by category name in FEATURED_CATEGORY_SLUGS order', async () => {
+      mockCategoryService.getAllCategories.mockResolvedValue([
+        // Intentionally ordered opposite to the featured-slug order.
+        featured[1],
+        featured[0],
+        { id: 'c3', name: 'Other', slug: 'other' },
+      ]);
+      mockEpisodeService.getVisibleEpisodes.mockResolvedValue([
+        ep('a', 100),
+        ep('b', 200),
+        ep('c', 300),
+      ]);
+      categoryJunctionRows = [
+        { categoryId: 'c1', episodeId: 'a' },
+        { categoryId: 'c2', episodeId: 'b' },
+        { categoryId: 'c3', episodeId: 'c' },
+      ];
+
+      const result = await service.getEpisodesByFeaturedCategory();
+
+      expect(Object.keys(result)).toEqual(['Nerd News', 'Interviews']);
+      expect(result['Nerd News'][0].id).toBe('a');
+      expect(result['Interviews'][0].id).toBe('b');
+    });
+
+    it('should sort each category bucket by episodeDate descending', async () => {
+      mockCategoryService.getAllCategories.mockResolvedValue([featured[0]]);
+      mockEpisodeService.getVisibleEpisodes.mockResolvedValue([
+        ep('old', 100),
+        ep('new', 500),
+        ep('mid', 300),
+      ]);
+      categoryJunctionRows = [
+        { categoryId: 'c1', episodeId: 'old' },
+        { categoryId: 'c1', episodeId: 'new' },
+        { categoryId: 'c1', episodeId: 'mid' },
+      ];
+
+      const result = await service.getEpisodesByFeaturedCategory();
+
+      expect(result['Nerd News'].map((e) => e.id)).toEqual(['new', 'mid', 'old']);
+    });
+
+    it('should skip featured categories with zero visible episodes', async () => {
+      mockCategoryService.getAllCategories.mockResolvedValue(featured);
+      mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100)]);
+      categoryJunctionRows = [{ categoryId: 'c2', episodeId: 'a' }];
+
+      const result = await service.getEpisodesByFeaturedCategory();
+
+      expect(Object.keys(result)).toEqual(['Interviews']);
+    });
+
+    it('should ignore non-featured categories', async () => {
+      mockCategoryService.getAllCategories.mockResolvedValue([
+        { id: 'c3', name: 'Other', slug: 'other' },
+      ]);
+      mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100)]);
+      categoryJunctionRows = [{ categoryId: 'c3', episodeId: 'a' }];
+
+      const result = await service.getEpisodesByFeaturedCategory();
+
+      expect(result).toEqual({});
+    });
+  });
+
+  describe('getShelves', () => {
+    const featured: Category[] = [
+      { id: 'c1', name: 'Nerd News', slug: 'nerd-news' },
+      { id: 'c2', name: 'Interviews', slug: 'interviews' },
+    ];
+
+    it('should fetch visible episodes only once across both shelves', async () => {
+      mockGenreService.getAllGenres.mockResolvedValue([
+        { id: 'g1', name: 'Rock', slug: 'rock' },
+      ]);
+      mockCategoryService.getAllCategories.mockResolvedValue(featured);
+      mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100)]);
+      genreJunctionRows = [{ genreId: 'g1', episodeId: 'a' }];
+      categoryJunctionRows = [{ categoryId: 'c1', episodeId: 'a' }];
+
+      const result = await service.getShelves();
+      const categoryShelves = await result.episodesByCategory;
+
+      expect(mockEpisodeService.getVisibleEpisodes).toHaveBeenCalledTimes(1);
+      expect(Object.keys(result.episodesByGenre)).toEqual(['Rock']);
+      expect(Object.keys(categoryShelves)).toEqual(['Nerd News']);
+    });
+
+    it('should return genre shelves before the featured-category branch resolves', async () => {
+      mockGenreService.getAllGenres.mockResolvedValue([
+        { id: 'g1', name: 'Rock', slug: 'rock' },
+      ]);
+      let resolveCategories: (value: Category[]) => void;
+      mockCategoryService.getAllCategories.mockReturnValue(
+        new Promise<Category[]>((resolve) => {
+          resolveCategories = resolve;
+        })
+      );
+      mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100)]);
+      genreJunctionRows = [{ genreId: 'g1', episodeId: 'a' }];
+      categoryJunctionRows = [{ categoryId: 'c1', episodeId: 'a' }];
+
+      const result = await service.getShelves();
+
+      expect(result.episodesByGenre['Rock'][0].id).toBe('a');
+
+      resolveCategories!(featured);
+      const categoryShelves = await result.episodesByCategory;
+      expect(categoryShelves['Nerd News'][0].id).toBe('a');
+    });
+
+    it('should still return genre shelves when the featured-category branch fails', async () => {
+      mockGenreService.getAllGenres.mockResolvedValue([
+        { id: 'g1', name: 'Rock', slug: 'rock' },
+      ]);
+      mockCategoryService.getAllCategories.mockRejectedValue(new Error('cat-down'));
+      mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100)]);
+      genreJunctionRows = [{ genreId: 'g1', episodeId: 'a' }];
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+      const result = await service.getShelves();
+      const categoryShelves = await result.episodesByCategory;
+
+      expect(categoryShelves).toEqual({});
+      expect(result.episodesByGenre['Rock'][0].id).toBe('a');
+      errorSpy.mockRestore();
+    });
+
+    it('should reject when the genre branch fails', async () => {
+      mockGenreService.getAllGenres.mockRejectedValue(new Error('genre-down'));
+      mockCategoryService.getAllCategories.mockResolvedValue(featured);
+      mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100)]);
+
+      await expect(service.getShelves()).rejects.toThrow('genre-down');
+    });
+  });
+
+  describe('getShelves on the server', () => {
+    let serverService: EpisodeListService;
+
+    beforeEach(() => {
+      TestBed.resetTestingModule();
+      mockGenreService = { getAllGenres: vi.fn().mockResolvedValue([]) };
+      mockCategoryService = { getAllCategories: vi.fn().mockResolvedValue([]) };
+      mockEpisodeService = { getVisibleEpisodes: vi.fn().mockResolvedValue([]) };
+      genreJunctionRows = [];
+      categoryJunctionRows = [];
+      mockOps = {
+        collection: vi.fn((_db: unknown, name: string) => `${name}-ref`),
+        getDocs: vi.fn((ref: string) => {
+          if (ref === 'episodeCategories-ref') return Promise.resolve(snap(categoryJunctionRows));
+          return Promise.resolve(snap(genreJunctionRows));
+        }),
+      };
+      mockTransferCache = {
+        cached: vi.fn((_key: string, fetcher: () => Promise<unknown>) => fetcher()),
+      };
+
+      TestBed.configureTestingModule({
+        providers: [
+          EpisodeListService,
+          { provide: PLATFORM_ID, useValue: 'server' },
+          { provide: GenreService, useValue: mockGenreService },
+          { provide: CategoryService, useValue: mockCategoryService },
+          { provide: EpisodeService, useValue: mockEpisodeService },
+          { provide: FIRESTORE, useValue: {} },
+          { provide: FIRESTORE_OPS, useValue: mockOps },
+          { provide: TransferCacheService, useValue: mockTransferCache },
+        ],
+      });
+
+      serverService = TestBed.inject(EpisodeListService);
+    });
+
+    it('skips the featured-category branch entirely on the server', async () => {
+      mockGenreService.getAllGenres.mockResolvedValue([
+        { id: 'g1', name: 'Rock', slug: 'rock' },
+      ]);
+      mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100)]);
+      genreJunctionRows = [{ genreId: 'g1', episodeId: 'a' }];
+
+      const result = await serverService.getShelves();
+      const categoryShelves = await result.episodesByCategory;
+
+      expect(categoryShelves).toEqual({});
+      expect(result.episodesByGenre['Rock'][0].id).toBe('a');
+      expect(mockCategoryService.getAllCategories).not.toHaveBeenCalled();
+      expect(mockTransferCache.cached).not.toHaveBeenCalledWith(
+        'episodes.byFeaturedCategory',
+        expect.anything()
+      );
     });
   });
 });
