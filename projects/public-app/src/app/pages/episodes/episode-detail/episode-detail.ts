@@ -11,14 +11,8 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { EpisodeStore } from '@aj/core';
 import { SeoService } from '../../../seo/seo.service';
-import {
-  breadcrumbList,
-  organization,
-  podcastEpisode,
-  website,
-} from '../../../seo/seo.schemas';
 import { ORIGIN } from '../../../seo/origin.token';
-import { stripMarkdown } from '../../../seo/seo.text';
+import { buildEpisodeSeoInput } from './episode-detail.seo';
 import { EpisodeProperties } from '../../../episode/episode-detail/episode-properties/episode-properties';
 import { EpisodePropertiesSkeleton } from '../../../episode/episode-detail/episode-properties-skeleton/episode-properties-skeleton';
 import { RelatedEpisodeStore } from '../../../episode/episode-detail/related-episode.store';
@@ -102,26 +96,6 @@ export class EpisodeDetail implements OnDestroy {
   }
 
   private applyEpisodeSeo(ep: NonNullable<ReturnType<typeof this.episode>>): void {
-    const path = `/episodes/${ep.id}`;
-    const description =
-      stripMarkdown(ep.intelligence, 160) ||
-      `Episode of ${ep.title} on Analog Jones and the Temple of Film.`;
-    this.seo.setHead({
-      title: ep.title,
-      description,
-      path,
-      image: ep.posterUrl ?? undefined,
-      type: 'article',
-      jsonLd: [
-        organization(this.origin),
-        website(this.origin),
-        podcastEpisode(ep, this.origin),
-        breadcrumbList(this.origin, [
-          { name: 'Home', path: '/' },
-          { name: 'Episodes', path: '/episodes' },
-          { name: ep.title, path },
-        ]),
-      ],
-    });
+    this.seo.setHead(buildEpisodeSeoInput(ep, this.origin));
   }
 }
