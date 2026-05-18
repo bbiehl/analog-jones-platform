@@ -62,6 +62,8 @@ export class EpisodeDetail implements OnDestroy {
       const id = this.id();
       if (!id) return;
       this.relatedStore.clearRelatedEpisodes();
+      const current = this.episodeStore.selectedEpisode();
+      if (current?.id === id) return;
       this.episodeStore.loadEpisodeById(id);
     });
 
