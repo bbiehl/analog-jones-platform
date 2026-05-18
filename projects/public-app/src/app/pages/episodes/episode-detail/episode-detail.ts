@@ -5,6 +5,7 @@ import {
   computed,
   effect,
   inject,
+  untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -61,9 +62,9 @@ export class EpisodeDetail implements OnDestroy {
     effect(() => {
       const id = this.id();
       if (!id) return;
-      this.relatedStore.clearRelatedEpisodes();
-      const current = this.episodeStore.selectedEpisode();
+      const current = untracked(() => this.episodeStore.selectedEpisode());
       if (current?.id === id) return;
+      this.relatedStore.clearRelatedEpisodes();
       this.episodeStore.loadEpisodeById(id);
     });
 

@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { RedirectCommand, ResolveFn, Router } from '@angular/router';
 import {
+  EpisodeNotFoundError,
   EpisodeService,
   EpisodeStore,
   EpisodeWithRelations,
@@ -23,16 +24,19 @@ export const episodeDetailResolver: ResolveFn<EpisodeWithRelations | RedirectCom
   const origin = inject(ORIGIN);
   const transferCache = inject(TransferCacheService);
 
-  let episode: EpisodeWithRelations | null = null;
+  let episode: EpisodeWithRelations;
   try {
     episode = await transferCache.cached(`episode.byId.${id}`, () =>
       episodeService.getEpisodeById(id),
     );
-  } catch {
-    episode = null;
+  } catch (err) {
+    if (err instanceof EpisodeNotFoundError) {
+      return new RedirectCommand(router.parseUrl('/not-found'));
+    }
+    throw err;
   }
 
-  if (!episode || !episode.isVisible) {
+  if (!episode.isVisible) {
     return new RedirectCommand(router.parseUrl('/not-found'));
   }
 
