@@ -26,18 +26,16 @@ export const episodeDetailResolver: ResolveFn<EpisodeWithRelations | RedirectCom
 
   let episode: EpisodeWithRelations;
   try {
-    episode = await transferCache.cached(`episode.byId.${id}`, () =>
-      episodeService.getEpisodeById(id),
-    );
+    episode = await transferCache.cached(`episode.byId.${id}`, async () => {
+      const ep = await episodeService.getEpisodeById(id);
+      if (!ep.isVisible) throw new EpisodeNotFoundError(id);
+      return ep;
+    });
   } catch (err) {
     if (err instanceof EpisodeNotFoundError) {
       return new RedirectCommand(router.parseUrl('/not-found'));
     }
     throw err;
-  }
-
-  if (!episode.isVisible) {
-    return new RedirectCommand(router.parseUrl('/not-found'));
   }
 
   episodeStore.setSelectedEpisode(episode);

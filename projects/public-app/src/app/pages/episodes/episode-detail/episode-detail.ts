@@ -62,9 +62,9 @@ export class EpisodeDetail implements OnDestroy {
     effect(() => {
       const id = this.id();
       if (!id) return;
+      this.relatedStore.clearRelatedEpisodes();
       const current = untracked(() => this.episodeStore.selectedEpisode());
       if (current?.id === id) return;
-      this.relatedStore.clearRelatedEpisodes();
       this.episodeStore.loadEpisodeById(id);
     });
 
