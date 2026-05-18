@@ -1,4 +1,5 @@
-import { inject } from '@angular/core';
+import { inject, PLATFORM_ID, RESPONSE_INIT } from '@angular/core';
+import { isPlatformServer } from '@angular/common';
 import { RedirectCommand, ResolveFn, Router } from '@angular/router';
 import {
   EpisodeNotFoundError,
@@ -15,8 +16,18 @@ export const episodeDetailResolver: ResolveFn<EpisodeWithRelations | RedirectCom
   route,
 ) => {
   const router = inject(Router);
+  const isServer = isPlatformServer(inject(PLATFORM_ID));
+  const responseInit = isServer ? inject(RESPONSE_INIT, { optional: true }) : null;
+
+  const notFoundRedirect = () => {
+    // Matched route's status is 200, which createRedirectResponse rejects.
+    // Force a valid 3xx so SSR emits the redirect; /not-found itself serves 404.
+    if (responseInit) responseInit.status = 302;
+    return new RedirectCommand(router.parseUrl('/not-found'));
+  };
+
   const id = route.paramMap.get('id');
-  if (!id) return new RedirectCommand(router.parseUrl('/not-found'));
+  if (!id) return notFoundRedirect();
 
   const episodeService = inject(EpisodeService);
   const episodeStore = inject(EpisodeStore);
@@ -33,7 +44,7 @@ export const episodeDetailResolver: ResolveFn<EpisodeWithRelations | RedirectCom
     });
   } catch (err) {
     if (err instanceof EpisodeNotFoundError) {
-      return new RedirectCommand(router.parseUrl('/not-found'));
+      return notFoundRedirect();
     }
     throw err;
   }
