@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { Timestamp } from 'firebase/firestore';
 import { EpisodeStore } from '@aj/core';
@@ -60,7 +60,7 @@ describe('EpisodeDetail', () => {
         provideRouter([]),
         { provide: EpisodeStore, useValue: mockEpisodeStore },
         { provide: RelatedEpisodeStore, useValue: mockRelatedEpisodeStore },
-        { provide: ActivatedRoute, useValue: { paramMap: paramMap$ } },
+        { provide: ActivatedRoute, useValue: { paramMap: paramMap$, data: of({}) } },
       ],
     });
 
@@ -253,10 +253,12 @@ describe('EpisodeDetail', () => {
     });
   });
 
-  describe('not-found navigation effect', () => {
-    async function createWithRouterSpy(routeId: string | null = 'ep123456ABC') {
+  describe('not-found rendering', () => {
+    async function createWithResolved(
+      resolved: EpisodeWithRelations | null,
+      routeId: string | null = 'ep123456ABC',
+    ) {
       const paramMap$ = of(convertToParamMap(routeId ? { id: routeId } : {}));
-      const navigateByUrl = vi.fn();
 
       TestBed.configureTestingModule({
         imports: [EpisodeDetail],
@@ -264,8 +266,10 @@ describe('EpisodeDetail', () => {
           provideRouter([]),
           { provide: EpisodeStore, useValue: mockEpisodeStore },
           { provide: RelatedEpisodeStore, useValue: mockRelatedEpisodeStore },
-          { provide: ActivatedRoute, useValue: { paramMap: paramMap$ } },
-          { provide: Router, useValue: { navigateByUrl } },
+          {
+            provide: ActivatedRoute,
+            useValue: { paramMap: paramMap$, data: of({ episode: resolved }) },
+          },
         ],
       });
 
@@ -274,89 +278,21 @@ describe('EpisodeDetail', () => {
       fixture.detectChanges();
       await fixture.whenStable();
       fixture.detectChanges();
-
-      return { navigateByUrl };
     }
 
-    it('navigates to /not-found when loading finishes with a store error', async () => {
-      loading.set(true);
-      const { navigateByUrl } = await createWithRouterSpy('ep123456ABC');
-
-      error.set('boom');
-      loading.set(false);
-      fixture.detectChanges();
-      await fixture.whenStable();
-
-      expect(navigateByUrl).toHaveBeenCalledWith('/not-found');
+    it('renders the not-found component when the resolver returns null', async () => {
+      await createWithResolved(null);
+      expect(fixture.nativeElement.querySelector('app-not-found')).toBeTruthy();
     });
 
-    it('navigates to /not-found when loading finishes with no episode', async () => {
-      loading.set(true);
-      const { navigateByUrl } = await createWithRouterSpy('ep123456ABC');
-
-      loading.set(false);
-      fixture.detectChanges();
-      await fixture.whenStable();
-
-      expect(navigateByUrl).toHaveBeenCalledWith('/not-found');
+    it('does not call loadEpisodeById when the resolver returned null', async () => {
+      await createWithResolved(null);
+      expect(mockEpisodeStore.loadEpisodeById).not.toHaveBeenCalled();
     });
 
-    it('navigates to /not-found when the loaded episode id does not match the route id', async () => {
-      loading.set(true);
-      const { navigateByUrl } = await createWithRouterSpy('ep123456ABC');
-
-      selectedEpisode.set(makeEpisode({ id: 'different', isVisible: true }));
-      loading.set(false);
-      fixture.detectChanges();
-      await fixture.whenStable();
-
-      expect(navigateByUrl).toHaveBeenCalledWith('/not-found');
-    });
-
-    it('navigates to /not-found when the loaded episode is hidden', async () => {
-      loading.set(true);
-      const { navigateByUrl } = await createWithRouterSpy('ep123456ABC');
-
-      selectedEpisode.set(makeEpisode({ id: 'ep123456ABC', isVisible: false }));
-      loading.set(false);
-      fixture.detectChanges();
-      await fixture.whenStable();
-
-      expect(navigateByUrl).toHaveBeenCalledWith('/not-found');
-    });
-
-    it('does not navigate when loading finishes and a valid episode is loaded', async () => {
-      loading.set(true);
-      const { navigateByUrl } = await createWithRouterSpy('ep123456ABC');
-
-      selectedEpisode.set(makeEpisode({ id: 'ep123456ABC', isVisible: true }));
-      loading.set(false);
-      fixture.detectChanges();
-      await fixture.whenStable();
-
-      expect(navigateByUrl).not.toHaveBeenCalled();
-    });
-
-    it('does not navigate while still loading', async () => {
-      loading.set(true);
-      const { navigateByUrl } = await createWithRouterSpy('ep123456ABC');
-      expect(navigateByUrl).not.toHaveBeenCalled();
-    });
-
-    it('does not navigate when there was never a loading transition', async () => {
-      const { navigateByUrl } = await createWithRouterSpy('ep123456ABC');
-      expect(navigateByUrl).not.toHaveBeenCalled();
-    });
-
-    it('does not navigate when the route has no id', async () => {
-      loading.set(true);
-      const { navigateByUrl } = await createWithRouterSpy(null);
-
-      loading.set(false);
-      fixture.detectChanges();
-      await fixture.whenStable();
-
-      expect(navigateByUrl).not.toHaveBeenCalled();
+    it('does not render the not-found component when an episode is resolved', async () => {
+      await createWithResolved(makeEpisode());
+      expect(fixture.nativeElement.querySelector('app-not-found')).toBeFalsy();
     });
   });
 

@@ -49,7 +49,12 @@ export class TransferCacheService {
   private readonly isServer = isPlatformServer(inject(PLATFORM_ID));
   private readonly memo = new Map<string, unknown>();
 
-  async cached<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+  async cached<T>(
+    key: string,
+    fetcher: () => Promise<T>,
+    options?: { memoize?: boolean },
+  ): Promise<T> {
+    const memoize = options?.memoize !== false;
     const stateKey = makeStateKey<unknown>(`aj:${key}`);
 
     if (this.isServer) {
@@ -67,7 +72,7 @@ export class TransferCacheService {
       }
     }
 
-    if (this.memo.has(key)) {
+    if (memoize && this.memo.has(key)) {
       return this.memo.get(key) as T;
     }
 
@@ -75,12 +80,12 @@ export class TransferCacheService {
       const raw = this.transferState.get(stateKey, null);
       this.transferState.remove(stateKey);
       const revived = reviveTimestamps(raw) as T;
-      this.memo.set(key, revived);
+      if (memoize) this.memo.set(key, revived);
       return revived;
     }
 
     const result = await fetcher();
-    this.memo.set(key, result);
+    if (memoize) this.memo.set(key, result);
     return result;
   }
 }
