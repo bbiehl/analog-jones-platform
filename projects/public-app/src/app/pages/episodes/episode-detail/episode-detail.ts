@@ -5,15 +5,11 @@ import {
   computed,
   effect,
   inject,
-  untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { EpisodeStore, EpisodeWithRelations } from '@aj/core';
-import { SeoService } from '../../../seo/seo.service';
-import { ORIGIN } from '../../../seo/origin.token';
-import { buildEpisodeSeoInput } from './episode-detail.seo';
 import { EpisodeProperties } from '../../../episode/episode-detail/episode-properties/episode-properties';
 import { EpisodePropertiesSkeleton } from '../../../episode/episode-detail/episode-properties-skeleton/episode-properties-skeleton';
 import { RelatedEpisodeStore } from '../../../episode/episode-detail/related-episode.store';
@@ -40,8 +36,6 @@ export class EpisodeDetail implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly episodeStore = inject(EpisodeStore);
   private readonly relatedStore = inject(RelatedEpisodeStore);
-  private readonly seo = inject(SeoService);
-  private readonly origin = inject(ORIGIN);
 
   protected readonly id = toSignal(this.route.paramMap.pipe(map((p) => p.get('id'))), {
     initialValue: null,
@@ -64,14 +58,13 @@ export class EpisodeDetail implements OnDestroy {
   });
 
   constructor() {
+    // episodeDetailResolver populates the store and sets the SEO head before
+    // activation, so this component does not fetch or own SEO. It only resets
+    // related episodes when the route id changes.
     effect(() => {
       const id = this.id();
       if (!id) return;
       this.relatedStore.clearRelatedEpisodes();
-      if (this.notFound()) return;
-      const current = untracked(() => this.episodeStore.selectedEpisode());
-      if (current?.id === id) return;
-      this.episodeStore.loadEpisodeById(id);
     });
 
     effect(() => {
@@ -79,7 +72,6 @@ export class EpisodeDetail implements OnDestroy {
       const ep = this.episode();
       if (id && ep && ep.id === id && ep.isVisible) {
         this.relatedStore.loadRelatedEpisodes(ep);
-        this.applyEpisodeSeo(ep);
       }
     });
   }
@@ -87,9 +79,5 @@ export class EpisodeDetail implements OnDestroy {
   ngOnDestroy(): void {
     this.episodeStore.clearSelectedEpisode();
     this.relatedStore.clearRelatedEpisodes();
-  }
-
-  private applyEpisodeSeo(ep: NonNullable<ReturnType<typeof this.episode>>): void {
-    this.seo.setHead(buildEpisodeSeoInput(ep, this.origin));
   }
 }

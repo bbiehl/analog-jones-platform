@@ -16,6 +16,5 @@ export const serverRoutes: ServerRoute[] = [
   prerender('terms'),
 
   // Not-found: server-rendered with a real 404 so crawlers see noindex + 404
-  { path: 'not-found', renderMode: RenderMode.Server, status: 404 },
   { path: '**', renderMode: RenderMode.Server, status: 404 },
 ];

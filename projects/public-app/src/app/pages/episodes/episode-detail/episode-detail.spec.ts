@@ -212,18 +212,6 @@ describe('EpisodeDetail', () => {
     });
   });
 
-  describe('episode loading effect', () => {
-    it('calls loadEpisodeById when the route id is present', async () => {
-      await createComponent('ep123456ABC');
-      expect(mockEpisodeStore.loadEpisodeById).toHaveBeenCalledWith('ep123456ABC');
-    });
-
-    it('does not call loadEpisodeById when the route has no id', async () => {
-      await createComponent(null);
-      expect(mockEpisodeStore.loadEpisodeById).not.toHaveBeenCalled();
-    });
-  });
-
   describe('related episodes loading effect', () => {
     it('loads related episodes when the selected episode matches the route id and is visible', async () => {
       const ep = makeEpisode({ id: 'ep123456ABC', isVisible: true });

@@ -97,15 +97,6 @@ export const routes: Routes = [
         }),
       },
       {
-        path: 'not-found',
-        loadComponent: () => import('./pages/not-found/not-found').then((c) => c.NotFound),
-        data: seo({
-          title: 'Not Found',
-          description: 'The page you requested could not be found.',
-          robots: 'noindex,follow',
-        }),
-      },
-      {
         path: '**',
         loadComponent: () => import('./pages/not-found/not-found').then((c) => c.NotFound),
         data: seo({
