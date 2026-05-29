@@ -450,6 +450,40 @@ describe('EpisodeStore', () => {
     });
   });
 
+  describe('setSelectedEpisode', () => {
+    it('should set selectedEpisode and clear loading/error', async () => {
+      mockEpisodeService.getAllEpisodes.mockRejectedValueOnce(new Error('boom'));
+      await store.loadEpisodes();
+      expect(store.error()).toBe('boom');
+
+      store.setSelectedEpisode(mockEpisodeWithRelations);
+
+      expect(store.selectedEpisode()).toEqual(mockEpisodeWithRelations);
+      expect(store.loading()).toBe(false);
+      expect(store.error()).toBeNull();
+    });
+
+    it('should supersede an in-flight loadEpisodeById so its result is discarded', async () => {
+      let resolve!: (v: EpisodeWithRelations) => void;
+      const pending = new Promise<EpisodeWithRelations>((r) => (resolve = r));
+      mockEpisodeService.getEpisodeById.mockImplementationOnce(() => pending);
+
+      const inFlight = store.loadEpisodeById('ep1');
+      const other: EpisodeWithRelations = {
+        ...mockEpisodeWithRelations,
+        id: 'ep-other',
+        title: 'Other',
+      };
+      store.setSelectedEpisode(other);
+      expect(store.selectedEpisode()).toEqual(other);
+
+      resolve(mockEpisodeWithRelations);
+      await inFlight;
+
+      expect(store.selectedEpisode()).toEqual(other);
+    });
+  });
+
   describe('clearSelectedEpisode', () => {
     it('should set selectedEpisode to null', async () => {
       // First load an episode so selectedEpisode is set

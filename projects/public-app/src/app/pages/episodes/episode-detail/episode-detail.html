@@ -1,3 +1,6 @@
+@if (notFound()) {
+  <app-not-found />
+} @else {
 <div class="overlay scanlines" aria-hidden="true"></div>
 <div class="overlay grain" aria-hidden="true"></div>
 
@@ -55,4 +58,5 @@
       </div>
     </div>
   </section>
+}
 }

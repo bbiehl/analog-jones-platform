@@ -7,6 +7,13 @@ import { ImageUploadService } from '../shared/image-upload.service';
 import { TransferCacheService } from '../shared/transfer-state.helpers';
 import { Episode, EpisodeWithRelations } from './episode.model';
 
+export class EpisodeNotFoundError extends Error {
+  constructor(id: string) {
+    super(`Episode with id "${id}" not found`);
+    this.name = 'EpisodeNotFoundError';
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class EpisodeService {
   private firestore = inject(FIRESTORE);
@@ -110,7 +117,7 @@ export class EpisodeService {
   async getEpisodeById(id: string): Promise<EpisodeWithRelations> {
     const snap = await this.ops.getDoc(this.ops.doc(this.firestore, 'episodes', id));
     if (!snap.exists()) {
-      throw new Error(`Episode with id "${id}" not found`);
+      throw new EpisodeNotFoundError(id);
     }
 
     const episode = { id: snap.id, ...snap.data() } as Episode;

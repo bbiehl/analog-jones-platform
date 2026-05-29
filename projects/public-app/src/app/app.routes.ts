@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import type { RouteSeo } from './seo/seo-title.strategy';
+import { episodeDetailResolver } from './pages/episodes/episode-detail/episode-detail.resolver';
 
 const seo = (data: RouteSeo) => ({ seo: data });
 
@@ -51,6 +52,7 @@ export const routes: Routes = [
         path: 'episodes/:id',
         loadComponent: () =>
           import('./pages/episodes/episode-detail/episode-detail').then((c) => c.EpisodeDetail),
+        resolve: { episode: episodeDetailResolver },
         data: seo({
           title: 'Episode',
           description: 'Episode details on Analog Jones and the Temple of Film.',

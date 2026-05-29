@@ -15,6 +15,6 @@ export const serverRoutes: ServerRoute[] = [
   prerender('privacy'),
   prerender('terms'),
 
-  // Client-rendered (fallback)
-  { path: '**', renderMode: RenderMode.Client },
+  // Not-found: server-rendered with a real 404 so crawlers see noindex + 404
+  { path: '**', renderMode: RenderMode.Server, status: 404 },
 ];
