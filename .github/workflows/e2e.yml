@@ -49,11 +49,11 @@ jobs:
       - name: Install Playwright Chromium + system deps
         run: pnpm exec playwright install --with-deps chromium
 
-      # Boots the Firebase emulators (seeded from seed-data/) and both Angular dev
-      # servers via Playwright's webServer config. CI=true → reuseExistingServer:false
-      # and 2 retries (see playwright.config.ts).
-      - name: Run Playwright tests
-        run: pnpm exec playwright test
+      # `pnpm e2e` wraps `playwright test` in `firebase emulators:exec` (seeded from
+      # seed-data/), which owns the emulator lifecycle; Playwright's webServer boots
+      # the two Angular dev servers. CI=true → reuseExistingServer:false + 2 retries.
+      - name: Run e2e suite
+        run: pnpm e2e
 
       - name: Upload Playwright report
         if: ${{ !cancelled() }}

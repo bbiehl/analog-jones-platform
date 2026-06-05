@@ -60,15 +60,14 @@ export default defineConfig({
     */
   ],
 
-  /* Start Firebase emulators and both dev servers before running tests.
-   * The emulators import the source-of-truth seed data; do not export from tests. */
+  /* Boot both Angular dev servers before running tests.
+   *
+   * The Firebase emulators are intentionally NOT managed here. They are started
+   * around the test run by `firebase emulators:exec` (see the `e2e` script in
+   * package.json), which deterministically tears down its own child processes —
+   * including the Firestore java child that `emulators:start` otherwise orphans
+   * on :8080 when Playwright kills the webServer on teardown. */
   webServer: [
-    {
-      command: 'firebase emulators:start --import=./seed-data',
-      port: 4000,
-      reuseExistingServer: !process.env['CI'],
-      timeout: 120_000,
-    },
     {
       command: 'ng serve public-app --port 4200',
       port: 4200,
