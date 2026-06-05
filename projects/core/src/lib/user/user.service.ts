@@ -33,6 +33,9 @@ export class UserService {
     return this.authOps.onAuthStateChanged(this.auth, callback);
   }
 
+  // NOTE: Firestore rules deny `list` on the users collection (`allow list: if false`),
+  // so this query fails with permission-denied for every caller, admins included.
+  // User enumeration is intentionally unsupported. Read single docs via getUserDoc().
   async getAllUsers(): Promise<AppUser[]> {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'users'),

@@ -56,6 +56,7 @@ pnpm test             # public + admin + core, in parallel
 pnpm test:public
 pnpm test:admin
 pnpm test:core        # runs the @aj/core library spec target
+pnpm test:rules       # Firestore security rules, run against the firestore emulator
 pnpm e2e              # Playwright
 ```
 
