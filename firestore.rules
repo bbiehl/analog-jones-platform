@@ -8,7 +8,9 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if true;
+      allow get: if request.auth != null
+                 && (request.auth.uid == userId || isAdmin());
+      allow list: if false;
       allow create: if request.auth != null
                     && request.auth.uid == userId
                     && !('role' in request.resource.data);
@@ -19,35 +21,42 @@ service cloud.firestore {
     }
 
     match /episodes/{document} {
+      allow read: if true;
       allow write: if isAdmin();
     }
 
     match /tags/{document} {
+      allow read: if true;
       allow write: if isAdmin();
     }
 
     match /genres/{document} {
+      allow read: if true;
       allow write: if isAdmin();
     }
 
     match /categories/{document} {
+      allow read: if true;
       allow write: if isAdmin();
     }
 
     match /episodeTags/{document} {
+      allow read: if true;
       allow write: if isAdmin();
     }
 
     match /episodeGenres/{document} {
+      allow read: if true;
       allow write: if isAdmin();
     }
 
     match /episodeCategories/{document} {
+      allow read: if true;
       allow write: if isAdmin();
     }
 
     match /{document=**} {
-      allow read: if true;
+      allow read, write: if false;
     }
   }
 }

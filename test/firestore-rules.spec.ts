@@ -44,6 +44,38 @@ function dbFor(uid: string) {
 }
 
 describe('users collection role protection', () => {
+  it('allows a user reading their own document', async () => {
+    await seedUser('member-user', { displayName: 'Member' });
+    const db = dbFor('member-user');
+
+    await assertSucceeds(db.doc('users/member-user').get());
+  });
+
+  it('denies a user reading another user document', async () => {
+    await seedUser('other-user', { displayName: 'Other' });
+    const db = dbFor('member-user');
+
+    await assertFails(db.doc('users/other-user').get());
+  });
+
+  it('denies users collection queries for admins', async () => {
+    const db = dbFor('admin-user');
+
+    await assertFails(db.collection('users').get());
+  });
+
+  it('denies users collection queries for signed-in non-admins', async () => {
+    const db = dbFor('member-user');
+
+    await assertFails(db.collection('users').get());
+  });
+
+  it('denies users collection queries for unauthenticated clients', async () => {
+    const db = testEnv.unauthenticatedContext().firestore();
+
+    await assertFails(db.collection('users').get());
+  });
+
   it('denies a user creating their own document with a role', async () => {
     const db = dbFor('member-user');
 
@@ -116,6 +148,16 @@ describe('explicit admin collections', () => {
     'episodeCategories',
   ];
 
+  it.each(collections)('allows public reads from %s', async (collection) => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().doc(`${collection}/doc-1`).set({ title: 'Readable' });
+    });
+    const db = testEnv.unauthenticatedContext().firestore();
+
+    await assertSucceeds(db.doc(`${collection}/doc-1`).get());
+    await assertSucceeds(db.collection(collection).get());
+  });
+
   it.each(collections)('allows admins to manage %s', async (collection) => {
     const db = dbFor('admin-user');
     const doc = db.doc(`${collection}/doc-1`);
@@ -129,5 +171,14 @@ describe('explicit admin collections', () => {
     const db = dbFor('admin-user');
 
     await assertFails(db.doc('futureCollection/doc-1').set({ title: 'Created' }));
+  });
+
+  it('denies public reads from unspecified collections', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().doc('futureCollection/doc-1').set({ title: 'Hidden' });
+    });
+    const db = testEnv.unauthenticatedContext().firestore();
+
+    await assertFails(db.doc('futureCollection/doc-1').get());
   });
 });
