@@ -2,14 +2,17 @@ import { APIRequestContext, request } from '@playwright/test';
 
 /**
  * Firebase emulator endpoints. Ports match `firebase.json`.
- * The `key` query param is ignored by the Auth emulator but the SDK still sends one,
- * so any non-empty value works.
+ *
+ * WEB_API_KEY must equal `firebaseConfig.apiKey` in the apps'
+ * `src/environments/environment.ts`. The Auth emulator ignores the `?key=` query
+ * param, but the SDK derives its IndexedDB session key from the app's apiKey
+ * (`firebase:authUser:<apiKey>:[DEFAULT]`), so the auth fixture must seed under the
+ * exact same value or the seeded session won't be found. If the env key rotates,
+ * update this too.
  */
-export const PROJECT_ID = 'analog-jones-v2';
-export const FAKE_API_KEY = 'AIzaSyDTqvdZ9ti_Fht7Gkp_m9FxS8qaGYLwjDs';
+export const WEB_API_KEY = 'AIzaSyDTqvdZ9ti_Fht7Gkp_m9FxS8qaGYLwjDs';
 
 export const AUTH_EMULATOR = 'http://localhost:9099';
-export const FIRESTORE_EMULATOR = 'http://localhost:8080';
 
 /** Seeded admin account — see `seed-data/auth_export/accounts.json`. */
 export const BRAD = {
@@ -46,7 +49,7 @@ export async function signInWithGoogleEmulator(
     )}&providerId=google.com`;
 
   const res = await ctx.post(
-    `${AUTH_EMULATOR}/identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=${FAKE_API_KEY}`,
+    `${AUTH_EMULATOR}/identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=${WEB_API_KEY}`,
     {
       data: {
         postBody,

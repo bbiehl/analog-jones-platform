@@ -14,7 +14,7 @@
     "test:core": "ng test core",
     "serve:ssr:public-app": "node dist/public-app/server/server.mjs",
     "serve:ssr:admin-app": "node dist/admin-app/server/server.mjs",
-    "e2e": "pnpm build:core && firebase emulators:exec --import=./seed-data \"playwright test\"",
+    "e2e": "firebase emulators:exec --import=./seed-data \"playwright test\"",
     "test:rules": "firebase emulators:exec --only firestore \"vitest run test/firestore-rules.spec.ts\"",
     "emulators:save": "firebase emulators:export ./seed-data",
     "emulators:start": "firebase emulators:start",

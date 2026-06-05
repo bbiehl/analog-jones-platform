@@ -1,5 +1,5 @@
 import { test as base, expect } from '@playwright/test';
-import { BRAD, FAKE_API_KEY, signInAsBrad } from './emulator';
+import { BRAD, WEB_API_KEY, signInAsBrad } from './emulator';
 
 /**
  * Admin-app auth fixture.
@@ -15,9 +15,7 @@ import { BRAD, FAKE_API_KEY, signInAsBrad } from './emulator';
  * exercise the unauthenticated path (e.g. the auth guard), use the bare `test`
  * from `@playwright/test` instead.
  */
-export const adminTest = base.extend<{ adminUid: string }>({
-  adminUid: BRAD.uid,
-
+export const adminTest = base.extend({
   // Override `page` so every page in an admin spec boots already signed in.
   page: async ({ page }, use) => {
     const { idToken, refreshToken } = await signInAsBrad();
@@ -47,7 +45,7 @@ export const adminTest = base.extend<{ adminUid: string }>({
       },
       createdAt: String(now),
       lastLoginAt: String(now),
-      apiKey: FAKE_API_KEY,
+      apiKey: WEB_API_KEY,
       appName: '[DEFAULT]',
     };
 
@@ -70,7 +68,7 @@ export const adminTest = base.extend<{ adminUid: string }>({
           tx.objectStore('firebaseLocalStorage').put(record);
         };
       },
-      [`firebase:authUser:${FAKE_API_KEY}:[DEFAULT]`, storedUser] as const,
+      [`firebase:authUser:${WEB_API_KEY}:[DEFAULT]`, storedUser] as const,
     );
 
     await use(page);

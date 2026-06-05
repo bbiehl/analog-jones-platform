@@ -72,13 +72,17 @@ export default defineConfig({
       command: 'ng serve public-app --port 4200',
       port: 4200,
       reuseExistingServer: !process.env['CI'],
-      timeout: 120_000,
+      // Cold `ng serve` build can be slow on a loaded CI runner competing with the
+      // emulator JVM; give it headroom so a slow build doesn't error the whole suite.
+      timeout: 240_000,
     },
     {
       command: 'ng serve admin-app --port 4300',
       port: 4300,
       reuseExistingServer: !process.env['CI'],
-      timeout: 120_000,
+      // Cold `ng serve` build can be slow on a loaded CI runner competing with the
+      // emulator JVM; give it headroom so a slow build doesn't error the whole suite.
+      timeout: 240_000,
     },
   ],
 });

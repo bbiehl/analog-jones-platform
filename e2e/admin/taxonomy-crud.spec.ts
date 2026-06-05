@@ -2,6 +2,22 @@ import { adminTest, expect } from '../fixtures/auth';
 import { AdminCategoriesPage } from '../pages/admin/categories.page';
 
 adminTest.describe('Taxonomy CRUD', () => {
+  // Track throwaway categories so cleanup runs even if a test fails mid-flow.
+  const createdNames: string[] = [];
+
+  adminTest.afterEach(async ({ page }) => {
+    if (createdNames.length === 0) return;
+    const categories = new AdminCategoriesPage(page);
+    await categories.gotoList();
+    for (const name of createdNames) {
+      const row = categories.rowByName(name);
+      if (await row.count()) {
+        await categories.deleteByName(name);
+      }
+    }
+    createdNames.length = 0;
+  });
+
   adminTest('category: slug auto-generates, create appears in list, then delete', async ({
     page,
   }) => {
@@ -17,6 +33,7 @@ adminTest.describe('Taxonomy CRUD', () => {
     await categories.saveButton.click();
     await expect(page).toHaveURL(/\/categories$/);
     await expect(categories.rowByName(name)).toBeVisible();
+    createdNames.push(name); // register for afterEach cleanup once it exists
 
     await categories.deleteByName(name);
     await expect(categories.rowByName(name)).toHaveCount(0);

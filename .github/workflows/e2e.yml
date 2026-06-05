@@ -13,6 +13,9 @@ on:
       - 'firestore.rules'
       - 'package.json'
       - 'pnpm-lock.yaml'
+      - 'angular.json'
+      - 'tsconfig*.json'
+      - 'pnpm-workspace.yaml'
       - '.github/workflows/e2e.yml'
   push:
     branches: [main]
@@ -52,6 +55,8 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
 
       # On a cache hit, only the OS-level shared libraries still need installing;
       # on a miss this also downloads the chromium build. Both paths are idempotent.
