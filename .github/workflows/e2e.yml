@@ -32,6 +32,15 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      # firebase-tools 15.x requires Java 21+ to run the emulators; the default
+      # runner JDK is older, so `firebase emulators:exec` (via `pnpm e2e`) aborts
+      # without it.
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
