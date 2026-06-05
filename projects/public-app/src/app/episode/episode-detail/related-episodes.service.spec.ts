@@ -58,12 +58,15 @@ describe('RelatedEpisodesService', () => {
       expect(ids).toEqual(['t1', 't2']);
     });
 
-    it('should extract genre ids and filter out undefined', () => {
+    it('should ignore genre ids when selecting related episodes', () => {
       const genres = [{ id: 'g1' }, { id: undefined }];
 
-      const ids = genres.map((g) => g.id).filter((id): id is string => !!id);
+      const tagIds = ([] as { id?: string }[])
+        .map((t) => t.id)
+        .filter((id): id is string => !!id);
 
-      expect(ids).toEqual(['g1']);
+      expect(genres.map((g) => g.id)).toEqual(['g1', undefined]);
+      expect(tagIds).toEqual([]);
     });
   });
 
@@ -169,58 +172,47 @@ describe('RelatedEpisodesService', () => {
       b: { episodeDate: { toMillis: () => number } }
     ) => b.episodeDate.toMillis() - a.episodeDate.toMillis();
 
-    it('should emit all tag matches (sorted by date desc) before any genre matches', () => {
+    it('should emit tag matches sorted by date desc', () => {
       const max = 12;
       const tagResults = new Map([
         ['tag-old', { id: 'tag-old', episodeDate: { toMillis: () => 100 } }],
         ['tag-new', { id: 'tag-new', episodeDate: { toMillis: () => 300 } }],
       ]);
-      const genreResults = new Map([
-        ['genre-new', { id: 'genre-new', episodeDate: { toMillis: () => 500 } }],
-        ['genre-old', { id: 'genre-old', episodeDate: { toMillis: () => 50 } }],
-      ]);
 
       const tagsSorted = Array.from(tagResults.values()).sort(byDateDesc);
-      for (const id of tagResults.keys()) genreResults.delete(id);
-      const genresSorted = Array.from(genreResults.values()).sort(byDateDesc);
-      const result = [...tagsSorted, ...genresSorted].slice(0, max);
+      const result = tagsSorted.slice(0, max);
 
-      expect(result.map((r) => r.id)).toEqual(['tag-new', 'tag-old', 'genre-new', 'genre-old']);
+      expect(result.map((r) => r.id)).toEqual(['tag-new', 'tag-old']);
     });
 
-    it('should not let a recent genre match precede an older tag match', () => {
+    it('should never include genre matches', () => {
       const max = 12;
       const tagResults = new Map([
         ['older-tag', { id: 'older-tag', episodeDate: { toMillis: () => 100 } }],
       ]);
-      const genreResults = new Map([
+      const ignoredGenreResults = new Map([
         ['newer-genre', { id: 'newer-genre', episodeDate: { toMillis: () => 999 } }],
       ]);
 
       const tagsSorted = Array.from(tagResults.values()).sort(byDateDesc);
-      for (const id of tagResults.keys()) genreResults.delete(id);
-      const genresSorted = Array.from(genreResults.values()).sort(byDateDesc);
-      const result = [...tagsSorted, ...genresSorted].slice(0, max);
+      const result = tagsSorted.slice(0, max);
 
-      expect(result.map((r) => r.id)).toEqual(['older-tag', 'newer-genre']);
+      expect(Array.from(ignoredGenreResults.keys())).toEqual(['newer-genre']);
+      expect(result.map((r) => r.id)).toEqual(['older-tag']);
     });
 
-    it('should dedupe genre matches that already appeared in the tag bucket', () => {
+    it('should dedupe tag matches before sorting', () => {
       const max = 12;
       const tagResults = new Map([
         ['shared', { id: 'shared', episodeDate: { toMillis: () => 200 } }],
-      ]);
-      const genreResults = new Map([
         ['shared', { id: 'shared', episodeDate: { toMillis: () => 200 } }],
-        ['genre-only', { id: 'genre-only', episodeDate: { toMillis: () => 100 } }],
+        ['tag-only', { id: 'tag-only', episodeDate: { toMillis: () => 100 } }],
       ]);
 
       const tagsSorted = Array.from(tagResults.values()).sort(byDateDesc);
-      for (const id of tagResults.keys()) genreResults.delete(id);
-      const genresSorted = Array.from(genreResults.values()).sort(byDateDesc);
-      const result = [...tagsSorted, ...genresSorted].slice(0, max);
+      const result = tagsSorted.slice(0, max);
 
-      expect(result.map((r) => r.id)).toEqual(['shared', 'genre-only']);
+      expect(result.map((r) => r.id)).toEqual(['shared', 'tag-only']);
     });
 
     it('should short-circuit and return only tag matches when they already fill max', () => {
@@ -237,39 +229,32 @@ describe('RelatedEpisodesService', () => {
       expect(result.map((r) => r.id)).toEqual(['tag-a', 'tag-b']);
     });
 
-    it('should truncate the combined list to max', () => {
+    it('should truncate tag results to max', () => {
       const max = 3;
       const tagResults = new Map([
         ['t1', { id: 't1', episodeDate: { toMillis: () => 400 } }],
         ['t2', { id: 't2', episodeDate: { toMillis: () => 300 } }],
-      ]);
-      const genreResults = new Map([
-        ['g1', { id: 'g1', episodeDate: { toMillis: () => 200 } }],
-        ['g2', { id: 'g2', episodeDate: { toMillis: () => 100 } }],
+        ['t3', { id: 't3', episodeDate: { toMillis: () => 200 } }],
+        ['t4', { id: 't4', episodeDate: { toMillis: () => 100 } }],
       ]);
 
       const tagsSorted = Array.from(tagResults.values()).sort(byDateDesc);
-      const genresSorted = Array.from(genreResults.values()).sort(byDateDesc);
-      const result = [...tagsSorted, ...genresSorted].slice(0, max);
+      const result = tagsSorted.slice(0, max);
 
-      expect(result.map((r) => r.id)).toEqual(['t1', 't2', 'g1']);
+      expect(result.map((r) => r.id)).toEqual(['t1', 't2', 't3']);
     });
   });
 
   describe('empty inputs', () => {
-    it('should resolve to an empty list when episode has no tags or genres', () => {
+    it('should resolve to an empty list when episode has no tags', () => {
       const tagIds = ([] as { id?: string }[])
         .map((t) => t.id)
-        .filter((id): id is string => !!id);
-      const genreIds = ([] as { id?: string }[])
-        .map((g) => g.id)
         .filter((id): id is string => !!id);
 
       const results = new Map<string, unknown>();
       const final = Array.from(results.values()).slice(0, 12);
 
       expect(tagIds).toEqual([]);
-      expect(genreIds).toEqual([]);
       expect(final).toEqual([]);
     });
 
@@ -354,55 +339,6 @@ describe('RelatedEpisodesService', () => {
     });
   });
 
-  describe('genre-only fallback', () => {
-    it('should return genre matches when tag lookup yields nothing', () => {
-      const max = 12;
-      const tagResults = new Map<string, { id: string; episodeDate: { toMillis: () => number } }>();
-      const genreResults = new Map([
-        ['g1', { id: 'g1', episodeDate: { toMillis: () => 400 } }],
-        ['g2', { id: 'g2', episodeDate: { toMillis: () => 200 } }],
-      ]);
-
-      const byDateDesc = (
-        a: { episodeDate: { toMillis: () => number } },
-        b: { episodeDate: { toMillis: () => number } }
-      ) => b.episodeDate.toMillis() - a.episodeDate.toMillis();
-
-      const tagsSorted = Array.from(tagResults.values()).sort(byDateDesc);
-      for (const id of tagResults.keys()) genreResults.delete(id);
-      const genresSorted = Array.from(genreResults.values()).sort(byDateDesc);
-      const result = [...tagsSorted, ...genresSorted].slice(0, max);
-
-      expect(result.map((r) => r.id)).toEqual(['g1', 'g2']);
-    });
-
-    it('should skip the genre-lookup branch entirely when tags already fill max', () => {
-      const max = 2;
-      const tagResults = new Map([
-        ['t1', { id: 't1', episodeDate: { toMillis: () => 300 } }],
-        ['t2', { id: 't2', episodeDate: { toMillis: () => 200 } }],
-      ]);
-      let genreLookupPerformed = false;
-
-      const byDateDesc = (
-        a: { episodeDate: { toMillis: () => number } },
-        b: { episodeDate: { toMillis: () => number } }
-      ) => b.episodeDate.toMillis() - a.episodeDate.toMillis();
-
-      const tagsSorted = Array.from(tagResults.values()).sort(byDateDesc);
-      let result: typeof tagsSorted;
-      if (tagsSorted.length >= max) {
-        result = tagsSorted.slice(0, max);
-      } else {
-        genreLookupPerformed = true;
-        result = tagsSorted;
-      }
-
-      expect(genreLookupPerformed).toBe(false);
-      expect(result.map((r) => r.id)).toEqual(['t1', 't2']);
-    });
-  });
-
   describe('getRelatedEpisodes (public API)', () => {
     const makeEpisode = (
       overrides: Partial<EpisodeWithRelations> = {}
@@ -416,7 +352,7 @@ describe('RelatedEpisodesService', () => {
         ...overrides,
       }) as unknown as EpisodeWithRelations;
 
-    it('should resolve to an empty list when the episode has no tags or genres', async () => {
+    it('should resolve to an empty list when the episode has no tags', async () => {
       const result = await service.getRelatedEpisodes(makeEpisode());
 
       expect(result).toEqual([]);
@@ -428,26 +364,28 @@ describe('RelatedEpisodesService', () => {
       expect(result).toEqual([]);
     });
 
-    it('should drop tag and genre entries with falsy ids before hitting firestore', async () => {
+    it('should drop tag entries with falsy ids before hitting firestore', async () => {
       const episode = makeEpisode({
         tags: [{ id: undefined }, { id: '' }] as unknown as EpisodeWithRelations['tags'],
-        genres: [{ id: undefined }] as unknown as EpisodeWithRelations['genres'],
+        genres: [{ id: 'g1' }] as unknown as EpisodeWithRelations['genres'],
       });
 
       const result = await service.getRelatedEpisodes(episode);
 
       expect(result).toEqual([]);
+      expect(ops.getDocs).not.toHaveBeenCalled();
     });
 
-    it('should accept an episode whose tags/genres arrays are only populated with empty ids and still return []', async () => {
+    it('should accept an episode whose tags are only populated with empty ids and still return []', async () => {
       const episode = makeEpisode({
         tags: [{ id: '' }, { id: '' }] as unknown as EpisodeWithRelations['tags'],
-        genres: [{ id: '' }] as unknown as EpisodeWithRelations['genres'],
+        genres: [{ id: 'g1' }] as unknown as EpisodeWithRelations['genres'],
       });
 
       const result = await service.getRelatedEpisodes(episode, 5);
 
       expect(result).toEqual([]);
+      expect(ops.getDocs).not.toHaveBeenCalled();
     });
   });
 
@@ -518,7 +456,7 @@ describe('RelatedEpisodesService', () => {
       expect(result).toEqual([]);
     });
 
-    it('should skip the genre lookup when tag results already meet max', async () => {
+    it('should return only tag results when tag results already meet max', async () => {
       ops.getDocs.mockResolvedValueOnce({
         docs: [junctionDoc('ep-a'), junctionDoc('ep-b')],
       });
@@ -530,51 +468,41 @@ describe('RelatedEpisodesService', () => {
 
       expect(result.map((e) => e.id)).toEqual(['ep-a', 'ep-b']);
       expect(ops.getDocs).toHaveBeenCalledTimes(1);
+      expect(ops.collection).not.toHaveBeenCalledWith(firestore, 'episodeGenres');
     });
 
-    it('should fall back to genres and remove tag-matched ids from the genre set', async () => {
-      ops.getDocs.mockResolvedValueOnce({ docs: [junctionDoc('ep-shared')] });
-      ops.getDoc.mockResolvedValueOnce(
-        epSnap('ep-shared', { isVisible: true, episodeDate: ts(50) })
-      );
-      ops.getDocs.mockResolvedValueOnce({
-        docs: [junctionDoc('ep-shared'), junctionDoc('ep-genre-only')],
-      });
-      ops.getDoc
-        .mockResolvedValueOnce(epSnap('ep-shared', { isVisible: true, episodeDate: ts(50) }))
-        .mockResolvedValueOnce(
-          epSnap('ep-genre-only', { isVisible: true, episodeDate: ts(20) })
-        );
+    it('should not query genres when tag results are empty', async () => {
+      ops.getDocs.mockResolvedValueOnce({ docs: [] });
 
       const result = await service.getRelatedEpisodes(makeEpisode());
 
-      expect(result.map((e) => e.id)).toEqual(['ep-shared', 'ep-genre-only']);
-      expect(ops.collection).toHaveBeenCalledWith(firestore, 'episodeGenres');
-      expect(ops.where).toHaveBeenCalledWith('genreId', '==', 'g1');
+      expect(result).toEqual([]);
+      expect(ops.getDocs).toHaveBeenCalledTimes(1);
+      expect(ops.collection).toHaveBeenCalledWith(firestore, 'episodeTags');
+      expect(ops.collection).not.toHaveBeenCalledWith(firestore, 'episodeGenres');
+      expect(ops.where).not.toHaveBeenCalledWith('genreId', '==', 'g1');
     });
 
-    it('should slice the merged tag+genre list to max', async () => {
-      ops.getDocs.mockResolvedValueOnce({ docs: [junctionDoc('ep-a')] });
-      ops.getDoc.mockResolvedValueOnce(
-        epSnap('ep-a', { isVisible: true, episodeDate: ts(100) })
-      );
+    it('should slice tag results to max', async () => {
       ops.getDocs.mockResolvedValueOnce({
-        docs: [junctionDoc('ep-b'), junctionDoc('ep-c')],
+        docs: [junctionDoc('ep-a'), junctionDoc('ep-b'), junctionDoc('ep-c')],
       });
       ops.getDoc
+        .mockResolvedValueOnce(epSnap('ep-a', { isVisible: true, episodeDate: ts(100) }))
         .mockResolvedValueOnce(epSnap('ep-b', { isVisible: true, episodeDate: ts(80) }))
         .mockResolvedValueOnce(epSnap('ep-c', { isVisible: true, episodeDate: ts(60) }));
 
       const result = await service.getRelatedEpisodes(makeEpisode(), 2);
 
       expect(result.map((e) => e.id)).toEqual(['ep-a', 'ep-b']);
+      expect(ops.getDocs).toHaveBeenCalledTimes(1);
     });
 
-    it('should issue no firestore reads when episode has no tag/genre ids', async () => {
+    it('should issue no firestore reads when episode has no tag ids', async () => {
       const result = await service.getRelatedEpisodes(
         makeEpisode({
           tags: [] as unknown as EpisodeWithRelations['tags'],
-          genres: [] as unknown as EpisodeWithRelations['genres'],
+          genres: [{ id: 'g1' }] as unknown as EpisodeWithRelations['genres'],
         })
       );
 
