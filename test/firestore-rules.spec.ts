@@ -167,6 +167,18 @@ describe('explicit admin collections', () => {
     await assertSucceeds(doc.delete());
   });
 
+  it.each(collections)('denies signed-in non-admin writes to %s', async (collection) => {
+    const db = dbFor('member-user');
+
+    await assertFails(db.doc(`${collection}/doc-1`).set({ title: 'Created' }));
+  });
+
+  it.each(collections)('denies unauthenticated writes to %s', async (collection) => {
+    const db = testEnv.unauthenticatedContext().firestore();
+
+    await assertFails(db.doc(`${collection}/doc-1`).set({ title: 'Created' }));
+  });
+
   it('denies admin writes to unspecified collections', async () => {
     const db = dbFor('admin-user');
 
