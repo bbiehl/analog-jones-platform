@@ -10,7 +10,9 @@ import {
   addDoc,
   collection,
   doc,
+  documentId,
   Firestore,
+  getCountFromServer,
   getDoc,
   getDocs,
   limit,
@@ -59,12 +61,14 @@ export const STORAGE_OPS = new InjectionToken<StorageOps>('StorageOps', {
 export interface FirestoreOps {
   collection: typeof collection;
   doc: typeof doc;
+  documentId: typeof documentId;
   query: typeof query;
   orderBy: typeof orderBy;
   where: typeof where;
   limit: typeof limit;
   getDoc: typeof getDoc;
   getDocs: typeof getDocs;
+  getCountFromServer: typeof getCountFromServer;
   addDoc: typeof addDoc;
   updateDoc: typeof updateDoc;
   writeBatch: typeof writeBatch;
@@ -75,12 +79,14 @@ export const FIRESTORE_OPS = new InjectionToken<FirestoreOps>('FirestoreOps', {
   factory: () => ({
     collection,
     doc,
+    documentId,
     query,
     orderBy,
     where,
     limit,
     getDoc,
     getDocs,
+    getCountFromServer,
     addDoc,
     updateDoc,
     writeBatch,

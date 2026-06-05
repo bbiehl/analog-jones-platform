@@ -22,7 +22,7 @@ function ep(id: string, millis: number): Episode {
 describe('EpisodeListStore', () => {
   let store: InstanceType<typeof EpisodeListStore>;
   const mockService = {
-    getEpisodesByGenre: vi.fn(),
+    getShelves: vi.fn(),
   };
 
   beforeEach(() => {
@@ -34,65 +34,247 @@ describe('EpisodeListStore', () => {
     });
     store = TestBed.inject(EpisodeListStore);
     vi.clearAllMocks();
+    mockService.getShelves.mockResolvedValue({
+      episodesByCategory: Promise.resolve({}),
+      episodesByGenre: {},
+    });
   });
 
   it('should have correct initial state', () => {
+    expect(store.episodesByCategory()).toEqual({});
     expect(store.episodesByGenre()).toEqual({});
-    expect(store.isLoading()).toBe(false);
+    expect(store.genreLoaded()).toBe(false);
+    expect(store.categoryLoaded()).toBe(false);
+    expect(store.isLoading()).toBe(true);
     expect(store.error()).toBeNull();
   });
 
-  it('should load episodes grouped by genre', async () => {
+  it('should load episodes grouped by category and genre', async () => {
     const grouped = { Rock: [ep('a', 100)], Jazz: [ep('b', 200)] };
-    mockService.getEpisodesByGenre.mockResolvedValue(grouped);
+    const categorized = { 'Nerd News': [ep('c', 300)] };
+    mockService.getShelves.mockResolvedValue({
+      episodesByGenre: grouped,
+      episodesByCategory: Promise.resolve(categorized),
+    });
 
-    await store.loadEpisodesByGenre();
+    await store.load();
 
-    expect(mockService.getEpisodesByGenre).toHaveBeenCalled();
+    expect(mockService.getShelves).toHaveBeenCalled();
     expect(store.episodesByGenre()).toEqual(grouped);
+    expect(store.episodesByCategory()).toEqual(categorized);
+    expect(store.genreLoaded()).toBe(true);
+    expect(store.categoryLoaded()).toBe(true);
     expect(store.isLoading()).toBe(false);
     expect(store.error()).toBeNull();
   });
 
   it('should set isLoading during the call and clear it on success', async () => {
     let loadingDuringCall: boolean | null = null;
-    mockService.getEpisodesByGenre.mockImplementation(() => {
+    mockService.getShelves.mockImplementation(() => {
       loadingDuringCall = store.isLoading();
-      return Promise.resolve({});
+      return Promise.resolve({
+        episodesByCategory: Promise.resolve({}),
+        episodesByGenre: {},
+      });
     });
 
-    await store.loadEpisodesByGenre();
+    await store.load();
 
     expect(loadingDuringCall).toBe(true);
     expect(store.isLoading()).toBe(false);
   });
 
   it('should set error and clear isLoading on Error failure', async () => {
-    mockService.getEpisodesByGenre.mockRejectedValue(new Error('Network error'));
+    mockService.getShelves.mockRejectedValue(new Error('Network error'));
 
-    await store.loadEpisodesByGenre();
+    await store.load();
 
     expect(store.error()).toBe('Network error');
     expect(store.isLoading()).toBe(false);
     expect(store.episodesByGenre()).toEqual({});
+    expect(store.episodesByCategory()).toEqual({});
   });
 
   it('should set a fallback message when a non-Error is thrown', async () => {
-    mockService.getEpisodesByGenre.mockRejectedValue('nope');
+    mockService.getShelves.mockRejectedValue('nope');
 
-    await store.loadEpisodesByGenre();
+    await store.load();
 
     expect(store.error()).toBe('Failed to load episodes');
     expect(store.isLoading()).toBe(false);
   });
 
+  it('clears isLoading after genre shelves arrive, before category shelves resolve', async () => {
+    const grouped = { Rock: [ep('a', 100)] };
+    let resolveCategories!: (value: Record<string, Episode[]>) => void;
+    const categoryPromise = new Promise<Record<string, Episode[]>>((resolve) => {
+      resolveCategories = resolve;
+    });
+    mockService.getShelves.mockResolvedValue({
+      episodesByGenre: grouped,
+      episodesByCategory: categoryPromise,
+    });
+
+    const loadPromise = store.load();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(store.isLoading()).toBe(false);
+    expect(store.genreLoaded()).toBe(true);
+    expect(store.categoryLoaded()).toBe(false);
+    expect(store.episodesByGenre()).toEqual(grouped);
+    expect(store.episodesByCategory()).toEqual({});
+
+    resolveCategories({ 'Nerd News': [ep('c', 300)] });
+    await loadPromise;
+
+    expect(store.episodesByCategory()).toEqual({ 'Nerd News': [ep('c', 300)] });
+    expect(store.categoryLoaded()).toBe(true);
+  });
+
+  it('keeps genre shelves and no error when the category branch rejects', async () => {
+    const grouped = { Rock: [ep('a', 100)] };
+    mockService.getShelves.mockResolvedValue({
+      episodesByGenre: grouped,
+      episodesByCategory: Promise.reject(new Error('category boom')),
+    });
+
+    await store.load();
+
+    expect(store.isLoading()).toBe(false);
+    expect(store.categoryLoaded()).toBe(true);
+    expect(store.error()).toBeNull();
+    expect(store.episodesByGenre()).toEqual(grouped);
+    expect(store.episodesByCategory()).toEqual({});
+  });
+
+  it('ignores stale category results from a superseded load', async () => {
+    const firstGrouped = { Rock: [ep('a', 100)] };
+    const secondGrouped = { Jazz: [ep('b', 200)] };
+    let resolveFirstCategory!: (value: Record<string, Episode[]>) => void;
+    const firstCategory = new Promise<Record<string, Episode[]>>((resolve) => {
+      resolveFirstCategory = resolve;
+    });
+
+    mockService.getShelves.mockResolvedValueOnce({
+      episodesByGenre: firstGrouped,
+      episodesByCategory: firstCategory,
+    });
+    mockService.getShelves.mockResolvedValueOnce({
+      episodesByGenre: secondGrouped,
+      episodesByCategory: Promise.resolve({ Interviews: [ep('d', 400)] }),
+    });
+
+    const firstLoad = store.load();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // Kick off a second load before the first's category branch resolves.
+    await store.load();
+
+    resolveFirstCategory({ 'Nerd News': [ep('c', 300)] });
+    await firstLoad;
+
+    expect(store.episodesByGenre()).toEqual(secondGrouped);
+    expect(store.episodesByCategory()).toEqual({ Interviews: [ep('d', 400)] });
+  });
+
+  it('resets genreLoaded and categoryLoaded at the start of a subsequent load', async () => {
+    mockService.getShelves.mockResolvedValueOnce({
+      episodesByGenre: { Rock: [ep('a', 100)] },
+      episodesByCategory: Promise.resolve({ 'Nerd News': [ep('c', 300)] }),
+    });
+    await store.load();
+    expect(store.genreLoaded()).toBe(true);
+    expect(store.categoryLoaded()).toBe(true);
+
+    let resolveSecond!: (value: {
+      episodesByGenre: Record<string, Episode[]>;
+      episodesByCategory: Promise<Record<string, Episode[]>>;
+    }) => void;
+    mockService.getShelves.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveSecond = resolve;
+      })
+    );
+
+    const secondLoad = store.load();
+    expect(store.genreLoaded()).toBe(false);
+    expect(store.categoryLoaded()).toBe(false);
+    expect(store.isLoading()).toBe(true);
+
+    resolveSecond({
+      episodesByGenre: { Jazz: [ep('b', 200)] },
+      episodesByCategory: Promise.resolve({}),
+    });
+    await secondLoad;
+  });
+
+  it('ignores stale genre results from a superseded load', async () => {
+    let resolveFirstShelves!: (value: {
+      episodesByGenre: Record<string, Episode[]>;
+      episodesByCategory: Promise<Record<string, Episode[]>>;
+    }) => void;
+    mockService.getShelves.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveFirstShelves = resolve;
+      })
+    );
+    mockService.getShelves.mockResolvedValueOnce({
+      episodesByGenre: { Jazz: [ep('b', 200)] },
+      episodesByCategory: Promise.resolve({ Interviews: [ep('d', 400)] }),
+    });
+
+    const firstLoad = store.load();
+    // Start the second load before the first's getShelves resolves.
+    await store.load();
+
+    // Now resolve the first load's getShelves — its patches should be dropped
+    // because a newer load has already settled.
+    resolveFirstShelves({
+      episodesByGenre: { Rock: [ep('a', 100)] },
+      episodesByCategory: Promise.resolve({ 'Nerd News': [ep('c', 300)] }),
+    });
+    await firstLoad;
+
+    expect(store.episodesByGenre()).toEqual({ Jazz: [ep('b', 200)] });
+    expect(store.episodesByCategory()).toEqual({ Interviews: [ep('d', 400)] });
+  });
+
+  it('ignores a stale error from a superseded load', async () => {
+    let rejectFirst!: (reason: unknown) => void;
+    mockService.getShelves.mockReturnValueOnce(
+      new Promise((_, reject) => {
+        rejectFirst = reject;
+      })
+    );
+    mockService.getShelves.mockResolvedValueOnce({
+      episodesByGenre: { Rock: [ep('a', 100)] },
+      episodesByCategory: Promise.resolve({}),
+    });
+
+    const firstLoad = store.load();
+    await store.load();
+
+    rejectFirst(new Error('stale boom'));
+    await firstLoad;
+
+    expect(store.error()).toBeNull();
+    expect(store.episodesByGenre()).toEqual({ Rock: [ep('a', 100)] });
+    expect(store.genreLoaded()).toBe(true);
+    expect(store.categoryLoaded()).toBe(true);
+  });
+
   it('should clear a prior error when a subsequent load succeeds', async () => {
-    mockService.getEpisodesByGenre.mockRejectedValueOnce(new Error('boom'));
-    await store.loadEpisodesByGenre();
+    mockService.getShelves.mockRejectedValueOnce(new Error('boom'));
+    await store.load();
     expect(store.error()).toBe('boom');
 
-    mockService.getEpisodesByGenre.mockResolvedValueOnce({ Rock: [ep('a', 100)] });
-    await store.loadEpisodesByGenre();
+    mockService.getShelves.mockResolvedValueOnce({
+      episodesByGenre: { Rock: [ep('a', 100)] },
+      episodesByCategory: Promise.resolve({}),
+    });
+    await store.load();
 
     expect(store.error()).toBeNull();
     expect(store.episodesByGenre()).toEqual({ Rock: [ep('a', 100)] });

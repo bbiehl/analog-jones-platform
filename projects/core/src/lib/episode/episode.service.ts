@@ -4,7 +4,15 @@ import { EpisodeCategoryService } from '../junction/episode-category.service';
 import { EpisodeGenreService } from '../junction/episode-genre.service';
 import { EpisodeTagService } from '../junction/episode-tag.service';
 import { ImageUploadService } from '../shared/image-upload.service';
+import { TransferCacheService } from '../shared/transfer-state.helpers';
 import { Episode, EpisodeWithRelations } from './episode.model';
+
+export class EpisodeNotFoundError extends Error {
+  constructor(id: string) {
+    super(`Episode with id "${id}" not found`);
+    this.name = 'EpisodeNotFoundError';
+  }
+}
 
 @Injectable({ providedIn: 'root' })
 export class EpisodeService {
@@ -14,6 +22,42 @@ export class EpisodeService {
   private episodeGenreService = inject(EpisodeGenreService);
   private episodeTagService = inject(EpisodeTagService);
   private imageUploadService = inject(ImageUploadService);
+  private transferCache = inject(TransferCacheService);
+
+  async getHomeEpisodes(
+    max = 9
+  ): Promise<{ episodes: Episode[]; total: number; featured: EpisodeWithRelations | null }> {
+    return this.transferCache.cached(`episodes.home.${max}`, async () => {
+      const collectionRef = this.ops.collection(this.firestore, 'episodes');
+      const baseFilter = this.ops.where('isVisible', '==', true);
+      const limitedQuery = this.ops.query(
+        collectionRef,
+        baseFilter,
+        this.ops.orderBy('episodeDate', 'desc'),
+        this.ops.limit(max)
+      );
+      const countQuery = this.ops.query(collectionRef, baseFilter);
+      const [snapshot, countSnap] = await Promise.all([
+        this.ops.getDocs(limitedQuery),
+        this.ops.getCountFromServer(countQuery),
+      ]);
+      const episodes = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Episode);
+      const total = countSnap.data().count;
+
+      const featuredBase = episodes[0] ?? null;
+      let featured: EpisodeWithRelations | null = null;
+      if (featuredBase?.id) {
+        const [categories, genres, tags] = await Promise.all([
+          this.episodeCategoryService.getEpisodeCategoriesByEpisodeId(featuredBase.id),
+          this.episodeGenreService.getEpisodeGenresByEpisodeId(featuredBase.id),
+          this.episodeTagService.getEpisodeTagsByEpisodeId(featuredBase.id),
+        ]);
+        featured = { ...featuredBase, categories, genres, tags };
+      }
+
+      return { episodes, total, featured };
+    });
+  }
 
   async getAllEpisodes(): Promise<Episode[]> {
     const q = this.ops.query(
@@ -73,7 +117,7 @@ export class EpisodeService {
   async getEpisodeById(id: string): Promise<EpisodeWithRelations> {
     const snap = await this.ops.getDoc(this.ops.doc(this.firestore, 'episodes', id));
     if (!snap.exists()) {
-      throw new Error(`Episode with id "${id}" not found`);
+      throw new EpisodeNotFoundError(id);
     }
 
     const episode = { id: snap.id, ...snap.data() } as Episode;

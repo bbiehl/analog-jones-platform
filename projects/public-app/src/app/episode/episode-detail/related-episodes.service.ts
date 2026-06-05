@@ -8,8 +8,13 @@ export class RelatedEpisodesService {
   private ops = inject(FIRESTORE_OPS);
 
   async getRelatedEpisodes(episode: EpisodeWithRelations, max = 12): Promise<Episode[]> {
+    if (max <= 0) return [];
+
     const byDateDesc = (a: Episode, b: Episode) =>
       b.episodeDate.toMillis() - a.episodeDate.toMillis();
+
+    const tagIds = episode.tags.map((t) => t.id).filter((id): id is string => !!id);
+    if (tagIds.length === 0) return [];
 
     const tagResults = new Map<string, Episode>();
     await this.collectFromJunction(
@@ -17,28 +22,10 @@ export class RelatedEpisodesService {
       tagResults,
       'episodeTags',
       'tagId',
-      episode.tags.map((t) => t.id).filter((id): id is string => !!id)
+      tagIds
     );
 
-    const tagsSorted = Array.from(tagResults.values()).sort(byDateDesc);
-    if (tagsSorted.length >= max) {
-      return tagsSorted.slice(0, max);
-    }
-
-    const genreResults = new Map<string, Episode>();
-    await this.collectFromJunction(
-      episode,
-      genreResults,
-      'episodeGenres',
-      'genreId',
-      episode.genres.map((g) => g.id).filter((id): id is string => !!id)
-    );
-    for (const id of tagResults.keys()) {
-      genreResults.delete(id);
-    }
-
-    const genresSorted = Array.from(genreResults.values()).sort(byDateDesc);
-    return [...tagsSorted, ...genresSorted].slice(0, max);
+    return Array.from(tagResults.values()).sort(byDateDesc).slice(0, max);
   }
 
   private async collectFromJunction(

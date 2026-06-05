@@ -13,7 +13,7 @@ import { firestore } from './app/firebase';
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
-const angularApp = new AngularNodeAppEngine();
+const angularApp = new AngularNodeAppEngine({ trustProxyHeaders: true });
 
 app.get('/sitemap-episodes.xml', async (_req, res, next) => {
   try {
@@ -63,11 +63,30 @@ app.use(
 
 /**
  * Handle all other requests by rendering the Angular application.
+ *
+ * Episode and listing pages are CDN-cacheable, but only when they render
+ * successfully. A resolver-issued 404 (missing or hidden episode) must not be
+ * cached as if it were a real page — otherwise the edge would keep serving a
+ * stale 404 after the episode is published. The cache header is therefore
+ * applied after render and gated on a 200 status.
  */
 app.use((req, res, next) => {
   angularApp
     .handle(req)
-    .then((response) => (response ? writeResponseToNodeResponse(response, res) : next()))
+    .then((response) => {
+      if (!response) return next();
+      if (
+        req.method === 'GET' &&
+        response.status === 200 &&
+        /^\/(episodes(\/[^/]+)?)?\/?$/.test(req.path)
+      ) {
+        res.setHeader(
+          'Cache-Control',
+          'public, max-age=0, s-maxage=300, stale-while-revalidate=86400',
+        );
+      }
+      return writeResponseToNodeResponse(response, res);
+    })
     .catch(next);
 });
 

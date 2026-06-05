@@ -56,6 +56,7 @@ pnpm test             # public + admin + core, in parallel
 pnpm test:public
 pnpm test:admin
 pnpm test:core        # runs the @aj/core library spec target
+pnpm test:rules       # Firestore security rules, run against the firestore emulator
 pnpm e2e              # Playwright
 ```
 
@@ -66,6 +67,14 @@ Both apps deploy via Firebase App Hosting using `apphosting.public.yaml` and `ap
 ```bash
 pnpm deploy:rules
 ```
+
+## Operational checks
+
+```bash
+pnpm probe:write-defenses   # verify unauthorized writes to prod Firestore + Storage are rejected
+```
+
+Sends token-less create/update/delete REST calls against sentinel paths; exits 0 only if every probe is rejected (rules + any App Check enforcement holding). The denial source (rules vs. App Check) is intentionally opaque — what matters is the combined write defense.
 
 ## Public client config in this repo
 

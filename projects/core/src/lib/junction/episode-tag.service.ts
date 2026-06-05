@@ -99,17 +99,14 @@ export class EpisodeTagService {
       this.ops.where('episodeId', '==', episodeId)
     );
     const snapshot = await this.ops.getDocs(q);
-    const tags: Tag[] = [];
-
-    for (const junction of snapshot.docs) {
-      const tagId = junction.data()['tagId'];
-      const tagSnap = await this.ops.getDoc(this.ops.doc(this.firestore, 'tags', tagId));
-      if (tagSnap.exists()) {
-        tags.push({ id: tagSnap.id, ...tagSnap.data() } as Tag);
-      }
-    }
-
-    return tags;
+    const tags = await Promise.all(
+      snapshot.docs.map(async (junction) => {
+        const tagId = junction.data()['tagId'];
+        const tagSnap = await this.ops.getDoc(this.ops.doc(this.firestore, 'tags', tagId));
+        return tagSnap.exists() ? ({ id: tagSnap.id, ...tagSnap.data() } as Tag) : null;
+      })
+    );
+    return tags.filter((t): t is Tag => t !== null);
   }
 
   async getEpisodesByTagId(tagId: string): Promise<Episode[]> {
@@ -118,18 +115,29 @@ export class EpisodeTagService {
       this.ops.where('tagId', '==', tagId)
     );
     const junctionSnapshot = await this.ops.getDocs(junctionQuery);
-    const episodes: Episode[] = [];
+    const episodeIds = Array.from(
+      new Set(junctionSnapshot.docs.map((d) => d.data()['episodeId'] as string))
+    );
+    if (episodeIds.length === 0) return [];
 
-    for (const junction of junctionSnapshot.docs) {
-      const episodeId = junction.data()['episodeId'];
-      const episodeSnap = await this.ops.getDoc(
-        this.ops.doc(this.firestore, 'episodes', episodeId)
-      );
-      if (episodeSnap.exists() && episodeSnap.data()['isVisible']) {
-        episodes.push({ id: episodeSnap.id, ...episodeSnap.data() } as Episode);
-      }
+    const episodesCol = this.ops.collection(this.firestore, 'episodes');
+    const chunks: string[][] = [];
+    for (let i = 0; i < episodeIds.length; i += 30) {
+      chunks.push(episodeIds.slice(i, i + 30));
     }
-
-    return episodes;
+    const snapshots = await Promise.all(
+      chunks.map((chunk) =>
+        this.ops.getDocs(
+          this.ops.query(
+            episodesCol,
+            this.ops.where(this.ops.documentId(), 'in', chunk),
+            this.ops.where('isVisible', '==', true)
+          )
+        )
+      )
+    );
+    return snapshots.flatMap((snap) =>
+      snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Episode)
+    );
   }
 }

@@ -1,10 +1,11 @@
 import { inject, Injectable } from '@angular/core';
 import { EpisodeService } from '@aj/core';
 import { Episode } from '@aj/core';
-import { GenreService } from '@aj/core';
-import { TagService } from '@aj/core';
 import { EpisodeGenreService } from '@aj/core';
 import { EpisodeTagService } from '@aj/core';
+import { GenreService } from '@aj/core';
+import { TagService } from '@aj/core';
+import { TransferCacheService } from '@aj/core';
 import { SearchAutoCompleteOption } from './explore.model';
 
 @Injectable({ providedIn: 'root' })
@@ -14,18 +15,21 @@ export class ExploreSearchService {
   private tagService = inject(TagService);
   private episodeGenreService = inject(EpisodeGenreService);
   private episodeTagService = inject(EpisodeTagService);
+  private transferCache = inject(TransferCacheService);
 
   async getAutoCompleteOptions(): Promise<SearchAutoCompleteOption[]> {
-    const [episodes, genres, tags] = await Promise.all([
-      this.episodeService.getVisibleEpisodes(),
-      this.genreService.getAllGenres(),
-      this.tagService.getAllTags(),
-    ]);
-    return [
-      ...episodes.map((e) => ({ type: 'episode' as const, value: e.title, id: e.id })),
-      ...genres.map((g) => ({ type: 'genre' as const, value: g.name, id: g.id })),
-      ...tags.map((t) => ({ type: 'tag' as const, value: t.name, id: t.id })),
-    ];
+    return this.transferCache.cached('explorer.autoComplete', async () => {
+      const [episodes, genres, tags] = await Promise.all([
+        this.episodeService.getVisibleEpisodes(),
+        this.genreService.getAllGenres(),
+        this.tagService.getAllTags(),
+      ]);
+      return [
+        ...episodes.map((e) => ({ type: 'episode' as const, value: e.title, id: e.id })),
+        ...genres.map((g) => ({ type: 'genre' as const, value: g.name, id: g.id })),
+        ...tags.map((t) => ({ type: 'tag' as const, value: t.name, id: t.id })),
+      ];
+    });
   }
 
   async searchEpisodes(option: SearchAutoCompleteOption): Promise<Episode[]> {
@@ -42,16 +46,12 @@ export class ExploreSearchService {
         }
       }
     } else if (option.type === 'genre') {
-      const genres = await this.genreService.getAllGenres();
-      const genre = genres.find((g) => g.name === option.value);
-      if (genre?.id) {
-        results = await this.episodeGenreService.getEpisodesByGenreId(genre.id);
+      if (option.id) {
+        results = await this.episodeGenreService.getEpisodesByGenreId(option.id);
       }
     } else {
-      const tags = await this.tagService.getAllTags();
-      const tag = tags.find((t) => t.name === option.value);
-      if (tag?.id) {
-        results = await this.episodeTagService.getEpisodesByTagId(tag.id);
+      if (option.id) {
+        results = await this.episodeTagService.getEpisodesByTagId(option.id);
       }
     }
     const deduped = Array.from(new Map(results.map((e) => [e.id, e])).values());
