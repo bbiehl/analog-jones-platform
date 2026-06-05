@@ -7,10 +7,15 @@ service firebase.storage {
         firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
+    function isValidImageUpload() {
+      return request.resource.size < 2 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*');
+    }
+
     match /{allPaths=**} {
       allow read: if true;
-      allow create: if isAdmin();
-      allow update: if isAdmin();
+      allow create: if isAdmin() && isValidImageUpload();
+      allow update: if isAdmin() && isValidImageUpload();
       allow delete: if isAdmin();
     }
   }
