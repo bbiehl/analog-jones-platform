@@ -68,7 +68,9 @@ describe('TransferCacheService (browser)', () => {
     const svc = configure('browser');
     const state = TestBed.inject(TransferState);
     // Simulate SSR-transferred payload
-    const key = { toString: () => 'aj:k-hydrate' } as unknown as Parameters<TransferState['set']>[0];
+    const key = { toString: () => 'aj:k-hydrate' } as unknown as Parameters<
+      TransferState['set']
+    >[0];
     state.set(key, {
       at: { __ts__: true, seconds: 10, nanoseconds: 20 },
       list: [{ __ts__: true, seconds: 1, nanoseconds: 2 }],
@@ -147,10 +149,7 @@ describe('TransferCacheService (browser)', () => {
     >[0];
     const arrKey = { toString: () => 'aj:k-arr' } as unknown as Parameters<TransferState['set']>[0];
     state.set(nullKey, null as never);
-    state.set(arrKey, [
-      { __ts__: true, seconds: 7, nanoseconds: 8 },
-      { plain: true },
-    ] as never);
+    state.set(arrKey, [{ __ts__: true, seconds: 7, nanoseconds: 8 }, { plain: true }] as never);
 
     const nullResult = await svc.cached('k-null', async () => ({ shouldNot: 'run' }));
     const arrResult = (await svc.cached('k-arr', async () => [])) as unknown as [

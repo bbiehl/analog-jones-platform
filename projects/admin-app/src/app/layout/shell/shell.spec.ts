@@ -157,7 +157,9 @@ describe('Shell', () => {
 
       const allItems = fixture.nativeElement.querySelectorAll('mat-nav-list a');
       expect(allItems.length).toBe(7);
-      const navLinks = Array.from(allItems).filter((el) => (el as HTMLElement).hasAttribute('href'));
+      const navLinks = Array.from(allItems).filter((el) =>
+        (el as HTMLElement).hasAttribute('href'),
+      );
       expect(navLinks.length).toBe(6);
       const signOutHrefs = Array.from(allItems).filter(
         (el) => !(el as HTMLElement).hasAttribute('href'),

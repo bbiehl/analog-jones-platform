@@ -61,9 +61,7 @@ describe('RelatedEpisodesService', () => {
     it('should ignore genre ids when selecting related episodes', () => {
       const genres = [{ id: 'g1' }, { id: undefined }];
 
-      const tagIds = ([] as { id?: string }[])
-        .map((t) => t.id)
-        .filter((id): id is string => !!id);
+      const tagIds = ([] as { id?: string }[]).map((t) => t.id).filter((id): id is string => !!id);
 
       expect(genres.map((g) => g.id)).toEqual(['g1', undefined]);
       expect(tagIds).toEqual([]);
@@ -169,7 +167,7 @@ describe('RelatedEpisodesService', () => {
   describe('final ordering and limit', () => {
     const byDateDesc = (
       a: { episodeDate: { toMillis: () => number } },
-      b: { episodeDate: { toMillis: () => number } }
+      b: { episodeDate: { toMillis: () => number } },
     ) => b.episodeDate.toMillis() - a.episodeDate.toMillis();
 
     it('should emit tag matches sorted by date desc', () => {
@@ -247,9 +245,7 @@ describe('RelatedEpisodesService', () => {
 
   describe('empty inputs', () => {
     it('should resolve to an empty list when episode has no tags', () => {
-      const tagIds = ([] as { id?: string }[])
-        .map((t) => t.id)
-        .filter((id): id is string => !!id);
+      const tagIds = ([] as { id?: string }[]).map((t) => t.id).filter((id): id is string => !!id);
 
       const results = new Map<string, unknown>();
       const final = Array.from(results.values()).slice(0, 12);
@@ -340,9 +336,7 @@ describe('RelatedEpisodesService', () => {
   });
 
   describe('getRelatedEpisodes (public API)', () => {
-    const makeEpisode = (
-      overrides: Partial<EpisodeWithRelations> = {}
-    ): EpisodeWithRelations =>
+    const makeEpisode = (overrides: Partial<EpisodeWithRelations> = {}): EpisodeWithRelations =>
       ({
         id: 'ep-source',
         tags: [],
@@ -397,9 +391,7 @@ describe('RelatedEpisodesService', () => {
       exists: () => data !== null,
       data: () => data ?? {},
     });
-    const makeEpisode = (
-      overrides: Partial<EpisodeWithRelations> = {}
-    ): EpisodeWithRelations =>
+    const makeEpisode = (overrides: Partial<EpisodeWithRelations> = {}): EpisodeWithRelations =>
       ({
         id: 'ep-source',
         tags: [{ id: 't1' }],
@@ -417,7 +409,7 @@ describe('RelatedEpisodesService', () => {
         .mockResolvedValueOnce(epSnap('ep-b', { isVisible: true, episodeDate: ts(300) }));
 
       const result = await service.getRelatedEpisodes(
-        makeEpisode({ genres: [] as unknown as EpisodeWithRelations['genres'] })
+        makeEpisode({ genres: [] as unknown as EpisodeWithRelations['genres'] }),
       );
 
       expect(result.map((e) => e.id)).toEqual(['ep-b', 'ep-a']);
@@ -429,12 +421,10 @@ describe('RelatedEpisodesService', () => {
       ops.getDocs.mockResolvedValueOnce({
         docs: [junctionDoc('ep-source'), junctionDoc('ep-a'), junctionDoc('ep-a')],
       });
-      ops.getDoc.mockResolvedValueOnce(
-        epSnap('ep-a', { isVisible: true, episodeDate: ts(10) })
-      );
+      ops.getDoc.mockResolvedValueOnce(epSnap('ep-a', { isVisible: true, episodeDate: ts(10) }));
 
       const result = await service.getRelatedEpisodes(
-        makeEpisode({ genres: [] as unknown as EpisodeWithRelations['genres'] })
+        makeEpisode({ genres: [] as unknown as EpisodeWithRelations['genres'] }),
       );
 
       expect(result.map((e) => e.id)).toEqual(['ep-a']);
@@ -450,7 +440,7 @@ describe('RelatedEpisodesService', () => {
         .mockResolvedValueOnce(epSnap('ep-missing', null));
 
       const result = await service.getRelatedEpisodes(
-        makeEpisode({ genres: [] as unknown as EpisodeWithRelations['genres'] })
+        makeEpisode({ genres: [] as unknown as EpisodeWithRelations['genres'] }),
       );
 
       expect(result).toEqual([]);
@@ -503,7 +493,7 @@ describe('RelatedEpisodesService', () => {
         makeEpisode({
           tags: [] as unknown as EpisodeWithRelations['tags'],
           genres: [{ id: 'g1' }] as unknown as EpisodeWithRelations['genres'],
-        })
+        }),
       );
 
       expect(result).toEqual([]);
@@ -520,7 +510,7 @@ describe('RelatedEpisodesService', () => {
   describe('date sorting edge cases', () => {
     const byDateDesc = (
       a: { episodeDate: { toMillis: () => number } },
-      b: { episodeDate: { toMillis: () => number } }
+      b: { episodeDate: { toMillis: () => number } },
     ) => b.episodeDate.toMillis() - a.episodeDate.toMillis();
 
     it('should preserve insertion order when two episodes share an identical date', () => {

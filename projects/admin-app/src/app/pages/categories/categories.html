@@ -14,7 +14,9 @@
   } @else if (categoryStore.error()) {
     <p class="text-red-400">{{ categoryStore.error() }}</p>
   } @else if (categoryStore.categories().length === 0) {
-    <p class="text-gray-400 py-8 text-center">No categories yet. Click "Add Category" to create one.</p>
+    <p class="text-gray-400 py-8 text-center">
+      No categories yet. Click "Add Category" to create one.
+    </p>
   } @else {
     <table mat-table [dataSource]="categoryStore.categories()" class="w-full">
       <ng-container matColumnDef="name">
@@ -40,7 +42,12 @@
           >
             <mat-icon>playlist_add_check</mat-icon>
           </button>
-          <button mat-icon-button aria-label="Delete category" color="warn" (click)="onDelete(category.id)">
+          <button
+            mat-icon-button
+            aria-label="Delete category"
+            color="warn"
+            (click)="onDelete(category.id)"
+          >
             <mat-icon>delete</mat-icon>
           </button>
         </td>

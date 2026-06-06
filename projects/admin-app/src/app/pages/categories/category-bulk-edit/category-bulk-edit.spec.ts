@@ -115,7 +115,7 @@ describe('CategoryBulkEdit', () => {
 
     expect(mockEpisodeCategoryService.setEpisodesForCategory).toHaveBeenCalledWith(
       'cat1',
-      expect.arrayContaining(['e1', 'e2', 'e3'])
+      expect.arrayContaining(['e1', 'e2', 'e3']),
     );
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/categories']);
   });
@@ -224,9 +224,7 @@ describe('CategoryBulkEdit', () => {
     });
 
     it('resets saving back to false when setEpisodesForCategory rejects', async () => {
-      mockEpisodeCategoryService.setEpisodesForCategory.mockRejectedValueOnce(
-        new Error('boom')
-      );
+      mockEpisodeCategoryService.setEpisodesForCategory.mockRejectedValueOnce(new Error('boom'));
       component['toggleEpisode']('e3');
 
       await expect(component['onSave']()).rejects.toThrow('boom');
@@ -237,7 +235,7 @@ describe('CategoryBulkEdit', () => {
   describe('loadAssigned error path', () => {
     it('sets junctionError when getEpisodeIdsByCategoryId rejects', async () => {
       mockEpisodeCategoryService.getEpisodeIdsByCategoryId.mockRejectedValueOnce(
-        new Error('network down')
+        new Error('network down'),
       );
 
       const fresh = TestBed.createComponent(CategoryBulkEdit);
@@ -305,7 +303,7 @@ describe('CategoryBulkEdit', () => {
       fixture.detectChanges();
 
       const buttonSpinner = fixture.nativeElement.querySelector(
-        'button[mat-flat-button] mat-spinner'
+        'button[mat-flat-button] mat-spinner',
       );
       expect(buttonSpinner).toBeTruthy();
     });
@@ -318,13 +316,13 @@ describe('CategoryBulkEdit', () => {
       expect(dataRows.length).toBe(3);
 
       const titleCells = fixture.nativeElement.querySelectorAll(
-        'tr.mat-mdc-row td.cdk-column-title'
+        'tr.mat-mdc-row td.cdk-column-title',
       );
       const titles = Array.from(titleCells).map((c: any) => c.textContent.trim());
       expect(titles).toEqual(['First', 'Second', 'Third']);
 
       const visibleIcons = fixture.nativeElement.querySelectorAll(
-        'tr.mat-mdc-row td.cdk-column-isVisible mat-icon'
+        'tr.mat-mdc-row td.cdk-column-isVisible mat-icon',
       );
       expect(visibleIcons.length).toBe(3);
       expect(visibleIcons[0].textContent.trim()).toBe('visibility');

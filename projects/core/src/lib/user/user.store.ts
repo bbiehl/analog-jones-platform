@@ -63,5 +63,5 @@ export const UserStore = signalStore(
         patchState(store, { user: null });
       },
     };
-  })
+  }),
 );

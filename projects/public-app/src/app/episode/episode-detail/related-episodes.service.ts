@@ -17,13 +17,7 @@ export class RelatedEpisodesService {
     if (tagIds.length === 0) return [];
 
     const tagResults = new Map<string, Episode>();
-    await this.collectFromJunction(
-      episode,
-      tagResults,
-      'episodeTags',
-      'tagId',
-      tagIds
-    );
+    await this.collectFromJunction(episode, tagResults, 'episodeTags', 'tagId', tagIds);
 
     return Array.from(tagResults.values()).sort(byDateDesc).slice(0, max);
   }
@@ -33,12 +27,12 @@ export class RelatedEpisodesService {
     results: Map<string, Episode>,
     junctionCollection: string,
     junctionField: string,
-    ids: string[]
+    ids: string[],
   ): Promise<void> {
     const { collection, doc, getDoc, getDocs, query, where } = this.ops;
     for (const id of ids) {
       const junctionSnap = await getDocs(
-        query(collection(this.firestore, junctionCollection), where(junctionField, '==', id))
+        query(collection(this.firestore, junctionCollection), where(junctionField, '==', id)),
       );
 
       for (const junction of junctionSnap.docs) {

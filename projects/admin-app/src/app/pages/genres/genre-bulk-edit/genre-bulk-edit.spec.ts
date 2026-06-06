@@ -110,7 +110,7 @@ describe('GenreBulkEdit', () => {
 
     expect(mockEpisodeGenreService.setEpisodesForGenre).toHaveBeenCalledWith(
       'g1',
-      expect.arrayContaining(['e1', 'e2', 'e3'])
+      expect.arrayContaining(['e1', 'e2', 'e3']),
     );
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/genres']);
   });

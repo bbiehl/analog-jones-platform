@@ -15,19 +15,17 @@ describe('SeoService', () => {
     document.head
       .querySelectorAll('script[type="application/ld+json"][data-seo]')
       .forEach((n) => n.remove());
-    document.head
-      .querySelectorAll('meta[name], meta[property]')
-      .forEach((n) => {
-        const name = n.getAttribute('name') || n.getAttribute('property') || '';
-        if (
-          name === 'description' ||
-          name === 'robots' ||
-          name.startsWith('og:') ||
-          name.startsWith('twitter:')
-        ) {
-          n.remove();
-        }
-      });
+    document.head.querySelectorAll('meta[name], meta[property]').forEach((n) => {
+      const name = n.getAttribute('name') || n.getAttribute('property') || '';
+      if (
+        name === 'description' ||
+        name === 'robots' ||
+        name.startsWith('og:') ||
+        name.startsWith('twitter:')
+      ) {
+        n.remove();
+      }
+    });
   });
 
   it('should set title with site-name suffix and canonical url', () => {
@@ -57,9 +55,7 @@ describe('SeoService', () => {
     expect(meta.getTag('property="og:description"')?.content).toBe('A description');
     expect(meta.getTag('property="og:type"')?.content).toBe('website');
     expect(meta.getTag('property="og:url"')?.content).toBe('https://example.test/p');
-    expect(meta.getTag('property="og:image"')?.content).toBe(
-      'https://example.test/og-default.png',
-    );
+    expect(meta.getTag('property="og:image"')?.content).toBe('https://example.test/og-default.png');
     expect(meta.getTag('name="twitter:card"')?.content).toBe('summary_large_image');
     expect(meta.getTag('name="twitter:title"')?.content).toBe(`My Page — ${SITE_NAME}`);
     expect(meta.getTag('name="twitter:description"')?.content).toBe('A description');

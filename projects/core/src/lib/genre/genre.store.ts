@@ -84,5 +84,5 @@ export const GenreStore = signalStore(
         patchState(store, { selectedGenre: null });
       },
     };
-  })
+  }),
 );

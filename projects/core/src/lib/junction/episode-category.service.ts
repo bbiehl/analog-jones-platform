@@ -18,7 +18,7 @@ export class EpisodeCategoryService {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'episodeCategories'),
       this.ops.where('episodeId', '==', episodeId),
-      this.ops.where('categoryId', '==', categoryId)
+      this.ops.where('categoryId', '==', categoryId),
     );
     const snapshot = await this.ops.getDocs(q);
     const batch = this.ops.writeBatch(this.firestore);
@@ -29,7 +29,7 @@ export class EpisodeCategoryService {
   async deleteEpisodeCategoriesByCategoryId(categoryId: string): Promise<void> {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'episodeCategories'),
-      this.ops.where('categoryId', '==', categoryId)
+      this.ops.where('categoryId', '==', categoryId),
     );
     const snapshot = await this.ops.getDocs(q);
     const batch = this.ops.writeBatch(this.firestore);
@@ -40,7 +40,7 @@ export class EpisodeCategoryService {
   async deleteEpisodeCategoriesByEpisodeId(episodeId: string): Promise<void> {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'episodeCategories'),
-      this.ops.where('episodeId', '==', episodeId)
+      this.ops.where('episodeId', '==', episodeId),
     );
     const snapshot = await this.ops.getDocs(q);
     const batch = this.ops.writeBatch(this.firestore);
@@ -51,7 +51,7 @@ export class EpisodeCategoryService {
   async getEpisodeIdsByCategoryId(categoryId: string): Promise<string[]> {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'episodeCategories'),
-      this.ops.where('categoryId', '==', categoryId)
+      this.ops.where('categoryId', '==', categoryId),
     );
     const snapshot = await this.ops.getDocs(q);
     return Array.from(new Set(snapshot.docs.map((d) => d.data()['episodeId'] as string)));
@@ -60,7 +60,7 @@ export class EpisodeCategoryService {
   async setEpisodesForCategory(categoryId: string, episodeIds: string[]): Promise<void> {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'episodeCategories'),
-      this.ops.where('categoryId', '==', categoryId)
+      this.ops.where('categoryId', '==', categoryId),
     );
     const snapshot = await this.ops.getDocs(q);
 
@@ -95,19 +95,19 @@ export class EpisodeCategoryService {
   async getEpisodeCategoriesByEpisodeId(episodeId: string): Promise<Category[]> {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'episodeCategories'),
-      this.ops.where('episodeId', '==', episodeId)
+      this.ops.where('episodeId', '==', episodeId),
     );
     const snapshot = await this.ops.getDocs(q);
     const categories = await Promise.all(
       snapshot.docs.map(async (junction) => {
         const categoryId = junction.data()['categoryId'];
         const categorySnap = await this.ops.getDoc(
-          this.ops.doc(this.firestore, 'categories', categoryId)
+          this.ops.doc(this.firestore, 'categories', categoryId),
         );
         return categorySnap.exists()
           ? ({ id: categorySnap.id, ...categorySnap.data() } as Category)
           : null;
-      })
+      }),
     );
     return categories.filter((c): c is Category => c !== null);
   }

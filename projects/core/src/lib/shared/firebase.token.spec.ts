@@ -1,10 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import {
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  signInWithPopup,
-  signOut,
-} from 'firebase/auth';
+import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import {
   addDoc,
   collection,
@@ -20,14 +15,7 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { deleteObject, getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import {
-  AUTH,
-  AUTH_OPS,
-  FIRESTORE,
-  FIRESTORE_OPS,
-  STORAGE,
-  STORAGE_OPS,
-} from './firebase.token';
+import { AUTH, AUTH_OPS, FIRESTORE, FIRESTORE_OPS, STORAGE, STORAGE_OPS } from './firebase.token';
 
 describe('firebase tokens (no factory)', () => {
   beforeEach(() => {

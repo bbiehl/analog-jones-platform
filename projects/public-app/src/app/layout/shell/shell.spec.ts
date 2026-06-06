@@ -126,8 +126,9 @@ describe('Shell', () => {
       const items = fixture.nativeElement.querySelectorAll('mat-nav-list a');
       expect(items.length).toBe(3);
       ['Home', 'Episodes', 'Explorer'].forEach((label) => {
-        expect(Array.from(items).some((el) => (el as HTMLElement).textContent?.includes(label)))
-          .toBe(true);
+        expect(
+          Array.from(items).some((el) => (el as HTMLElement).textContent?.includes(label)),
+        ).toBe(true);
       });
     });
 

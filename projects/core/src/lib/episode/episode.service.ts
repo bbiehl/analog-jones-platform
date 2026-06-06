@@ -25,7 +25,7 @@ export class EpisodeService {
   private transferCache = inject(TransferCacheService);
 
   async getHomeEpisodes(
-    max = 9
+    max = 9,
   ): Promise<{ episodes: Episode[]; total: number; featured: EpisodeWithRelations | null }> {
     return this.transferCache.cached(`episodes.home.${max}`, async () => {
       const collectionRef = this.ops.collection(this.firestore, 'episodes');
@@ -34,7 +34,7 @@ export class EpisodeService {
         collectionRef,
         baseFilter,
         this.ops.orderBy('episodeDate', 'desc'),
-        this.ops.limit(max)
+        this.ops.limit(max),
       );
       const countQuery = this.ops.query(collectionRef, baseFilter);
       const [snapshot, countSnap] = await Promise.all([
@@ -62,7 +62,7 @@ export class EpisodeService {
   async getAllEpisodes(): Promise<Episode[]> {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'episodes'),
-      this.ops.orderBy('episodeDate', 'desc')
+      this.ops.orderBy('episodeDate', 'desc'),
     );
     const snapshot = await this.ops.getDocs(q);
     return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Episode);
@@ -77,7 +77,7 @@ export class EpisodeService {
       this.ops.collection(this.firestore, 'episodes'),
       this.ops.where('isVisible', '==', true),
       this.ops.orderBy('episodeDate', 'desc'),
-      this.ops.limit(1)
+      this.ops.limit(1),
     );
     const snapshot = await this.ops.getDocs(q);
     if (snapshot.empty) {
@@ -91,7 +91,7 @@ export class EpisodeService {
       this.ops.collection(this.firestore, 'episodes'),
       this.ops.where('isVisible', '==', true),
       this.ops.orderBy('episodeDate', 'desc'),
-      this.ops.limit(5)
+      this.ops.limit(5),
     );
     const snapshot = await this.ops.getDocs(q);
     return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Episode);
@@ -101,7 +101,7 @@ export class EpisodeService {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'episodes'),
       this.ops.where('isVisible', '==', true),
-      this.ops.orderBy('episodeDate', 'desc')
+      this.ops.orderBy('episodeDate', 'desc'),
     );
     const snapshot = await this.ops.getDocs(q);
     let episodes = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Episode);
@@ -135,7 +135,7 @@ export class EpisodeService {
     categoryIds: string[],
     genreIds: string[],
     tagIds: string[],
-    posterFile?: File
+    posterFile?: File,
   ): Promise<string> {
     const episodeRef = this.ops.doc(this.ops.collection(this.firestore, 'episodes'));
     const episodeId = episodeRef.id;
@@ -197,7 +197,7 @@ export class EpisodeService {
     genreIds?: string[],
     tagIds?: string[],
     posterFile?: File,
-    removePoster?: boolean
+    removePoster?: boolean,
   ): Promise<void> {
     const { id: _id, ...data } = episode as Episode;
 
@@ -215,24 +215,24 @@ export class EpisodeService {
         ? this.ops.getDocs(
             this.ops.query(
               this.ops.collection(this.firestore, 'episodeCategories'),
-              this.ops.where('episodeId', '==', id)
-            )
+              this.ops.where('episodeId', '==', id),
+            ),
           )
         : null,
       genreIds
         ? this.ops.getDocs(
             this.ops.query(
               this.ops.collection(this.firestore, 'episodeGenres'),
-              this.ops.where('episodeId', '==', id)
-            )
+              this.ops.where('episodeId', '==', id),
+            ),
           )
         : null,
       tagIds
         ? this.ops.getDocs(
             this.ops.query(
               this.ops.collection(this.firestore, 'episodeTags'),
-              this.ops.where('episodeId', '==', id)
-            )
+              this.ops.where('episodeId', '==', id),
+            ),
           )
         : null,
     ]);
@@ -281,20 +281,20 @@ export class EpisodeService {
       this.ops.getDocs(
         this.ops.query(
           this.ops.collection(this.firestore, 'episodeCategories'),
-          this.ops.where('episodeId', '==', id)
-        )
+          this.ops.where('episodeId', '==', id),
+        ),
       ),
       this.ops.getDocs(
         this.ops.query(
           this.ops.collection(this.firestore, 'episodeGenres'),
-          this.ops.where('episodeId', '==', id)
-        )
+          this.ops.where('episodeId', '==', id),
+        ),
       ),
       this.ops.getDocs(
         this.ops.query(
           this.ops.collection(this.firestore, 'episodeTags'),
-          this.ops.where('episodeId', '==', id)
-        )
+          this.ops.where('episodeId', '==', id),
+        ),
       ),
     ]);
 

@@ -3,6 +3,7 @@
 ## Architecture
 
 Angular v21 multi-project workspace with pnpm. Two apps:
+
 - `public-app` (`projects/public-app/`) — SSR via Express + `@angular/ssr`
 - `admin-app` (`projects/admin-app/`) — SSR via Express + `@angular/ssr`
 
@@ -22,12 +23,14 @@ Angular v21 multi-project workspace with pnpm. Two apps:
 Single Angular library at `projects/core/` (package name `@aj/core`, generated via `ng generate library`). All domain services, stores, models, and shared infra live here. Apps consume it via the `@aj/core` path alias resolving directly to `projects/core/src/public-api`, so `ng build`/`ng test`/`ng serve` work on a clean checkout without prebuilding the lib. Run `pnpm build:core` only when you actually need the packaged output in `dist/core`.
 
 Subfolders under `projects/core/src/lib/`:
+
 - `category/`, `episode/`, `genre/`, `tag/`, `user/` — each with `<domain>.model.ts`, `<domain>.service.ts`, `<domain>.store.ts` (+ specs)
 - `junction/` — many-to-many services: `episode-category.service.ts`, `episode-genre.service.ts`, `episode-tag.service.ts`
 - `shared/` — cross-cutting infra only: `firebase.token.ts` (injection tokens `AUTH`, `FIRESTORE`, `STORAGE`, `STORAGE_OPS`) and `image-upload.service.ts`
 - `styles/` — `theme.scss`, `theme-public.scss` (consumed via Sass `@use`, not exported from `public-api.ts`)
 
 Each domain follows the same pattern:
+
 - `<domain>.store.ts` — `signalStore` with `withState`, `withComputed`, `withMethods`
 - `<domain>.service.ts` — Firebase data access
 
@@ -40,12 +43,14 @@ Each domain follows the same pattern:
 Each app has `projects/<app>/src/app/firebase.ts` exporting `auth`, `firestore`, `storage` directly. Uses Firebase modular SDK — NOT `@angular/fire`. Import instances directly in services.
 
 Provided via injection tokens in each app's `app.config.ts`:
+
 - **admin-app**: `AUTH`, `FIRESTORE`, `STORAGE`
 - **public-app**: `FIRESTORE`, `STORAGE` only (no auth)
 
 Connects to emulators when `environment.useEmulators` is true.
 
 **Static SDK functions are wrapped in injection tokens.** Because `vi.mock()` is banned (see Testing), services do not call `firebase/firestore`, `firebase/storage`, or `firebase/auth` static functions directly. Instead they inject:
+
 - `FIRESTORE_OPS` — `collection`, `doc`, `query`, `orderBy`, `where`, `limit`, `getDoc`, `getDocs`, `addDoc`, `updateDoc`, `writeBatch`
 - `STORAGE_OPS` — `ref`, `uploadBytes`, `getDownloadURL`, `deleteObject`
 - `AUTH_OPS` — `GoogleAuthProvider`, `signInWithPopup`, `signOut`, `onAuthStateChanged`
@@ -55,6 +60,7 @@ All three are defined in `projects/core/src/lib/shared/firebase.token.ts` with d
 ### Shell Layout
 
 Root shell (`layout/shell/`) wraps all routes:
+
 - `mat-toolbar` for desktop nav
 - `mat-sidenav` at `position="end"` for mobile (hamburger at right end)
 - `BreakpointObserver` (`Breakpoints.Handset`) drives `isMobile` signal
@@ -85,9 +91,13 @@ Root shell (`layout/shell/`) wraps all routes:
 signalStore(
   { providedIn: 'root' },
   withState(initialState),
-  withComputed((store) => ({ /* derived signals */ })),
-  withMethods((store) => ({ /* async methods using patchState(store, {...}) */ }))
-)
+  withComputed((store) => ({
+    /* derived signals */
+  })),
+  withMethods((store) => ({
+    /* async methods using patchState(store, {...}) */
+  })),
+);
 ```
 
 Use `patchState()` for mutations. Never use `mutate`.

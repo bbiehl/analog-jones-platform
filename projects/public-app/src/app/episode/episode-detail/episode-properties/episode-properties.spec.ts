@@ -51,7 +51,7 @@ describe('EpisodeProperties', () => {
     expect(title.textContent).toContain('Hidden Mix');
   });
 
-describe('chips row', () => {
+  describe('chips row', () => {
     it('is omitted when there are no classifications', () => {
       setInputs({ episode: makeEpisode() });
       fixture.detectChanges();

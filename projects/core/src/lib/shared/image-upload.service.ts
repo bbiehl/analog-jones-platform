@@ -48,7 +48,7 @@ export class ImageUploadService {
       const scale = Math.sqrt(MAX_SIZE_BYTES / blob.size);
       const scaledCanvas = new OffscreenCanvas(
         Math.round(width * scale),
-        Math.round(height * scale)
+        Math.round(height * scale),
       );
       const scaledCtx = scaledCanvas.getContext('2d')!;
       scaledCtx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);

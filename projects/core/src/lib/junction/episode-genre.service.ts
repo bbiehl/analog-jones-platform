@@ -19,7 +19,7 @@ export class EpisodeGenreService {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'episodeGenres'),
       this.ops.where('episodeId', '==', episodeId),
-      this.ops.where('genreId', '==', genreId)
+      this.ops.where('genreId', '==', genreId),
     );
     const snapshot = await this.ops.getDocs(q);
     const batch = this.ops.writeBatch(this.firestore);
@@ -30,7 +30,7 @@ export class EpisodeGenreService {
   async deleteEpisodeGenresByEpisodeId(episodeId: string): Promise<void> {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'episodeGenres'),
-      this.ops.where('episodeId', '==', episodeId)
+      this.ops.where('episodeId', '==', episodeId),
     );
     const snapshot = await this.ops.getDocs(q);
     const batch = this.ops.writeBatch(this.firestore);
@@ -41,7 +41,7 @@ export class EpisodeGenreService {
   async deleteEpisodeGenresByGenreId(genreId: string): Promise<void> {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'episodeGenres'),
-      this.ops.where('genreId', '==', genreId)
+      this.ops.where('genreId', '==', genreId),
     );
     const snapshot = await this.ops.getDocs(q);
     const batch = this.ops.writeBatch(this.firestore);
@@ -52,7 +52,7 @@ export class EpisodeGenreService {
   async getEpisodeIdsByGenreId(genreId: string): Promise<string[]> {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'episodeGenres'),
-      this.ops.where('genreId', '==', genreId)
+      this.ops.where('genreId', '==', genreId),
     );
     const snapshot = await this.ops.getDocs(q);
     return Array.from(new Set(snapshot.docs.map((d) => d.data()['episodeId'] as string)));
@@ -61,7 +61,7 @@ export class EpisodeGenreService {
   async setEpisodesForGenre(genreId: string, episodeIds: string[]): Promise<void> {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'episodeGenres'),
-      this.ops.where('genreId', '==', genreId)
+      this.ops.where('genreId', '==', genreId),
     );
     const snapshot = await this.ops.getDocs(q);
 
@@ -96,17 +96,15 @@ export class EpisodeGenreService {
   async getEpisodeGenresByEpisodeId(episodeId: string): Promise<Genre[]> {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'episodeGenres'),
-      this.ops.where('episodeId', '==', episodeId)
+      this.ops.where('episodeId', '==', episodeId),
     );
     const snapshot = await this.ops.getDocs(q);
     const genres = await Promise.all(
       snapshot.docs.map(async (junction) => {
         const genreId = junction.data()['genreId'];
         const genreSnap = await this.ops.getDoc(this.ops.doc(this.firestore, 'genres', genreId));
-        return genreSnap.exists()
-          ? ({ id: genreSnap.id, ...genreSnap.data() } as Genre)
-          : null;
-      })
+        return genreSnap.exists() ? ({ id: genreSnap.id, ...genreSnap.data() } as Genre) : null;
+      }),
     );
     return genres.filter((g): g is Genre => g !== null);
   }
@@ -114,11 +112,11 @@ export class EpisodeGenreService {
   async getEpisodesByGenreId(genreId: string): Promise<Episode[]> {
     const junctionQuery = this.ops.query(
       this.ops.collection(this.firestore, 'episodeGenres'),
-      this.ops.where('genreId', '==', genreId)
+      this.ops.where('genreId', '==', genreId),
     );
     const junctionSnapshot = await this.ops.getDocs(junctionQuery);
     const episodeIds = Array.from(
-      new Set(junctionSnapshot.docs.map((d) => d.data()['episodeId'] as string))
+      new Set(junctionSnapshot.docs.map((d) => d.data()['episodeId'] as string)),
     );
     if (episodeIds.length === 0) return [];
 
@@ -133,13 +131,13 @@ export class EpisodeGenreService {
           this.ops.query(
             episodesCol,
             this.ops.where(this.ops.documentId(), 'in', chunk),
-            this.ops.where('isVisible', '==', true)
-          )
-        )
-      )
+            this.ops.where('isVisible', '==', true),
+          ),
+        ),
+      ),
     );
     return snapshots.flatMap((snap) =>
-      snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Episode)
+      snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Episode),
     );
   }
 }

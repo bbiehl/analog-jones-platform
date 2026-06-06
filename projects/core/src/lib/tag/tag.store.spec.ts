@@ -86,9 +86,7 @@ describe('TagStore', () => {
     });
 
     it('should set error on failure', async () => {
-      mockTagService.getTagById.mockRejectedValueOnce(
-        new Error('Tag with id "missing" not found')
-      );
+      mockTagService.getTagById.mockRejectedValueOnce(new Error('Tag with id "missing" not found'));
 
       await store.loadTagById('missing');
 

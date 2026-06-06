@@ -1,5 +1,12 @@
 import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -73,7 +80,7 @@ export class GenreBulkEdit implements OnInit {
     this.junctionError.set(null);
     try {
       const ids = await this.episodeGenreService.getEpisodeIdsByGenreId(
-        this.route.snapshot.params['id']
+        this.route.snapshot.params['id'],
       );
       const set = new Set(ids);
       this.initialAssigned.set(set);
@@ -117,10 +124,7 @@ export class GenreBulkEdit implements OnInit {
     if (!this.genreStore.selectedGenre()) return;
     this.saving.set(true);
     try {
-      await this.episodeGenreService.setEpisodesForGenre(
-        this.genreId,
-        [...this.selected()]
-      );
+      await this.episodeGenreService.setEpisodesForGenre(this.genreId, [...this.selected()]);
       this.router.navigate(['/genres']);
     } finally {
       this.saving.set(false);

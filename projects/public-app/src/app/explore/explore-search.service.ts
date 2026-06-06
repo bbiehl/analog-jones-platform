@@ -55,8 +55,6 @@ export class ExploreSearchService {
       }
     }
     const deduped = Array.from(new Map(results.map((e) => [e.id, e])).values());
-    return deduped.sort(
-      (a, b) => b.episodeDate.toMillis() - a.episodeDate.toMillis()
-    );
+    return deduped.sort((a, b) => b.episodeDate.toMillis() - a.episodeDate.toMillis());
   }
 }

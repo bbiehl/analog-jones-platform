@@ -53,23 +53,13 @@
     @if (hasLinks()) {
       <div class="cta-row">
         @if (episode().links.spotify; as spotify) {
-          <a
-            class="btn btn--spotify"
-            [href]="spotify"
-            target="_blank"
-            rel="noopener"
-          >
+          <a class="btn btn--spotify" [href]="spotify" target="_blank" rel="noopener">
             <span class="btn-glyph" aria-hidden="true">▶</span>
             <span>LISTEN ON SPOTIFY</span>
           </a>
         }
         @if (episode().links.youtube; as youtube) {
-          <a
-            class="btn btn--youtube"
-            [href]="youtube"
-            target="_blank"
-            rel="noopener"
-          >
+          <a class="btn btn--youtube" [href]="youtube" target="_blank" rel="noopener">
             <span class="btn-glyph" aria-hidden="true">▶</span>
             <span>WATCH ON YOUTUBE</span>
           </a>

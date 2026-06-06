@@ -21,9 +21,7 @@ describe('stripMarkdown', () => {
   });
 
   it('preserves link text but drops the URL', () => {
-    expect(stripMarkdown('see [the docs](https://example.com) please')).toBe(
-      'see the docs please',
-    );
+    expect(stripMarkdown('see [the docs](https://example.com) please')).toBe('see the docs please');
   });
 
   it('removes markdown formatting characters and collapses whitespace', () => {

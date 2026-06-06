@@ -9,7 +9,13 @@ import { GenreStore } from '@aj/core';
 
 @Component({
   selector: 'app-genre-add',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+  ],
   templateUrl: './genre-add.html',
   styleUrl: './genre-add.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

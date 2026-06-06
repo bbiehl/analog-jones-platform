@@ -25,10 +25,10 @@ export class Episodes implements OnInit {
   protected readonly error = this.store.error;
   protected readonly entries = computed<ShelfEntry[]>(() => {
     const categoryEntries = Object.entries(this.store.episodesByCategory()).map(
-      ([heading, episodes]) => ({ key: `cat:${heading}`, heading, episodes })
+      ([heading, episodes]) => ({ key: `cat:${heading}`, heading, episodes }),
     );
     const genreEntries = Object.entries(this.store.episodesByGenre()).map(
-      ([heading, episodes]) => ({ key: `gen:${heading}`, heading, episodes })
+      ([heading, episodes]) => ({ key: `gen:${heading}`, heading, episodes }),
     );
     return [...categoryEntries, ...genreEntries];
   });

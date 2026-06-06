@@ -97,7 +97,7 @@ describe('CategoryService', () => {
       ops.getDoc.mockResolvedValueOnce({ exists: () => false });
 
       await expect(service.getCategoryById('missing')).rejects.toThrow(
-        'Category with id "missing" not found'
+        'Category with id "missing" not found',
       );
     });
 
@@ -117,7 +117,7 @@ describe('CategoryService', () => {
       expect(ops.collection).toHaveBeenCalledWith(firestore, 'categories');
       expect(ops.addDoc).toHaveBeenCalledWith(
         { __collection: 'categories' },
-        { name: 'Tech', slug: 'tech' }
+        { name: 'Tech', slug: 'tech' },
       );
       expect(result).toBe('new-id');
     });
@@ -142,7 +142,7 @@ describe('CategoryService', () => {
       ops.addDoc.mockRejectedValueOnce(new Error('quota exceeded'));
 
       await expect(service.createCategory({ name: 'X', slug: 'x' })).rejects.toThrow(
-        'quota exceeded'
+        'quota exceeded',
       );
     });
   });
@@ -154,7 +154,7 @@ describe('CategoryService', () => {
       expect(ops.doc).toHaveBeenCalledWith(firestore, 'categories', 'c1');
       expect(ops.updateDoc).toHaveBeenCalledWith(
         { __doc: 'categories/c1' },
-        { name: 'Updated', slug: 'updated' }
+        { name: 'Updated', slug: 'updated' },
       );
     });
 

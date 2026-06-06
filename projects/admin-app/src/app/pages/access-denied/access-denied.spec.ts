@@ -19,10 +19,7 @@ describe('AccessDenied', () => {
 
     await TestBed.configureTestingModule({
       imports: [AccessDenied],
-      providers: [
-        provideRouter([]),
-        { provide: UserStore, useValue: mockUserStore },
-      ],
+      providers: [provideRouter([]), { provide: UserStore, useValue: mockUserStore }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AccessDenied);

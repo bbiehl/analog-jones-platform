@@ -1,19 +1,21 @@
 @use '@angular/material' as mat;
 
-$theme: mat.define-theme((
-  color: (
-    primary: mat.$violet-palette,
-    tertiary: mat.$cyan-palette,
-    theme-type: dark,
-  ),
-  typography: (
-    brand-family: Orbitron,
-    plain-family: Inter,
-  ),
-  density: (
-    scale: 0,
-  ),
-));
+$theme: mat.define-theme(
+  (
+    color: (
+      primary: mat.$violet-palette,
+      tertiary: mat.$cyan-palette,
+      theme-type: dark,
+    ),
+    typography: (
+      brand-family: Orbitron,
+      plain-family: Inter,
+    ),
+    density: (
+      scale: 0,
+    ),
+  )
+);
 
 html {
   @include mat.all-component-themes($theme);
@@ -52,7 +54,12 @@ mat-sidenav .active-link {
 }
 
 // Apply Orbitron to headings and brand elements
-h1, h2, h3, h4, h5, h6,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
 .toolbar-brand {
   font-family: Orbitron, sans-serif;
 }

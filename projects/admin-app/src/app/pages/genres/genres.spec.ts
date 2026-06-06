@@ -35,10 +35,7 @@ describe('Genres', () => {
 
     await TestBed.configureTestingModule({
       imports: [Genres],
-      providers: [
-        provideRouter([]),
-        { provide: GenreStore, useValue: mockGenreStore },
-      ],
+      providers: [provideRouter([]), { provide: GenreStore, useValue: mockGenreStore }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Genres);
@@ -144,7 +141,10 @@ describe('Genres', () => {
   });
 
   it('should delete the genre when delete is confirmed', async () => {
-    vi.stubGlobal('confirm', vi.fn(() => true));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => true),
+    );
     const button = await loader.getHarness(
       MatButtonHarness.with({ selector: '[aria-label="Delete genre"]' }),
     );
@@ -157,7 +157,10 @@ describe('Genres', () => {
   });
 
   it('should not delete the genre when delete is cancelled', async () => {
-    vi.stubGlobal('confirm', vi.fn(() => false));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => false),
+    );
     const button = await loader.getHarness(
       MatButtonHarness.with({ selector: '[aria-label="Delete genre"]' }),
     );

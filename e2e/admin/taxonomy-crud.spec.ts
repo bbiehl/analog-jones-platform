@@ -18,26 +18,30 @@ adminTest.describe('Taxonomy CRUD', () => {
     createdNames.length = 0;
   });
 
-  adminTest('category: slug auto-generates, create appears in list, then delete', async ({
-    page,
-  }) => {
-    const name = `E2E Cat ${Date.now()}`;
-    const expectedSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    const categories = new AdminCategoriesPage(page);
+  adminTest(
+    'category: slug auto-generates, create appears in list, then delete',
+    async ({ page }) => {
+      const name = `E2E Cat ${Date.now()}`;
+      const expectedSlug = name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+      const categories = new AdminCategoriesPage(page);
 
-    await categories.gotoAdd();
-    await categories.nameInput.fill(name);
-    // Slug is derived from the name as you type.
-    await expect(categories.slugInput).toHaveValue(expectedSlug);
+      await categories.gotoAdd();
+      await categories.nameInput.fill(name);
+      // Slug is derived from the name as you type.
+      await expect(categories.slugInput).toHaveValue(expectedSlug);
 
-    await categories.saveButton.click();
-    await expect(page).toHaveURL(/\/categories$/);
-    await expect(categories.rowByName(name)).toBeVisible();
-    createdNames.push(name); // register for afterEach cleanup once it exists
+      await categories.saveButton.click();
+      await expect(page).toHaveURL(/\/categories$/);
+      await expect(categories.rowByName(name)).toBeVisible();
+      createdNames.push(name); // register for afterEach cleanup once it exists
 
-    await categories.deleteByName(name);
-    await expect(categories.rowByName(name)).toHaveCount(0);
-  });
+      await categories.deleteByName(name);
+      await expect(categories.rowByName(name)).toHaveCount(0);
+    },
+  );
 
   adminTest('genres list renders', async ({ page }) => {
     await page.goto('/genres');

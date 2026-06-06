@@ -28,8 +28,7 @@ export class EpisodeListService {
     episodesByGenre: Record<string, Episode[]>;
   }> {
     let episodesPromise: Promise<Episode[]> | undefined;
-    const getEpisodes = () =>
-      (episodesPromise ??= this.episodeService.getVisibleEpisodes());
+    const getEpisodes = () => (episodesPromise ??= this.episodeService.getVisibleEpisodes());
 
     // Featured-category shelves are ancillary; skip them entirely on the
     // server so a slow or broken category branch can't register an SSR
@@ -39,7 +38,7 @@ export class EpisodeListService {
       ? Promise.resolve({})
       : this.transferCache
           .cached('episodes.byFeaturedCategory', () =>
-            this.buildEpisodesByFeaturedCategory(getEpisodes)
+            this.buildEpisodesByFeaturedCategory(getEpisodes),
           )
           .catch((reason): Record<string, Episode[]> => {
             console.error('Failed to load featured-category shelves', reason);
@@ -47,7 +46,7 @@ export class EpisodeListService {
           });
 
     const episodesByGenre = await this.transferCache.cached('episodes.byGenre', () =>
-      this.buildEpisodesByGenre(getEpisodes)
+      this.buildEpisodesByGenre(getEpisodes),
     );
 
     return { episodesByGenre, episodesByCategory };
@@ -55,18 +54,18 @@ export class EpisodeListService {
 
   async getEpisodesByGenre(): Promise<Record<string, Episode[]>> {
     return this.transferCache.cached('episodes.byGenre', () =>
-      this.buildEpisodesByGenre(() => this.episodeService.getVisibleEpisodes())
+      this.buildEpisodesByGenre(() => this.episodeService.getVisibleEpisodes()),
     );
   }
 
   async getEpisodesByFeaturedCategory(): Promise<Record<string, Episode[]>> {
     return this.transferCache.cached('episodes.byFeaturedCategory', () =>
-      this.buildEpisodesByFeaturedCategory(() => this.episodeService.getVisibleEpisodes())
+      this.buildEpisodesByFeaturedCategory(() => this.episodeService.getVisibleEpisodes()),
     );
   }
 
   private async buildEpisodesByGenre(
-    getEpisodes: () => Promise<Episode[]>
+    getEpisodes: () => Promise<Episode[]>,
   ): Promise<Record<string, Episode[]>> {
     const [episodes, genres, junctionSnap] = await Promise.all([
       getEpisodes(),
@@ -89,9 +88,7 @@ export class EpisodeListService {
     for (const genre of genres) {
       if (!genre.id) continue;
       const ids = episodeIdsByGenre.get(genre.id) ?? [];
-      const genreEpisodes = ids
-        .map((id) => episodesById.get(id))
-        .filter((e): e is Episode => !!e);
+      const genreEpisodes = ids.map((id) => episodesById.get(id)).filter((e): e is Episode => !!e);
       if (genreEpisodes.length === 0) continue;
       genreEpisodes.sort((a, b) => b.episodeDate.toMillis() - a.episodeDate.toMillis());
       result[genre.name] = genreEpisodes;
@@ -101,7 +98,7 @@ export class EpisodeListService {
   }
 
   private async buildEpisodesByFeaturedCategory(
-    getEpisodes: () => Promise<Episode[]>
+    getEpisodes: () => Promise<Episode[]>,
   ): Promise<Record<string, Episode[]>> {
     const [episodes, categories, junctionSnap] = await Promise.all([
       getEpisodes(),

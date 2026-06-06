@@ -1,6 +1,11 @@
 <div class="page-container p-6 max-w-2xl">
   <div class="flex items-center gap-2 mb-6">
-    <button mat-icon-button aria-label="Back to episodes" [disabled]="submitting()" (click)="onCancel()">
+    <button
+      mat-icon-button
+      aria-label="Back to episodes"
+      [disabled]="submitting()"
+      (click)="onCancel()"
+    >
       <mat-icon>arrow_back</mat-icon>
     </button>
     <h1 class="text-2xl">Edit Episode</h1>
@@ -47,8 +52,13 @@
         @if (posterPreview()) {
           <div class="relative w-40">
             <img [src]="posterPreview()" alt="Poster preview" class="w-40 rounded" />
-            <button mat-icon-button type="button" class="absolute top-0 right-0"
-                    aria-label="Remove poster" (click)="removePoster()">
+            <button
+              mat-icon-button
+              type="button"
+              class="absolute top-0 right-0"
+              aria-label="Remove poster"
+              (click)="removePoster()"
+            >
               <mat-icon>close</mat-icon>
             </button>
           </div>
@@ -102,8 +112,11 @@
         </div>
 
         @if (showMarkdownPreview()) {
-          <div class="markdown-preview rounded p-4" style="background: var(--mat-sys-surface-variant); min-height: 150px;"
-               [innerHTML]="markdownHtml()"></div>
+          <div
+            class="markdown-preview rounded p-4"
+            style="background: var(--mat-sys-surface-variant); min-height: 150px"
+            [innerHTML]="markdownHtml()"
+          ></div>
         } @else {
           <mat-form-field>
             <mat-label>Intelligence</mat-label>
@@ -120,8 +133,12 @@
       }
 
       <div class="flex gap-3 mt-4">
-        <button mat-flat-button color="primary" type="submit"
-                [disabled]="form.invalid || submitting()">
+        <button
+          mat-flat-button
+          color="primary"
+          type="submit"
+          [disabled]="form.invalid || submitting()"
+        >
           @if (submitting()) {
             <mat-spinner diameter="18" class="inline-block align-middle mr-2" />
             Saving…

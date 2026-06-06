@@ -14,9 +14,7 @@ describe('Categories', () => {
   let loader: HarnessLoader;
   let loading: ReturnType<typeof signal<boolean>>;
   let error: ReturnType<typeof signal<string | null>>;
-  let categories: ReturnType<
-    typeof signal<{ id: string; name: string; slug: string }[]>
-  >;
+  let categories: ReturnType<typeof signal<{ id: string; name: string; slug: string }[]>>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockCategoryStore: any;
 
@@ -37,10 +35,7 @@ describe('Categories', () => {
 
     await TestBed.configureTestingModule({
       imports: [Categories],
-      providers: [
-        provideRouter([]),
-        { provide: CategoryStore, useValue: mockCategoryStore },
-      ],
+      providers: [provideRouter([]), { provide: CategoryStore, useValue: mockCategoryStore }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Categories);
@@ -146,7 +141,10 @@ describe('Categories', () => {
   });
 
   it('should delete the category when delete is confirmed', async () => {
-    vi.stubGlobal('confirm', vi.fn(() => true));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => true),
+    );
     const button = await loader.getHarness(
       MatButtonHarness.with({ selector: '[aria-label="Delete category"]' }),
     );
@@ -159,7 +157,10 @@ describe('Categories', () => {
   });
 
   it('should not delete the category when delete is cancelled', async () => {
-    vi.stubGlobal('confirm', vi.fn(() => false));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => false),
+    );
     const button = await loader.getHarness(
       MatButtonHarness.with({ selector: '[aria-label="Delete category"]' }),
     );

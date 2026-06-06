@@ -59,10 +59,7 @@ describe('EpisodeStore', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        EpisodeStore,
-        { provide: EpisodeService, useValue: mockEpisodeService },
-      ],
+      providers: [EpisodeStore, { provide: EpisodeService, useValue: mockEpisodeService }],
     });
     store = TestBed.inject(EpisodeStore);
     vi.clearAllMocks();
@@ -238,7 +235,7 @@ describe('EpisodeStore', () => {
 
     it('should set error on failure', async () => {
       mockEpisodeService.getEpisodeById.mockRejectedValueOnce(
-        new Error('Episode with id "missing" not found')
+        new Error('Episode with id "missing" not found'),
       );
 
       await store.loadEpisodeById('missing');
@@ -303,9 +300,7 @@ describe('EpisodeStore', () => {
     });
 
     it('should set error on failure', async () => {
-      mockEpisodeService.toggleEpisodeVisibility.mockRejectedValueOnce(
-        new Error('Toggle failed')
-      );
+      mockEpisodeService.toggleEpisodeVisibility.mockRejectedValueOnce(new Error('Toggle failed'));
 
       await store.toggleEpisodeVisibility('ep1', false);
 
@@ -336,7 +331,7 @@ describe('EpisodeStore', () => {
         categoryIds,
         genreIds,
         tagIds,
-        undefined
+        undefined,
       );
       expect(mockEpisodeService.getAllEpisodes).toHaveBeenCalled();
       expect(store.episodes()).toEqual(mockEpisodes);
@@ -362,7 +357,7 @@ describe('EpisodeStore', () => {
         [],
         [],
         [],
-        posterFile
+        posterFile,
       );
     });
 
@@ -397,7 +392,7 @@ describe('EpisodeStore', () => {
         ['g1'],
         ['t1'],
         undefined,
-        undefined
+        undefined,
       );
       expect(mockEpisodeService.getAllEpisodes).toHaveBeenCalled();
       expect(store.episodes()).toEqual(mockEpisodes);
@@ -407,7 +402,14 @@ describe('EpisodeStore', () => {
     it('should pass poster file when provided', async () => {
       const posterFile = new File(['img'], 'poster.png', { type: 'image/png' });
 
-      await store.updateEpisode('ep1', { title: 'Updated' }, undefined, undefined, undefined, posterFile);
+      await store.updateEpisode(
+        'ep1',
+        { title: 'Updated' },
+        undefined,
+        undefined,
+        undefined,
+        posterFile,
+      );
 
       expect(mockEpisodeService.updateEpisode).toHaveBeenCalledWith(
         'ep1',
@@ -416,7 +418,7 @@ describe('EpisodeStore', () => {
         undefined,
         undefined,
         posterFile,
-        undefined
+        undefined,
       );
     });
 
@@ -515,7 +517,7 @@ describe('EpisodeStore', () => {
     it('should set loading=true while loadEpisodes is pending', async () => {
       let resolve!: (v: Episode[]) => void;
       mockEpisodeService.getAllEpisodes.mockImplementationOnce(
-        () => new Promise<Episode[]>((r) => (resolve = r))
+        () => new Promise<Episode[]>((r) => (resolve = r)),
       );
 
       const pending = store.loadEpisodes();
@@ -534,7 +536,7 @@ describe('EpisodeStore', () => {
 
       let resolve!: (v: Episode[]) => void;
       mockEpisodeService.getAllEpisodes.mockImplementationOnce(
-        () => new Promise<Episode[]>((r) => (resolve = r))
+        () => new Promise<Episode[]>((r) => (resolve = r)),
       );
       const pending = store.loadEpisodes();
       expect(store.error()).toBeNull();
@@ -560,7 +562,7 @@ describe('EpisodeStore', () => {
         undefined,
         undefined,
         undefined,
-        true
+        true,
       );
 
       expect(mockEpisodeService.updateEpisode).toHaveBeenCalledWith(
@@ -570,7 +572,7 @@ describe('EpisodeStore', () => {
         undefined,
         undefined,
         undefined,
-        true
+        true,
       );
     });
 
@@ -584,7 +586,7 @@ describe('EpisodeStore', () => {
         [],
         [],
         undefined,
-        undefined
+        undefined,
       );
     });
   });

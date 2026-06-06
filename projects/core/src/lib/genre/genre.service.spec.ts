@@ -90,7 +90,7 @@ describe('GenreService', () => {
     it('should throw when the snapshot does not exist', async () => {
       ops.getDoc.mockResolvedValueOnce({ exists: () => false });
       await expect(service.getGenreById('missing')).rejects.toThrow(
-        'Genre with id "missing" not found'
+        'Genre with id "missing" not found',
       );
     });
 
@@ -108,7 +108,7 @@ describe('GenreService', () => {
 
       expect(ops.addDoc).toHaveBeenCalledWith(
         { __collection: 'genres' },
-        { name: 'Horror', slug: 'horror' }
+        { name: 'Horror', slug: 'horror' },
       );
       expect(result).toBe('new-id');
     });
@@ -125,7 +125,7 @@ describe('GenreService', () => {
 
       expect(ops.updateDoc).toHaveBeenCalledWith(
         { __doc: 'genres/g1' },
-        { name: 'Updated', slug: 'updated' }
+        { name: 'Updated', slug: 'updated' },
       );
     });
 

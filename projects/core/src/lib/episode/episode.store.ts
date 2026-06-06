@@ -115,7 +115,7 @@ export const EpisodeStore = signalStore(
         categoryIds: string[],
         genreIds: string[],
         tagIds: string[],
-        posterFile?: File
+        posterFile?: File,
       ) {
         patchState(store, { loading: true, error: null });
         try {
@@ -134,7 +134,7 @@ export const EpisodeStore = signalStore(
         genreIds?: string[],
         tagIds?: string[],
         posterFile?: File,
-        removePoster?: boolean
+        removePoster?: boolean,
       ) {
         patchState(store, { loading: true, error: null });
         try {
@@ -145,7 +145,7 @@ export const EpisodeStore = signalStore(
             genreIds,
             tagIds,
             posterFile,
-            removePoster
+            removePoster,
           );
           const episodes = await episodeService.getAllEpisodes();
           patchState(store, { episodes, loading: false });
@@ -175,5 +175,5 @@ export const EpisodeStore = signalStore(
         patchState(store, { selectedEpisode: null });
       },
     };
-  })
+  }),
 );

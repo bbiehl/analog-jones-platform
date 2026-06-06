@@ -82,9 +82,9 @@ export class SeoService {
 
   private setJsonLd(jsonLd: SeoInput['jsonLd']): void {
     const head = this.document.head;
-    head.querySelectorAll('script[type="application/ld+json"][data-seo]').forEach((node) =>
-      node.remove(),
-    );
+    head
+      .querySelectorAll('script[type="application/ld+json"][data-seo]')
+      .forEach((node) => node.remove());
     if (!jsonLd) return;
     const blocks = Array.isArray(jsonLd) ? jsonLd : [jsonLd];
     for (const block of blocks) {

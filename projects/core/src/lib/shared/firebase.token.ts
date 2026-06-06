@@ -22,13 +22,7 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore';
-import {
-  deleteObject,
-  FirebaseStorage,
-  getDownloadURL,
-  ref,
-  uploadBytes,
-} from 'firebase/storage';
+import { deleteObject, FirebaseStorage, getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 export const AUTH = new InjectionToken<Auth>('Auth');
 

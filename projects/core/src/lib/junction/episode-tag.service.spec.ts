@@ -15,7 +15,7 @@ describe('EpisodeTagService', () => {
       doc: vi.fn((arg1, arg2, arg3) =>
         arg2 === undefined
           ? { id: 'auto', __collection: (arg1 as { __collection?: string }).__collection }
-          : { __doc: `${arg2}/${arg3}` }
+          : { __doc: `${arg2}/${arg3}` },
       ),
       query: vi.fn((coll, ...constraints) => ({ __query: { coll, constraints } })),
       orderBy: vi.fn((field) => ({ __orderBy: field })),
@@ -48,7 +48,7 @@ describe('EpisodeTagService', () => {
       expect(ops.collection).toHaveBeenCalledWith(firestore, 'episodeTags');
       expect(ops.addDoc).toHaveBeenCalledWith(
         { __collection: 'episodeTags' },
-        { episodeId: 'ep1', tagId: 't1' }
+        { episodeId: 'ep1', tagId: 't1' },
       );
     });
   });
@@ -96,10 +96,7 @@ describe('EpisodeTagService', () => {
   describe('getEpisodeIdsByTagId', () => {
     it('should return unique episodeIds', async () => {
       ops.getDocs.mockResolvedValueOnce({
-        docs: [
-          { data: () => ({ episodeId: 'ep1' }) },
-          { data: () => ({ episodeId: 'ep1' }) },
-        ],
+        docs: [{ data: () => ({ episodeId: 'ep1' }) }, { data: () => ({ episodeId: 'ep1' }) }],
       });
 
       expect(await service.getEpisodeIdsByTagId('t1')).toEqual(['ep1']);
@@ -130,10 +127,7 @@ describe('EpisodeTagService', () => {
   describe('getEpisodeTagsByEpisodeId', () => {
     it('should hydrate tags that exist and skip missing ones', async () => {
       ops.getDocs.mockResolvedValueOnce({
-        docs: [
-          { data: () => ({ tagId: 't1' }) },
-          { data: () => ({ tagId: 'gone' }) },
-        ],
+        docs: [{ data: () => ({ tagId: 't1' }) }, { data: () => ({ tagId: 'gone' }) }],
       });
       ops.getDoc
         .mockResolvedValueOnce({
@@ -160,9 +154,7 @@ describe('EpisodeTagService', () => {
           ],
         })
         .mockResolvedValueOnce({
-          docs: [
-            { id: 'ep1', data: () => ({ title: 'V', isVisible: true }) },
-          ],
+          docs: [{ id: 'ep1', data: () => ({ title: 'V', isVisible: true }) }],
         });
 
       const result = await service.getEpisodesByTagId('t1');

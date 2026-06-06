@@ -56,7 +56,11 @@
     <main>
       <router-outlet />
     </main>
-    <footer class="border-t border-gray-700 px-6 py-8" style="background: var(--mat-sys-surface-variant);" role="contentinfo">
+    <footer
+      class="border-t border-gray-700 px-6 py-8"
+      style="background: var(--mat-sys-surface-variant)"
+      role="contentinfo"
+    >
       <nav aria-label="Footer navigation" class="flex flex-wrap justify-center gap-4 mb-4">
         @for (link of footerLinks; track link.path) {
           <a

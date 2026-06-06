@@ -89,7 +89,7 @@ describe('EpisodeAdd', () => {
     mockEpisodeStore.createEpisode.mockReturnValueOnce(
       new Promise<void>((resolve) => {
         resolveCreate = resolve;
-      })
+      }),
     );
     const router = TestBed.inject(Router);
     vi.spyOn(router, 'navigate').mockResolvedValue(true);
@@ -152,7 +152,7 @@ describe('EpisodeAdd', () => {
     mockEpisodeStore.createEpisode.mockReturnValueOnce(
       new Promise<void>((resolve) => {
         resolveCreate = resolve;
-      })
+      }),
     );
     const router = TestBed.inject(Router);
     vi.spyOn(router, 'navigate').mockResolvedValue(true);
@@ -171,7 +171,7 @@ describe('EpisodeAdd', () => {
     mockEpisodeStore.createEpisode.mockReturnValueOnce(
       new Promise<void>((resolve) => {
         resolveCreate = resolve;
-      })
+      }),
     );
     const router = TestBed.inject(Router);
     vi.spyOn(router, 'navigate').mockResolvedValue(true);
@@ -181,7 +181,7 @@ describe('EpisodeAdd', () => {
     c.form.patchValue({ title: 'Test' });
 
     const backButton = await loader.getHarness(
-      MatButtonHarness.with({ selector: '[aria-label="Back to episodes"]' })
+      MatButtonHarness.with({ selector: '[aria-label="Back to episodes"]' }),
     );
     expect(await backButton.isDisabled()).toBe(false);
 
@@ -204,7 +204,7 @@ describe('EpisodeAdd', () => {
     mockEpisodeStore.createEpisode.mockReturnValueOnce(
       new Promise<void>((resolve) => {
         resolveCreate = resolve;
-      })
+      }),
     );
     const router = TestBed.inject(Router);
     vi.spyOn(router, 'navigate').mockResolvedValue(true);

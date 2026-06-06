@@ -107,7 +107,7 @@ describe('EpisodeEdit', () => {
     mockEpisodeStore.updateEpisode.mockReturnValueOnce(
       new Promise<void>((resolve) => {
         resolveUpdate = resolve;
-      })
+      }),
     );
     const router = TestBed.inject(Router);
     vi.spyOn(router, 'navigate').mockResolvedValue(true);
@@ -184,7 +184,7 @@ describe('EpisodeEdit', () => {
     mockEpisodeStore.updateEpisode.mockReturnValueOnce(
       new Promise<void>((resolve) => {
         resolveUpdate = resolve;
-      })
+      }),
     );
     const router = TestBed.inject(Router);
     vi.spyOn(router, 'navigate').mockResolvedValue(true);
@@ -206,7 +206,7 @@ describe('EpisodeEdit', () => {
     mockEpisodeStore.updateEpisode.mockReturnValueOnce(
       new Promise<void>((resolve) => {
         resolveUpdate = resolve;
-      })
+      }),
     );
     const router = TestBed.inject(Router);
     vi.spyOn(router, 'navigate').mockResolvedValue(true);
@@ -216,7 +216,7 @@ describe('EpisodeEdit', () => {
     c.form.patchValue({ title: 'Test' });
 
     const backButton = await loader.getHarness(
-      MatButtonHarness.with({ selector: '[aria-label="Back to episodes"]' })
+      MatButtonHarness.with({ selector: '[aria-label="Back to episodes"]' }),
     );
     expect(await backButton.isDisabled()).toBe(false);
 
@@ -459,7 +459,7 @@ describe('EpisodeEdit', () => {
     mockEpisodeStore.updateEpisode.mockReturnValueOnce(
       new Promise<void>((resolve) => {
         resolveUpdate = resolve;
-      })
+      }),
     );
     const router = TestBed.inject(Router);
     vi.spyOn(router, 'navigate').mockResolvedValue(true);

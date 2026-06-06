@@ -7,11 +7,6 @@
     "rootDir": "..",
     "types": ["vitest/globals"]
   },
-  "include": [
-    "src/**/*.d.ts",
-    "src/**/*.spec.ts",
-    "src/test-setup.ts",
-    "../core/src/**/*.ts"
-  ],
+  "include": ["src/**/*.d.ts", "src/**/*.spec.ts", "src/test-setup.ts", "../core/src/**/*.ts"],
   "exclude": ["../core/src/**/*.spec.ts", "../core/src/test-setup.ts"]
 }

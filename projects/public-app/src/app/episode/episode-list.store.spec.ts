@@ -27,10 +27,7 @@ describe('EpisodeListStore', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        EpisodeListStore,
-        { provide: EpisodeListService, useValue: mockService },
-      ],
+      providers: [EpisodeListStore, { provide: EpisodeListService, useValue: mockService }],
     });
     store = TestBed.inject(EpisodeListStore);
     vi.clearAllMocks();
@@ -195,7 +192,7 @@ describe('EpisodeListStore', () => {
     mockService.getShelves.mockReturnValueOnce(
       new Promise((resolve) => {
         resolveSecond = resolve;
-      })
+      }),
     );
 
     const secondLoad = store.load();
@@ -218,7 +215,7 @@ describe('EpisodeListStore', () => {
     mockService.getShelves.mockReturnValueOnce(
       new Promise((resolve) => {
         resolveFirstShelves = resolve;
-      })
+      }),
     );
     mockService.getShelves.mockResolvedValueOnce({
       episodesByGenre: { Jazz: [ep('b', 200)] },
@@ -246,7 +243,7 @@ describe('EpisodeListStore', () => {
     mockService.getShelves.mockReturnValueOnce(
       new Promise((_, reject) => {
         rejectFirst = reject;
-      })
+      }),
     );
     mockService.getShelves.mockResolvedValueOnce({
       episodesByGenre: { Rock: [ep('a', 100)] },

@@ -44,7 +44,9 @@ describe('Episodes', () => {
     toggleEpisodeVisibility: ReturnType<typeof vi.fn>;
   };
 
-  async function setup(initial: { loading?: boolean; error?: string | null; episodes?: Episode[] } = {}) {
+  async function setup(
+    initial: { loading?: boolean; error?: string | null; episodes?: Episode[] } = {},
+  ) {
     loading.set(initial.loading ?? false);
     error.set(initial.error ?? null);
     episodes.set(initial.episodes ?? []);
@@ -130,7 +132,11 @@ describe('Episodes', () => {
     it('should display title and formatted date in the row', async () => {
       await setup({
         episodes: [
-          makeEpisode({ id: 'e1', title: 'Alpha', episodeDate: Timestamp.fromMillis(1_700_000_000_000) }),
+          makeEpisode({
+            id: 'e1',
+            title: 'Alpha',
+            episodeDate: Timestamp.fromMillis(1_700_000_000_000),
+          }),
         ],
       });
       const table = await loader.getHarness(MatTableHarness);
@@ -157,7 +163,9 @@ describe('Episodes', () => {
     it('should navigate to /episodes/edit/:id on edit click', async () => {
       const router = TestBed.inject(Router);
       const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-      const editBtn = await loader.getHarness(MatButtonHarness.with({ selector: '[aria-label="Edit episode"]' }));
+      const editBtn = await loader.getHarness(
+        MatButtonHarness.with({ selector: '[aria-label="Edit episode"]' }),
+      );
 
       await editBtn.click();
 
@@ -170,7 +178,9 @@ describe('Episodes', () => {
 
     it('should delete when user confirms', async () => {
       vi.spyOn(window, 'confirm').mockReturnValue(true);
-      const delBtn = await loader.getHarness(MatButtonHarness.with({ selector: '[aria-label="Delete episode"]' }));
+      const delBtn = await loader.getHarness(
+        MatButtonHarness.with({ selector: '[aria-label="Delete episode"]' }),
+      );
 
       await delBtn.click();
 
@@ -179,7 +189,9 @@ describe('Episodes', () => {
 
     it('should not delete when user cancels', async () => {
       vi.spyOn(window, 'confirm').mockReturnValue(false);
-      const delBtn = await loader.getHarness(MatButtonHarness.with({ selector: '[aria-label="Delete episode"]' }));
+      const delBtn = await loader.getHarness(
+        MatButtonHarness.with({ selector: '[aria-label="Delete episode"]' }),
+      );
 
       await delBtn.click();
 
@@ -205,35 +217,59 @@ describe('Episodes', () => {
           makeEpisode({ id: 'e1', title: 'Alpha' }),
           makeEpisode({ id: 'e2', title: 'Bravo' }),
         ],
-      })
+      }),
     );
 
     it('filterPredicate matches case-insensitive title substring', () => {
-      const ds = (component as unknown as { dataSource: { filterPredicate: (e: Episode, f: string) => boolean } }).dataSource;
+      const ds = (
+        component as unknown as {
+          dataSource: { filterPredicate: (e: Episode, f: string) => boolean };
+        }
+      ).dataSource;
       expect(ds.filterPredicate(makeEpisode({ title: 'Alpha' }), 'alp')).toBe(true);
       expect(ds.filterPredicate(makeEpisode({ title: 'Alpha' }), 'zzz')).toBe(false);
     });
 
     it('sortingDataAccessor returns lowercase title for "title"', () => {
-      const ds = (component as unknown as { dataSource: { sortingDataAccessor: (e: Episode, h: string) => string | number } }).dataSource;
+      const ds = (
+        component as unknown as {
+          dataSource: { sortingDataAccessor: (e: Episode, h: string) => string | number };
+        }
+      ).dataSource;
       expect(ds.sortingDataAccessor(makeEpisode({ title: 'Alpha' }), 'title')).toBe('alpha');
     });
 
     it('sortingDataAccessor returns millis for "episodeDate"', () => {
-      const ds = (component as unknown as { dataSource: { sortingDataAccessor: (e: Episode, h: string) => string | number } }).dataSource;
+      const ds = (
+        component as unknown as {
+          dataSource: { sortingDataAccessor: (e: Episode, h: string) => string | number };
+        }
+      ).dataSource;
       const ts = Timestamp.fromMillis(123456);
       expect(ds.sortingDataAccessor(makeEpisode({ episodeDate: ts }), 'episodeDate')).toBe(123456);
     });
 
     it('sortingDataAccessor returns "" for unknown column', () => {
-      const ds = (component as unknown as { dataSource: { sortingDataAccessor: (e: Episode, h: string) => string | number } }).dataSource;
+      const ds = (
+        component as unknown as {
+          dataSource: { sortingDataAccessor: (e: Episode, h: string) => string | number };
+        }
+      ).dataSource;
       expect(ds.sortingDataAccessor(makeEpisode(), 'unknown')).toBe('');
     });
 
     it('applyFilter trims, lowercases, and resets paginator to first page', () => {
-      const ds = (component as unknown as { dataSource: { filter: string; paginator: unknown } }).dataSource;
+      const ds = (component as unknown as { dataSource: { filter: string; paginator: unknown } })
+        .dataSource;
       const firstPage = vi.fn();
-      ds.paginator = { firstPage, page: new Subject(), initialized: new Subject(), pageIndex: 0, pageSize: 10, length: 0 };
+      ds.paginator = {
+        firstPage,
+        page: new Subject(),
+        initialized: new Subject(),
+        pageIndex: 0,
+        pageSize: 10,
+        length: 0,
+      };
 
       (component as unknown as { applyFilter: (v: string) => void }).applyFilter('  Alpha  ');
 
@@ -248,7 +284,9 @@ describe('Episodes', () => {
       fixture.detectChanges();
       await fixture.whenStable();
 
-      const clearBtn = await loader.getHarness(MatButtonHarness.with({ selector: '[aria-label="Clear filter"]' }));
+      const clearBtn = await loader.getHarness(
+        MatButtonHarness.with({ selector: '[aria-label="Clear filter"]' }),
+      );
       await clearBtn.click();
 
       expect((component as unknown as { filterValue: string }).filterValue).toBe('');
