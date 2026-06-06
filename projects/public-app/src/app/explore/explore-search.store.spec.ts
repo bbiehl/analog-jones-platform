@@ -68,7 +68,7 @@ describe('ExploreSearchStore', () => {
     mockExploreSearchService.searchEpisodes.mockReturnValueOnce(
       new Promise<Episode[]>((resolve) => {
         resolveFn = resolve;
-      })
+      }),
     );
 
     const pending = store.selectSearchOption(mockOptions[0]);
@@ -113,7 +113,7 @@ describe('ExploreSearchStore', () => {
     mockExploreSearchService.getAutoCompleteOptions.mockReturnValueOnce(
       new Promise<SearchAutoCompleteOption[]>((resolve) => {
         resolveFn = resolve;
-      })
+      }),
     );
 
     const pending = store.loadAutoCompleteOptions();
@@ -198,7 +198,7 @@ describe('ExploreSearchStore', () => {
       .mockReturnValueOnce(
         new Promise<Episode[]>((resolve) => {
           resolveFirst = resolve;
-        })
+        }),
       )
       .mockResolvedValueOnce(mockEpisodes);
 
@@ -220,7 +220,7 @@ describe('ExploreSearchStore', () => {
       .mockReturnValueOnce(
         new Promise<Episode[]>((_, reject) => {
           rejectFirst = reject;
-        })
+        }),
       )
       .mockResolvedValueOnce(mockEpisodes);
 

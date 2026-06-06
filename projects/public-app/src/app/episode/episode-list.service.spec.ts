@@ -106,10 +106,7 @@ describe('EpisodeListService', () => {
         { id: 'g2', name: 'Rock', slug: 'rock' },
       ];
       mockGenreService.getAllGenres.mockResolvedValue(genres);
-      mockEpisodeService.getVisibleEpisodes.mockResolvedValue([
-        ep('a', 100),
-        ep('b', 200),
-      ]);
+      mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100), ep('b', 200)]);
       genreJunctionRows = [
         { genreId: 'g1', episodeId: 'a' },
         { genreId: 'g2', episodeId: 'b' },
@@ -123,9 +120,7 @@ describe('EpisodeListService', () => {
     });
 
     it('should sort each bucket by episodeDate descending', async () => {
-      mockGenreService.getAllGenres.mockResolvedValue([
-        { id: 'g1', name: 'Rock', slug: 'rock' },
-      ]);
+      mockGenreService.getAllGenres.mockResolvedValue([{ id: 'g1', name: 'Rock', slug: 'rock' }]);
       mockEpisodeService.getVisibleEpisodes.mockResolvedValue([
         ep('old', 100),
         ep('new', 500),
@@ -262,9 +257,7 @@ describe('EpisodeListService', () => {
     ];
 
     it('should fetch visible episodes only once across both shelves', async () => {
-      mockGenreService.getAllGenres.mockResolvedValue([
-        { id: 'g1', name: 'Rock', slug: 'rock' },
-      ]);
+      mockGenreService.getAllGenres.mockResolvedValue([{ id: 'g1', name: 'Rock', slug: 'rock' }]);
       mockCategoryService.getAllCategories.mockResolvedValue(featured);
       mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100)]);
       genreJunctionRows = [{ genreId: 'g1', episodeId: 'a' }];
@@ -279,14 +272,12 @@ describe('EpisodeListService', () => {
     });
 
     it('should return genre shelves before the featured-category branch resolves', async () => {
-      mockGenreService.getAllGenres.mockResolvedValue([
-        { id: 'g1', name: 'Rock', slug: 'rock' },
-      ]);
+      mockGenreService.getAllGenres.mockResolvedValue([{ id: 'g1', name: 'Rock', slug: 'rock' }]);
       let resolveCategories: (value: Category[]) => void;
       mockCategoryService.getAllCategories.mockReturnValue(
         new Promise<Category[]>((resolve) => {
           resolveCategories = resolve;
-        })
+        }),
       );
       mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100)]);
       genreJunctionRows = [{ genreId: 'g1', episodeId: 'a' }];
@@ -302,9 +293,7 @@ describe('EpisodeListService', () => {
     });
 
     it('should still return genre shelves when the featured-category branch fails', async () => {
-      mockGenreService.getAllGenres.mockResolvedValue([
-        { id: 'g1', name: 'Rock', slug: 'rock' },
-      ]);
+      mockGenreService.getAllGenres.mockResolvedValue([{ id: 'g1', name: 'Rock', slug: 'rock' }]);
       mockCategoryService.getAllCategories.mockRejectedValue(new Error('cat-down'));
       mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100)]);
       genreJunctionRows = [{ genreId: 'g1', episodeId: 'a' }];
@@ -365,9 +354,7 @@ describe('EpisodeListService', () => {
     });
 
     it('skips the featured-category branch entirely on the server', async () => {
-      mockGenreService.getAllGenres.mockResolvedValue([
-        { id: 'g1', name: 'Rock', slug: 'rock' },
-      ]);
+      mockGenreService.getAllGenres.mockResolvedValue([{ id: 'g1', name: 'Rock', slug: 'rock' }]);
       mockEpisodeService.getVisibleEpisodes.mockResolvedValue([ep('a', 100)]);
       genreJunctionRows = [{ genreId: 'g1', episodeId: 'a' }];
 
@@ -379,7 +366,7 @@ describe('EpisodeListService', () => {
       expect(mockCategoryService.getAllCategories).not.toHaveBeenCalled();
       expect(mockTransferCache.cached).not.toHaveBeenCalledWith(
         'episodes.byFeaturedCategory',
-        expect.anything()
+        expect.anything(),
       );
     });
   });

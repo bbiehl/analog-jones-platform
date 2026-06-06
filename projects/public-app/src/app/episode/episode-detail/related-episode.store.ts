@@ -41,5 +41,5 @@ export const RelatedEpisodeStore = signalStore(
         patchState(store, { relatedEpisodes: [] });
       },
     };
-  })
+  }),
 );

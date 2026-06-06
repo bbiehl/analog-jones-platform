@@ -76,7 +76,7 @@ export class EpisodeEdit implements OnInit, OnDestroy {
   protected readonly submitError = signal<string | null>(null);
 
   protected readonly initialLoading = computed(
-    () => this.episodeStore.loading() && !this.episodeStore.selectedEpisode()
+    () => this.episodeStore.loading() && !this.episodeStore.selectedEpisode(),
   );
 
   private readonly intelligenceValue = toSignal(this.form.controls.intelligence.valueChanges, {
@@ -170,7 +170,7 @@ export class EpisodeEdit implements OnInit, OnDestroy {
         v.genreIds,
         v.tagIds,
         this.posterFile() ?? undefined,
-        this.posterRemoved()
+        this.posterRemoved(),
       );
       const error = this.episodeStore.error();
       if (error) {

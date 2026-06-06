@@ -12,6 +12,8 @@
     "test:public": "pnpm build:core && ng test public-app",
     "test:admin": "pnpm build:core && ng test admin-app",
     "test:core": "ng test core",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "serve:ssr:public-app": "node dist/public-app/server/server.mjs",
     "serve:ssr:admin-app": "node dist/admin-app/server/server.mjs",
     "e2e": "firebase emulators:exec --import=./seed-data \"playwright test\"",

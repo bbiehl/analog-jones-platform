@@ -76,5 +76,5 @@ export const ExploreSearchStore = signalStore(
       },
       searchEpisodes,
     };
-  })
+  }),
 );

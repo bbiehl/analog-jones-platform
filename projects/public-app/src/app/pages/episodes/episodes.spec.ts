@@ -79,9 +79,7 @@ describe('Episodes', () => {
       isLoading.set(true);
       fixture.detectChanges();
 
-      const skeletons = fixture.nativeElement.querySelectorAll(
-        'app-episode-scroller-skeleton'
-      );
+      const skeletons = fixture.nativeElement.querySelectorAll('app-episode-scroller-skeleton');
       expect(skeletons.length).toBe(2);
 
       const busyRegions = fixture.nativeElement.querySelectorAll('[aria-busy="true"]');
@@ -157,7 +155,7 @@ describe('Episodes', () => {
 
     it('preserves genre order from the store map', () => {
       const headings = Array.from(
-        fixture.nativeElement.querySelectorAll('app-episode-scroller')
+        fixture.nativeElement.querySelectorAll('app-episode-scroller'),
       ).map((el) => (el as HTMLElement).querySelector('h2,h3,header')?.textContent ?? '');
       // We don't assert exact heading template — only that the store-provided
       // genre order is preserved by checking the underlying entries.

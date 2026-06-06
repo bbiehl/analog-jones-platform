@@ -12,5 +12,5 @@ export interface AppUser {
 export enum UserRole {
   ADMIN = 'admin',
   MEMBER = 'member',
-  FREE = 'free'
+  FREE = 'free',
 }

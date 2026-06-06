@@ -5,6 +5,7 @@ type: project
 ---
 
 Analog Jones is a content platform with two Angular apps:
+
 - **public-app**: Public-facing site with episodes, tags, contact, terms, privacy pages
 - **admin-app**: Admin dashboard for managing users, episodes, tags
 

@@ -16,4 +16,3 @@ Run the following pnpm security audit workflow:
    - If auto-fixable issues exist, offer to run `pnpm audit --fix` (this updates the lockfile)
    - For vulnerabilities requiring manual intervention (e.g. no patched version yet), note the package and link to any advisory if available
    - Flag any critical or high severity issues that should be prioritized
-   

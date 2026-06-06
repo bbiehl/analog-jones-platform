@@ -69,25 +69,23 @@ export class Explorer implements OnInit {
 
   protected readonly optionsLoaded = computed(() => this.autoCompleteOptions().length > 0);
   protected readonly optionsLoading = computed(
-    () => this.isLoading() && !this.selectedSearchOption() && !this.optionsLoaded()
+    () => this.isLoading() && !this.selectedSearchOption() && !this.optionsLoaded(),
   );
   protected readonly optionsError = computed(() =>
-    !this.optionsLoaded() && !this.selectedSearchOption() ? this.error() : null
+    !this.optionsLoaded() && !this.selectedSearchOption() ? this.error() : null,
   );
   protected readonly resultsLoading = computed(
-    () => this.isLoading() && !!this.selectedSearchOption()
+    () => this.isLoading() && !!this.selectedSearchOption(),
   );
   protected readonly resultsError = computed(() =>
-    this.selectedSearchOption() ? this.error() : null
+    this.selectedSearchOption() ? this.error() : null,
   );
 
   protected readonly groupedOptions = computed<OptionGroup[]>(() => {
     const raw = this.searchText();
-    const term = (typeof raw === 'string' ? raw : raw?.value ?? '').trim().toLowerCase();
+    const term = (typeof raw === 'string' ? raw : (raw?.value ?? '')).trim().toLowerCase();
     const all = this.autoCompleteOptions();
-    const matches = term
-      ? all.filter((o) => o.value.toLowerCase().includes(term))
-      : all;
+    const matches = term ? all.filter((o) => o.value.toLowerCase().includes(term)) : all;
     return GROUP_ORDER.map(({ type, label }) => ({
       label,
       options: matches.filter((o) => o.type === type),

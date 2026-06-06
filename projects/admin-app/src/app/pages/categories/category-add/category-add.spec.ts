@@ -51,9 +51,7 @@ describe('CategoryAdd', () => {
   });
 
   it('should have the save button disabled when form is empty', async () => {
-    const saveButton = await loader.getHarness(
-      MatButtonHarness.with({ text: /Save/ })
-    );
+    const saveButton = await loader.getHarness(MatButtonHarness.with({ text: /Save/ }));
     expect(await saveButton.isDisabled()).toBe(true);
   });
 

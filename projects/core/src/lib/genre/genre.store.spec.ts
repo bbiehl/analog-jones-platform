@@ -86,7 +86,7 @@ describe('GenreStore', () => {
 
     it('should set error on failure', async () => {
       mockGenreService.getGenreById.mockRejectedValueOnce(
-        new Error('Genre with id "missing" not found')
+        new Error('Genre with id "missing" not found'),
       );
 
       await store.loadGenreById('missing');

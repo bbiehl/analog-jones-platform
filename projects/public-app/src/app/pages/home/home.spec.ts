@@ -36,7 +36,10 @@ function makeEpisode(overrides: Partial<Episode> = {}): Episode {
   };
 }
 
-function makeRelations(ep: Episode, overrides: Partial<EpisodeWithRelations> = {}): EpisodeWithRelations {
+function makeRelations(
+  ep: Episode,
+  overrides: Partial<EpisodeWithRelations> = {},
+): EpisodeWithRelations {
   return {
     ...ep,
     categories: [],
@@ -88,7 +91,7 @@ describe('Home', () => {
   describe('derivations', () => {
     it('featured is the first episode, shelfEpisodes is items 1..8', async () => {
       const eps = Array.from({ length: 10 }, (_, i) =>
-        makeEpisode({ id: `ep-${i}`, title: `t${i}` })
+        makeEpisode({ id: `ep-${i}`, title: `t${i}` }),
       );
       const { component } = await setup({ episodes: signal(eps) });
       expect(component['featured']()?.id).toBe('ep-0');
@@ -168,7 +171,9 @@ describe('Home', () => {
 
   describe('featuredIntelligence', () => {
     it('is null when featured.intelligence is null', async () => {
-      const { component } = await setup({ episodes: signal([makeEpisode({ intelligence: null })]) });
+      const { component } = await setup({
+        episodes: signal([makeEpisode({ intelligence: null })]),
+      });
       expect(component['featuredIntelligence']()).toBeNull();
     });
 
@@ -251,7 +256,7 @@ describe('Home', () => {
       const ep = makeEpisode({ links: { spotify: 'https://spotify/ep' } });
       const { fixture } = await setup({ episodes: signal([ep]) });
       const buttons = Array.from(
-        fixture.nativeElement.querySelectorAll('#drop .actions a')
+        fixture.nativeElement.querySelectorAll('#drop .actions a'),
       ) as HTMLAnchorElement[];
       expect(buttons.some((b) => b.textContent?.includes('SPOTIFY'))).toBe(true);
       expect(buttons.some((b) => b.textContent?.includes('YOUTUBE'))).toBe(false);
@@ -261,7 +266,7 @@ describe('Home', () => {
       const ep = makeEpisode({ links: { youtube: 'https://yt/ep' } });
       const { fixture } = await setup({ episodes: signal([ep]) });
       const buttons = Array.from(
-        fixture.nativeElement.querySelectorAll('#drop .actions a')
+        fixture.nativeElement.querySelectorAll('#drop .actions a'),
       ) as HTMLAnchorElement[];
       expect(buttons.some((b) => b.textContent?.includes('YOUTUBE'))).toBe(true);
       expect(buttons.some((b) => b.textContent?.includes('SPOTIFY'))).toBe(false);
@@ -273,7 +278,7 @@ describe('Home', () => {
       const ep = makeEpisode({ id: 'feat-99' });
       const { fixture } = await setup({ episodes: signal([ep]) });
       const links = Array.from(
-        fixture.nativeElement.querySelectorAll('.hero .cta a')
+        fixture.nativeElement.querySelectorAll('.hero .cta a'),
       ) as HTMLAnchorElement[];
       const play = links.find((a) => a.textContent?.includes('PLAY EPISODE'));
       expect(play).toBeTruthy();
@@ -343,7 +348,7 @@ describe('Home', () => {
       const ep = makeEpisode({ id: 'sn-1' });
       const { fixture } = await setup({ episodes: signal([ep]) });
       const links = Array.from(
-        fixture.nativeElement.querySelectorAll('#drop .actions a')
+        fixture.nativeElement.querySelectorAll('#drop .actions a'),
       ) as HTMLAnchorElement[];
       const showNotes = links.find((a) => a.textContent?.includes('SHOW NOTES'));
       expect(showNotes).toBeTruthy();
@@ -370,7 +375,7 @@ describe('Home', () => {
       const hosts = fixture.nativeElement.querySelectorAll('.hosts .host');
       expect(hosts.length).toBe(3);
       const inits = Array.from(fixture.nativeElement.querySelectorAll('.hosts .av')).map((el) =>
-        (el as HTMLElement).getAttribute('data-init')
+        (el as HTMLElement).getAttribute('data-init'),
       );
       expect(inits).toEqual(['ST', 'CH', 'BR']);
     });
@@ -382,10 +387,10 @@ describe('Home', () => {
       const blocks = await fixture.getDeferBlocks();
       await blocks[2].render(DeferBlockState.Complete);
       const spotify = fixture.nativeElement.querySelector(
-        '#listen .card.spotify a.btn.primary'
+        '#listen .card.spotify a.btn.primary',
       ) as HTMLAnchorElement;
       const youtube = fixture.nativeElement.querySelector(
-        '#listen .card.youtube a.btn.primary'
+        '#listen .card.youtube a.btn.primary',
       ) as HTMLAnchorElement;
       expect(spotify.getAttribute('href')).toContain('open.spotify.com');
       expect(spotify.getAttribute('target')).toBe('_blank');

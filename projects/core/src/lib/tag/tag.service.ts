@@ -8,10 +8,7 @@ export class TagService {
   private ops = inject(FIRESTORE_OPS);
 
   async getAllTags(): Promise<Tag[]> {
-    const q = this.ops.query(
-      this.ops.collection(this.firestore, 'tags'),
-      this.ops.orderBy('name')
-    );
+    const q = this.ops.query(this.ops.collection(this.firestore, 'tags'), this.ops.orderBy('name'));
     const snapshot = await this.ops.getDocs(q);
     return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Tag);
   }
@@ -40,7 +37,7 @@ export class TagService {
   async deleteTag(id: string): Promise<void> {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'episodeTags'),
-      this.ops.where('tagId', '==', id)
+      this.ops.where('tagId', '==', id),
     );
     const snapshot = await this.ops.getDocs(q);
 

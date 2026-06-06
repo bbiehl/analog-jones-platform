@@ -105,22 +105,19 @@ TestBed.configureTestingModule({
 
 ```typescript
 TestBed.configureTestingModule({
-  providers: [
-    EpisodeTagService,
-    { provide: FIRESTORE, useValue: {} as Firestore },
-  ],
+  providers: [EpisodeTagService, { provide: FIRESTORE, useValue: {} as Firestore }],
 });
 ```
 
 ### Token quick-reference
 
-| Token | Type | When to provide |
-|---|---|---|
-| `FIRESTORE` | `Firestore` | All services (always required) |
-| `STORAGE` | `FirebaseStorage` | Services using Firebase Storage |
-| `STORAGE_OPS` | `StorageOps` | Services calling `ref`, `uploadBytes`, `getDownloadURL`, `deleteObject` |
-| `AUTH` | `Auth` | Services using Firebase Auth |
-| Other services | class ref | Services that `inject()` another service (e.g., junction services) |
+| Token          | Type              | When to provide                                                         |
+| -------------- | ----------------- | ----------------------------------------------------------------------- |
+| `FIRESTORE`    | `Firestore`       | All services (always required)                                          |
+| `STORAGE`      | `FirebaseStorage` | Services using Firebase Storage                                         |
+| `STORAGE_OPS`  | `StorageOps`      | Services calling `ref`, `uploadBytes`, `getDownloadURL`, `deleteObject` |
+| `AUTH`         | `Auth`            | Services using Firebase Auth                                            |
+| Other services | class ref         | Services that `inject()` another service (e.g., junction services)      |
 
 ## Unit Test Pattern (lib stores)
 
@@ -150,16 +147,15 @@ describe('CategoryStore', () => {
   let store: InstanceType<typeof CategoryStore>;
 
   const mockCategoryService = {
-    getAllCategories: vi.fn().mockResolvedValue([/* ... */]),
+    getAllCategories: vi.fn().mockResolvedValue([
+      /* ... */
+    ]),
     // ...
   };
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        CategoryStore,
-        { provide: CategoryService, useValue: mockCategoryService },
-      ],
+      providers: [CategoryStore, { provide: CategoryService, useValue: mockCategoryService }],
     });
     store = TestBed.inject(CategoryStore);
     vi.clearAllMocks();
@@ -183,8 +179,6 @@ const mockCategoryStore = {
 };
 
 TestBed.configureTestingModule({
-  providers: [
-    { provide: CategoryStore, useValue: mockCategoryStore },
-  ],
+  providers: [{ provide: CategoryStore, useValue: mockCategoryStore }],
 });
 ```

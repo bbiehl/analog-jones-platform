@@ -81,13 +81,14 @@ Sends token-less create/update/delete REST calls against sentinel paths; exits 0
 `projects/*/src/environments/environment*.ts` contains two values that look sensitive but are intentionally committed:
 
 - **`firebaseConfig`** (apiKey, projectId, appId, etc.) — the Firebase Web SDK requires these in the browser to reach the project. They are identifiers, not secrets. Access is gated by Firestore/Storage **security rules** and **Firebase Authentication**, not by hiding the config. See [Firebase docs: "Is it safe to expose Firebase apiKey to the public?"](https://firebase.google.com/docs/projects/api-keys).
-- **`recaptchaSiteKey`** — reCAPTCHA Enterprise *site* keys are designed to be public. The matching *secret* key never leaves Google's servers. The site key is bound to the registered domains (App Hosting URLs + custom domains), so it can't be reused from a different origin.
+- **`recaptchaSiteKey`** — reCAPTCHA Enterprise _site_ keys are designed to be public. The matching _secret_ key never leaves Google's servers. The site key is bound to the registered domains (App Hosting URLs + custom domains), so it can't be reused from a different origin.
 
 The defense against a malicious clone of this repo is:
+
 1. **Security rules** (`firestore.rules`, `storage.rules`) — only authorized users can read/write protected paths.
 2. **Firebase App Check** with reCAPTCHA Enterprise — once enforced, Firestore and Storage reject requests that don't carry a valid attestation token, and tokens are only issuable from the registered origins.
 
-**Never commit:** service-account JSON keys, Firebase Admin SDK credentials, reCAPTCHA *secret* keys, or any value with `private_key` / `client_secret` in it.
+**Never commit:** service-account JSON keys, Firebase Admin SDK credentials, reCAPTCHA _secret_ keys, or any value with `private_key` / `client_secret` in it.
 
 ## Tech stack
 

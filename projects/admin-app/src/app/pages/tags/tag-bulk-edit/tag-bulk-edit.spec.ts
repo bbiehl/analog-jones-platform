@@ -110,7 +110,7 @@ describe('TagBulkEdit', () => {
 
     expect(mockEpisodeTagService.setEpisodesForTag).toHaveBeenCalledWith(
       't1',
-      expect.arrayContaining(['e1', 'e2', 'e3'])
+      expect.arrayContaining(['e1', 'e2', 'e3']),
     );
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/tags']);
   });

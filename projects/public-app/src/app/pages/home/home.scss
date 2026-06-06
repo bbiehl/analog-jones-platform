@@ -69,7 +69,12 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, transparent 0%, rgba(213, 186, 255, 0.04) 50%, transparent 100%);
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(213, 186, 255, 0.04) 50%,
+    transparent 100%
+  );
   background-size: 100% 8px;
   animation: roll 5.5s linear infinite;
   animation-play-state: paused;
@@ -111,12 +116,24 @@
 }
 
 @keyframes grainShift {
-  0% { transform: translate(0, 0); }
-  20% { transform: translate(-3%, 2%); }
-  40% { transform: translate(2%, -3%); }
-  60% { transform: translate(-2%, -2%); }
-  80% { transform: translate(3%, 3%); }
-  100% { transform: translate(0, 0); }
+  0% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-3%, 2%);
+  }
+  40% {
+    transform: translate(2%, -3%);
+  }
+  60% {
+    transform: translate(-2%, -2%);
+  }
+  80% {
+    transform: translate(3%, 3%);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
 }
 
 .vignette {
@@ -152,9 +169,15 @@
 }
 
 @keyframes staticMove {
-  0% { transform: translate(0, 0); }
-  50% { transform: translate(-2%, 1%); }
-  100% { transform: translate(1%, -1%); }
+  0% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-2%, 1%);
+  }
+  100% {
+    transform: translate(1%, -1%);
+  }
 }
 
 .tracking {
@@ -170,11 +193,25 @@
 }
 
 @keyframes trackFlick {
-  0%, 92% { opacity: 0; }
-  93% { opacity: 0.5; transform: translateY(-6px); }
-  95% { opacity: 0.2; transform: translateY(10px); }
-  97% { opacity: 0.55; transform: translateY(-2px); }
-  100% { opacity: 0; }
+  0%,
+  92% {
+    opacity: 0;
+  }
+  93% {
+    opacity: 0.5;
+    transform: translateY(-6px);
+  }
+  95% {
+    opacity: 0.2;
+    transform: translateY(10px);
+  }
+  97% {
+    opacity: 0.55;
+    transform: translateY(-2px);
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 /* Buttons */
@@ -196,7 +233,9 @@
   &:hover {
     border-color: var(--accent);
     color: var(--accent);
-    box-shadow: 0 0 0 1px var(--accent) inset, 0 0 18px -4px var(--accent);
+    box-shadow:
+      0 0 0 1px var(--accent) inset,
+      0 0 18px -4px var(--accent);
   }
 
   &.primary {
@@ -283,7 +322,9 @@
   overflow: hidden;
   aspect-ratio: 2 / 3;
   border: 1px solid #2d2246;
-  box-shadow: 0 20px 60px -30px rgba(154, 108, 255, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  box-shadow:
+    0 20px 60px -30px rgba(154, 108, 255, 0.6),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
   isolation: isolate;
 
   &.poster--big {
@@ -447,7 +488,9 @@
   color: inherit;
   text-decoration: none;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   box-shadow:
     0 40px 80px -40px rgba(154, 108, 255, 0.5),
     inset 0 0 0 1px rgba(255, 255, 255, 0.04);
@@ -470,7 +513,9 @@
     position: absolute;
     inset: 18px;
     border-radius: 10px;
-    box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(103, 232, 249, 0.05);
+    box-shadow:
+      inset 0 0 80px rgba(0, 0, 0, 0.8),
+      inset 0 0 20px rgba(103, 232, 249, 0.05);
     pointer-events: none;
     z-index: 3;
   }
@@ -480,9 +525,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background:
-      radial-gradient(ellipse at 50% 45%, #2a1b52, #0a0612 70%),
-      #0a0612;
+    background: radial-gradient(ellipse at 50% 45%, #2a1b52, #0a0612 70%), #0a0612;
     border-radius: 8px;
   }
 
@@ -559,7 +602,9 @@
     line-height: 0.92;
     text-transform: uppercase;
     color: #fff;
-    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.6), 0 0 24px rgba(154, 108, 255, 0.35);
+    text-shadow:
+      0 2px 0 rgba(0, 0, 0, 0.6),
+      0 0 24px rgba(154, 108, 255, 0.35);
     word-break: break-word;
   }
 

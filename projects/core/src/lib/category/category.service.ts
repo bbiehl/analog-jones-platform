@@ -10,7 +10,7 @@ export class CategoryService {
   async getAllCategories(): Promise<Category[]> {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'categories'),
-      this.ops.orderBy('name')
+      this.ops.orderBy('name'),
     );
     const snapshot = await this.ops.getDocs(q);
     return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Category);
@@ -40,7 +40,7 @@ export class CategoryService {
   async deleteCategory(id: string): Promise<void> {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'episodeCategories'),
-      this.ops.where('categoryId', '==', id)
+      this.ops.where('categoryId', '==', id),
     );
     const snapshot = await this.ops.getDocs(q);
 

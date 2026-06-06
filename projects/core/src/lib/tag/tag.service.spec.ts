@@ -85,7 +85,7 @@ describe('TagService', () => {
     it('should throw when the snapshot does not exist', async () => {
       ops.getDoc.mockResolvedValueOnce({ exists: () => false });
       await expect(service.getTagById('missing')).rejects.toThrow(
-        'Tag with id "missing" not found'
+        'Tag with id "missing" not found',
       );
     });
   });
@@ -98,7 +98,7 @@ describe('TagService', () => {
 
       expect(ops.addDoc).toHaveBeenCalledWith(
         { __collection: 'tags' },
-        { name: 'Retro', slug: 'retro' }
+        { name: 'Retro', slug: 'retro' },
       );
       expect(result).toBe('new-id');
     });
@@ -115,7 +115,7 @@ describe('TagService', () => {
 
       expect(ops.updateDoc).toHaveBeenCalledWith(
         { __doc: 'tags/t1' },
-        { name: 'Updated', slug: 'updated' }
+        { name: 'Updated', slug: 'updated' },
       );
     });
 

@@ -15,7 +15,7 @@ describe('EpisodeGenreService', () => {
       doc: vi.fn((arg1, arg2, arg3) =>
         arg2 === undefined
           ? { id: 'auto', __collection: (arg1 as { __collection?: string }).__collection }
-          : { __doc: `${arg2}/${arg3}` }
+          : { __doc: `${arg2}/${arg3}` },
       ),
       query: vi.fn((coll, ...constraints) => ({ __query: { coll, constraints } })),
       orderBy: vi.fn((field) => ({ __orderBy: field })),
@@ -48,7 +48,7 @@ describe('EpisodeGenreService', () => {
       expect(ops.collection).toHaveBeenCalledWith(firestore, 'episodeGenres');
       expect(ops.addDoc).toHaveBeenCalledWith(
         { __collection: 'episodeGenres' },
-        { episodeId: 'ep1', genreId: 'g1' }
+        { episodeId: 'ep1', genreId: 'g1' },
       );
     });
   });
@@ -149,10 +149,7 @@ describe('EpisodeGenreService', () => {
   describe('getEpisodeGenresByEpisodeId', () => {
     it('should hydrate genres that exist and skip missing ones', async () => {
       ops.getDocs.mockResolvedValueOnce({
-        docs: [
-          { data: () => ({ genreId: 'g1' }) },
-          { data: () => ({ genreId: 'gone' }) },
-        ],
+        docs: [{ data: () => ({ genreId: 'g1' }) }, { data: () => ({ genreId: 'gone' }) }],
       });
       ops.getDoc
         .mockResolvedValueOnce({
@@ -178,9 +175,7 @@ describe('EpisodeGenreService', () => {
           ],
         })
         .mockResolvedValueOnce({
-          docs: [
-            { id: 'ep1', data: () => ({ title: 'V', isVisible: true }) },
-          ],
+          docs: [{ id: 'ep1', data: () => ({ title: 'V', isVisible: true }) }],
         });
 
       const result = await service.getEpisodesByGenreId('g1');
@@ -211,4 +206,5 @@ describe('EpisodeGenreService', () => {
 
       expect(ops.getDocs).toHaveBeenCalledTimes(3);
     });
-  });});
+  });
+});

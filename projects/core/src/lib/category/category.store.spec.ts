@@ -87,7 +87,7 @@ describe('CategoryStore', () => {
 
     it('should set error on failure', async () => {
       mockCategoryService.getCategoryById.mockRejectedValueOnce(
-        new Error('Category with id "missing" not found')
+        new Error('Category with id "missing" not found'),
       );
 
       await store.loadCategoryById('missing');

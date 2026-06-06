@@ -108,7 +108,6 @@ describe('EpisodeDetail', () => {
       expect(chip.nativeElement.getAttribute('href')).toBe('/episodes');
       expect(chip.nativeElement.textContent).toContain('RETURN TO ARCHIVE');
     });
-
   });
 
   describe('dossier block', () => {
@@ -116,18 +115,14 @@ describe('EpisodeDetail', () => {
       loading.set(true);
       await createComponent();
 
-      expect(
-        fixture.debugElement.query(By.css('app-episode-properties-skeleton')),
-      ).toBeTruthy();
+      expect(fixture.debugElement.query(By.css('app-episode-properties-skeleton'))).toBeTruthy();
       expect(fixture.debugElement.query(By.css('app-episode-properties'))).toBeFalsy();
     });
 
     it('shows the skeleton when not loading but no episode is selected', async () => {
       await createComponent();
 
-      expect(
-        fixture.debugElement.query(By.css('app-episode-properties-skeleton')),
-      ).toBeTruthy();
+      expect(fixture.debugElement.query(By.css('app-episode-properties-skeleton'))).toBeTruthy();
       expect(fixture.debugElement.query(By.css('app-episode-properties'))).toBeFalsy();
     });
 
@@ -136,9 +131,7 @@ describe('EpisodeDetail', () => {
       await createComponent();
 
       expect(fixture.debugElement.query(By.css('app-episode-properties'))).toBeTruthy();
-      expect(
-        fixture.debugElement.query(By.css('app-episode-properties-skeleton')),
-      ).toBeFalsy();
+      expect(fixture.debugElement.query(By.css('app-episode-properties-skeleton'))).toBeFalsy();
     });
   });
 

@@ -28,12 +28,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.08),
-      transparent
-    );
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
     animation: shimmer 1.6s linear infinite;
   }
 }
@@ -76,12 +71,7 @@
     right: 0;
     height: 40%;
     top: -20%;
-    background: linear-gradient(
-      180deg,
-      transparent,
-      rgba(103, 232, 249, 0.18),
-      transparent
-    );
+    background: linear-gradient(180deg, transparent, rgba(103, 232, 249, 0.18), transparent);
     animation: cover-scan 5.5s linear infinite;
     mix-blend-mode: screen;
   }

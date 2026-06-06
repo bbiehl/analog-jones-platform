@@ -9,7 +9,13 @@ import { CategoryStore } from '@aj/core';
 
 @Component({
   selector: 'app-category-add',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+  ],
   templateUrl: './category-add.html',
   styleUrl: './category-add.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -84,5 +84,5 @@ export const CategoryStore = signalStore(
         patchState(store, { selectedCategory: null });
       },
     };
-  })
+  }),
 );

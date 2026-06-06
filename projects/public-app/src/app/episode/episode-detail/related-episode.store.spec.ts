@@ -43,10 +43,7 @@ describe('RelatedEpisodeStore', () => {
     mockService.getRelatedEpisodes.mockResolvedValue(mockRelated);
 
     TestBed.configureTestingModule({
-      providers: [
-        RelatedEpisodeStore,
-        { provide: RelatedEpisodesService, useValue: mockService },
-      ],
+      providers: [RelatedEpisodeStore, { provide: RelatedEpisodesService, useValue: mockService }],
     });
     store = TestBed.inject(RelatedEpisodeStore);
   });

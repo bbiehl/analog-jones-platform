@@ -14,9 +14,9 @@
       </h1>
       <div class="of-film">// OF&nbsp;&nbsp;FILM</div>
       <p class="lede">
-        Three men set out to find the treasure in the countless mounds of forgotten VHS tapes —
-        flea markets, garage sales, basements, and closets. Every week, we put something in our
-        film museum. Like Indiana Jones would.
+        Three men set out to find the treasure in the countless mounds of forgotten VHS tapes — flea
+        markets, garage sales, basements, and closets. Every week, we put something in our film
+        museum. Like Indiana Jones would.
       </p>
       <div class="cta">
         @if (featured(); as f) {
@@ -37,9 +37,7 @@
             <span class="rec-dot" aria-hidden="true"></span>
             TAPE · ROLLING
           </div>
-          <div class="v timecode">
-            {{ tapeCounter() }} <small>since tune-in</small>
-          </div>
+          <div class="v timecode">{{ tapeCounter() }} <small>since tune-in</small></div>
         </div>
       </div>
     </div>
@@ -49,7 +47,9 @@
         <div class="screen">
           <div class="bars" aria-hidden="true"></div>
           <div class="osd" aria-hidden="true">
-            <div class="row"><span>PLAY ▶</span><span class="counter">{{ tapeCounter() }}</span></div>
+            <div class="row">
+              <span>PLAY ▶</span><span class="counter">{{ tapeCounter() }}</span>
+            </div>
           </div>
           <div class="badge" aria-hidden="true"><span class="d"></span> REC</div>
           <div class="monitor-glow" aria-hidden="true" [style.background]="monitorGlow(f)"></div>
@@ -100,7 +100,9 @@
           }
           <div class="actions">
             @if (f.links.spotify) {
-              <a class="btn primary" [href]="f.links.spotify" target="_blank" rel="noopener">▶ SPOTIFY</a>
+              <a class="btn primary" [href]="f.links.spotify" target="_blank" rel="noopener"
+                >▶ SPOTIFY</a
+              >
             }
             @if (f.links.youtube) {
               <a class="btn" [href]="f.links.youtube" target="_blank" rel="noopener">▶ YOUTUBE</a>
@@ -156,43 +158,49 @@
 }
 
 @defer (on viewport; prefetch on idle) {
-<section class="block" id="listen" aria-label="Where to listen">
-  <div class="page">
-    <div class="section-head">
-      <h2><small>/ WHERE TO TUNE IN</small>All tapes live somewhere.</h2>
-    </div>
-    <div class="listen">
-      <div class="card spotify">
-        <div class="glyph" aria-hidden="true"></div>
-        <h3>Spotify</h3>
-        <p>Every single tape, from pilot to this week's drop — scroll back to 1987 and pretend your walkman is ok.</p>
-        <div class="card-actions">
-          <a
-            class="btn primary"
-            href="https://open.spotify.com/show/37eh3ycxOs92pCpGfPrSsz?si=cfb3697d1866461b"
-            target="_blank"
-            rel="noopener"
-            >▶ OPEN IN SPOTIFY</a
-          >
+  <section class="block" id="listen" aria-label="Where to listen">
+    <div class="page">
+      <div class="section-head">
+        <h2><small>/ WHERE TO TUNE IN</small>All tapes live somewhere.</h2>
+      </div>
+      <div class="listen">
+        <div class="card spotify">
+          <div class="glyph" aria-hidden="true"></div>
+          <h3>Spotify</h3>
+          <p>
+            Every single tape, from pilot to this week's drop — scroll back to 1987 and pretend your
+            walkman is ok.
+          </p>
+          <div class="card-actions">
+            <a
+              class="btn primary"
+              href="https://open.spotify.com/show/37eh3ycxOs92pCpGfPrSsz?si=cfb3697d1866461b"
+              target="_blank"
+              rel="noopener"
+              >▶ OPEN IN SPOTIFY</a
+            >
+          </div>
+        </div>
+        <div class="card youtube">
+          <div class="glyph" aria-hidden="true"></div>
+          <h3>YouTube</h3>
+          <p>
+            A growing reel of video episodes — box-art pans, trailer breakdowns, and the occasional
+            tape-head cleaning tutorial. Some episodes are YouTube-only.
+          </p>
+          <div class="card-actions">
+            <a
+              class="btn primary"
+              href="https://youtube.com/@analogjonesandthetempleoff4035?si=LqkX3HoN73ZTVMs8"
+              target="_blank"
+              rel="noopener"
+              >▶ OPEN IN YOUTUBE</a
+            >
+          </div>
         </div>
       </div>
-      <div class="card youtube">
-        <div class="glyph" aria-hidden="true"></div>
-        <h3>YouTube</h3>
-        <p>A growing reel of video episodes — box-art pans, trailer breakdowns, and the occasional tape-head cleaning tutorial. Some episodes are YouTube-only.</p>
-        <div class="card-actions">
-          <a
-            class="btn primary"
-            href="https://youtube.com/@analogjonesandthetempleoff4035?si=LqkX3HoN73ZTVMs8"
-            target="_blank"
-            rel="noopener"
-            >▶ OPEN IN YOUTUBE</a
-          >
-        </div>
-      </div>
     </div>
-  </div>
-</section>
+  </section>
 } @placeholder (minimum 0ms) {
   <div class="defer-listen" aria-hidden="true"></div>
 }

@@ -36,10 +36,7 @@ describe('Tags', () => {
 
     await TestBed.configureTestingModule({
       imports: [Tags],
-      providers: [
-        provideRouter([]),
-        { provide: TagStore, useValue: mockTagStore },
-      ],
+      providers: [provideRouter([]), { provide: TagStore, useValue: mockTagStore }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Tags);
@@ -145,7 +142,10 @@ describe('Tags', () => {
   });
 
   it('should delete the tag when delete is confirmed', async () => {
-    vi.stubGlobal('confirm', vi.fn(() => true));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => true),
+    );
     const button = await loader.getHarness(
       MatButtonHarness.with({ selector: '[aria-label="Delete tag"]' }),
     );
@@ -158,7 +158,10 @@ describe('Tags', () => {
   });
 
   it('should not delete the tag when delete is cancelled', async () => {
-    vi.stubGlobal('confirm', vi.fn(() => false));
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => false),
+    );
     const button = await loader.getHarness(
       MatButtonHarness.with({ selector: '[aria-label="Delete tag"]' }),
     );
@@ -206,9 +209,7 @@ describe('Tags', () => {
   });
 
   it('should show clear-filter button only when filter has a value', async () => {
-    expect(
-      fixture.nativeElement.querySelector('button[aria-label="Clear filter"]'),
-    ).toBeNull();
+    expect(fixture.nativeElement.querySelector('button[aria-label="Clear filter"]')).toBeNull();
 
     const input = await loader.getHarness(MatInputHarness);
     await input.setValue('feat');
@@ -228,7 +229,13 @@ describe('Tags', () => {
   });
 
   it('should sort by name using the case-insensitive sortingDataAccessor', () => {
-    const dataSource = (component as unknown as { dataSource: { sortingDataAccessor: (t: { name: string; slug: string }, header: string) => string } }).dataSource;
+    const dataSource = (
+      component as unknown as {
+        dataSource: {
+          sortingDataAccessor: (t: { name: string; slug: string }, header: string) => string;
+        };
+      }
+    ).dataSource;
     expect(dataSource.sortingDataAccessor({ name: 'ZED', slug: 'zed' }, 'name')).toBe('zed');
     expect(dataSource.sortingDataAccessor({ name: 'ZED', slug: 'SLUG' }, 'slug')).toBe('slug');
     expect(dataSource.sortingDataAccessor({ name: 'ZED', slug: 'zed' }, 'unknown')).toBe('');
@@ -237,7 +244,9 @@ describe('Tags', () => {
   it('should reset paginator to first page when filter applied', async () => {
     const input = await loader.getHarness(MatInputHarness);
     // dataSource has a paginator wired via effect; spy on firstPage
-    const dataSource = (component as unknown as { dataSource: { paginator: { firstPage: () => void } | null } }).dataSource;
+    const dataSource = (
+      component as unknown as { dataSource: { paginator: { firstPage: () => void } | null } }
+    ).dataSource;
     expect(dataSource.paginator).toBeTruthy();
     const firstPageSpy = vi.spyOn(dataSource.paginator!, 'firstPage');
 

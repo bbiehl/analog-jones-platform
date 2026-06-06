@@ -1,11 +1,6 @@
 import { EpisodeWithRelations } from '@aj/core';
 import { SeoInput } from '../../../seo/seo.service';
-import {
-  breadcrumbList,
-  organization,
-  podcastEpisode,
-  website,
-} from '../../../seo/seo.schemas';
+import { breadcrumbList, organization, podcastEpisode, website } from '../../../seo/seo.schemas';
 import { stripMarkdown } from '../../../seo/seo.text';
 
 export function buildEpisodeSeoInput(ep: EpisodeWithRelations, origin: string): SeoInput {

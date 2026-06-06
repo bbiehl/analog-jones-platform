@@ -39,7 +39,7 @@ function setupCanvasMocks(blobSize = 100_000) {
   vi.stubGlobal('OffscreenCanvas', MockOffscreenCanvas);
   vi.stubGlobal(
     'createImageBitmap',
-    vi.fn(() => Promise.resolve({ width: 800, height: 600, close: vi.fn() }))
+    vi.fn(() => Promise.resolve({ width: 800, height: 600, close: vi.fn() })),
   );
 
   return { convertToBlob, mockCtx, fakeBlob, constructorCalls };
@@ -103,11 +103,9 @@ describe('ImageUploadService', () => {
 
       await service.uploadPoster('ep1', file);
 
-      expect(mockOps.uploadBytes).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.any(Blob),
-        { contentType: 'image/webp' }
-      );
+      expect(mockOps.uploadBytes).toHaveBeenCalledWith(expect.anything(), expect.any(Blob), {
+        contentType: 'image/webp',
+      });
     });
   });
 

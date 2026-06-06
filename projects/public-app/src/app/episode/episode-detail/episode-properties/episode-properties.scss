@@ -98,12 +98,7 @@
   right: 0;
   height: 40%;
   top: -20%;
-  background: linear-gradient(
-    180deg,
-    transparent,
-    rgba(103, 232, 249, 0.18),
-    transparent
-  );
+  background: linear-gradient(180deg, transparent, rgba(103, 232, 249, 0.18), transparent);
   pointer-events: none;
   animation: cover-scan 5.5s linear infinite;
   mix-blend-mode: screen;
@@ -242,9 +237,7 @@
 .transmission {
   position: relative;
   border: 1px solid var(--ep-line);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.01), transparent),
-    var(--ep-surface);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), transparent), var(--ep-surface);
   overflow: visible;
 }
 

@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, effect, inject, OnInit, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  OnInit,
+  viewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';

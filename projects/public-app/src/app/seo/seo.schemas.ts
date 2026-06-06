@@ -100,10 +100,7 @@ export function podcastEpisode(
   return schema;
 }
 
-export function breadcrumbList(
-  origin: string,
-  items: BreadcrumbItem[],
-): Record<string, unknown> {
+export function breadcrumbList(origin: string, items: BreadcrumbItem[]): Record<string, unknown> {
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',

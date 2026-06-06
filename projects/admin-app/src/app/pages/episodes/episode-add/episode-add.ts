@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -123,7 +130,7 @@ export class EpisodeAdd implements OnInit {
         v.categoryIds,
         v.genreIds,
         v.tagIds,
-        this.posterFile() ?? undefined
+        this.posterFile() ?? undefined,
       );
       const error = this.episodeStore.error();
       if (error) {

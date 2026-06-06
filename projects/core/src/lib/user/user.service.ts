@@ -39,7 +39,7 @@ export class UserService {
   async getAllUsers(): Promise<AppUser[]> {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'users'),
-      this.ops.orderBy('name')
+      this.ops.orderBy('name'),
     );
     const snapshot = await this.ops.getDocs(q);
     return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as AppUser);

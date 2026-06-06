@@ -30,7 +30,7 @@ Write Playwright e2e tests for the route or feature the user provides. Tests run
 - Known seeded entities (see `seed-data/auth_export/accounts.json`):
   - User `brad@test.com` (displayName "Brad")
   - User `otter.orange.259@example.com` (displayName "Otter Orange")
-  - Episode documents (including the *Princess Bride* analysis), plus `episodeTags` / `episodeGenres` / `episodeCategories` junctions, and storage blobs.
+  - Episode documents (including the _Princess Bride_ analysis), plus `episodeTags` / `episodeGenres` / `episodeCategories` junctions, and storage blobs.
 - Do NOT mutate seed entities other tests depend on. If a test must write, create a fresh document with a unique id and clean it up in `afterEach` or `afterAll`.
 - Do NOT export emulator state from a test workflow. Never run `pnpm emulators:save` or `firebase emulators:export` from this skill — `seed-data/` is source-of-truth and is updated outside of test runs.
 - Tests must leave the emulator process clean. Rely on Playwright's `webServer` lifecycle to stop it; in CI set `reuseExistingServer: false`. If a stray emulator lingers locally, recover with `pnpm emulators:stop` (which kills the configured emulator ports).
@@ -63,7 +63,12 @@ Write Playwright e2e tests for the route or feature the user provides. Tests run
       );
       expect(res.ok()).toBeTruthy();
       // Persist the resulting auth state so the admin app picks it up on boot.
-      await use({ cookies: [], origins: [/* hydrate localStorage with the emulator token here */] });
+      await use({
+        cookies: [],
+        origins: [
+          /* hydrate localStorage with the emulator token here */
+        ],
+      });
     },
   });
 

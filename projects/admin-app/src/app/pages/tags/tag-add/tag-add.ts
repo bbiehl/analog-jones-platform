@@ -9,7 +9,13 @@ import { TagStore } from '@aj/core';
 
 @Component({
   selector: 'app-tag-add',
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule],
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+  ],
   templateUrl: './tag-add.html',
   styleUrl: './tag-add.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

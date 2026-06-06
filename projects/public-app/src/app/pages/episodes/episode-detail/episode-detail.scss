@@ -98,7 +98,10 @@
   letter-spacing: 0.2em;
   text-transform: uppercase;
   text-decoration: none;
-  transition: color 0.18s, border-color 0.18s, background 0.18s;
+  transition:
+    color 0.18s,
+    border-color 0.18s,
+    background 0.18s;
 
   .arrow {
     font-size: 0.6rem;
@@ -164,11 +167,7 @@
   padding: 36px 40px;
   border: 1px solid var(--line);
   background:
-    repeating-linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.012) 0 10px,
-      transparent 10px 22px
-    ),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.012) 0 10px, transparent 10px 22px),
     var(--surface);
   overflow: hidden;
 

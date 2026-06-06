@@ -10,7 +10,7 @@ export class GenreService {
   async getAllGenres(): Promise<Genre[]> {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'genres'),
-      this.ops.orderBy('name')
+      this.ops.orderBy('name'),
     );
     const snapshot = await this.ops.getDocs(q);
     return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Genre);
@@ -40,7 +40,7 @@ export class GenreService {
   async deleteGenre(id: string): Promise<void> {
     const q = this.ops.query(
       this.ops.collection(this.firestore, 'episodeGenres'),
-      this.ops.where('genreId', '==', id)
+      this.ops.where('genreId', '==', id),
     );
     const snapshot = await this.ops.getDocs(q);
 

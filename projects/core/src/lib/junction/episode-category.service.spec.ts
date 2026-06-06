@@ -15,7 +15,7 @@ describe('EpisodeCategoryService', () => {
       doc: vi.fn((arg1, arg2, arg3) =>
         arg2 === undefined
           ? { id: 'auto', __collection: (arg1 as { __collection?: string }).__collection }
-          : { __doc: `${arg2}/${arg3}` }
+          : { __doc: `${arg2}/${arg3}` },
       ),
       query: vi.fn((coll, ...constraints) => ({ __query: { coll, constraints } })),
       orderBy: vi.fn((field) => ({ __orderBy: field })),
@@ -48,7 +48,7 @@ describe('EpisodeCategoryService', () => {
       expect(ops.collection).toHaveBeenCalledWith(firestore, 'episodeCategories');
       expect(ops.addDoc).toHaveBeenCalledWith(
         { __collection: 'episodeCategories' },
-        { episodeId: 'ep1', categoryId: 'c1' }
+        { episodeId: 'ep1', categoryId: 'c1' },
       );
     });
   });
@@ -204,4 +204,5 @@ describe('EpisodeCategoryService', () => {
       ops.getDocs.mockResolvedValueOnce({ docs: [] });
       expect(await service.getEpisodeCategoriesByEpisodeId('ep1')).toEqual([]);
     });
-  });});
+  });
+});

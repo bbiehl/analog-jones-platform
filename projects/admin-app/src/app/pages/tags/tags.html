@@ -22,9 +22,15 @@
         matInput
         [(ngModel)]="filterValue"
         (ngModelChange)="applyFilter($event)"
-        placeholder="Search tags..." />
+        placeholder="Search tags..."
+      />
       @if (filterValue) {
-        <button matSuffix mat-icon-button aria-label="Clear filter" (click)="filterValue = ''; applyFilter('')">
+        <button
+          matSuffix
+          mat-icon-button
+          aria-label="Clear filter"
+          (click)="filterValue = ''; applyFilter('')"
+        >
           <mat-icon>close</mat-icon>
         </button>
       }
@@ -64,7 +70,10 @@
       <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
 
       <tr class="mat-mdc-row" *matNoDataRow>
-        <td class="mat-mdc-cell text-center py-8 text-gray-400" [attr.colspan]="displayedColumns.length">
+        <td
+          class="mat-mdc-cell text-center py-8 text-gray-400"
+          [attr.colspan]="displayedColumns.length"
+        >
           No tags match "{{ filterValue }}"
         </td>
       </tr>
@@ -73,6 +82,7 @@
     <mat-paginator
       [pageSizeOptions]="[10, 25, 50]"
       showFirstLastButtons
-      aria-label="Select page of tags" />
+      aria-label="Select page of tags"
+    />
   }
 </div>

@@ -38,15 +38,14 @@ export async function signInWithGoogleEmulator(
   ctx: APIRequestContext,
   user: { email: string; displayName: string; rawId: string },
 ): Promise<EmulatorSignInResult> {
-  const postBody =
-    `id_token=${encodeURIComponent(
-      JSON.stringify({
-        sub: user.rawId,
-        email: user.email,
-        email_verified: true,
-        name: user.displayName,
-      }),
-    )}&providerId=google.com`;
+  const postBody = `id_token=${encodeURIComponent(
+    JSON.stringify({
+      sub: user.rawId,
+      email: user.email,
+      email_verified: true,
+      name: user.displayName,
+    }),
+  )}&providerId=google.com`;
 
   const res = await ctx.post(
     `${AUTH_EMULATOR}/identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=${WEB_API_KEY}`,
@@ -61,9 +60,7 @@ export async function signInWithGoogleEmulator(
   );
 
   if (!res.ok()) {
-    throw new Error(
-      `Auth emulator signInWithIdp failed (${res.status()}): ${await res.text()}`,
-    );
+    throw new Error(`Auth emulator signInWithIdp failed (${res.status()}): ${await res.text()}`);
   }
 
   return (await res.json()) as EmulatorSignInResult;
