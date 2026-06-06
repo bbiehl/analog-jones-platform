@@ -1,0 +1,87 @@
+name: ci
+
+# Build, unit-test (with coverage thresholds), and format checks. Runs as a merge
+# gate on PRs and again on main after merge. Complements e2e.yml, which owns the
+# Playwright/emulator suite. Scoped with paths so unrelated changes don't spend CI
+# minutes. No Java/Playwright needed here — none of these jobs touch the emulator.
+on:
+  pull_request:
+    paths:
+      - 'projects/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'angular.json'
+      - 'tsconfig*.json'
+      - 'pnpm-workspace.yaml'
+      - '.prettierrc'
+      - '.prettierignore'
+      - '.github/workflows/ci.yml'
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # Reads the pinned version from package.json's "packageManager" field.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm format:check
+
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Each script builds core first, so this verifies all three projects compile
+      # under their production configuration.
+      - name: Build apps
+        run: pnpm build:public && pnpm build:admin
+
+  unit-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [core, public-app, admin-app]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Coverage + thresholds are configured per project in angular.json, so a
+      # threshold breach exits non-zero and fails the job.
+      - name: Run unit tests
+        run: pnpm exec ng test ${{ matrix.project }}

@@ -94,7 +94,15 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "setupFiles": ["projects/public-app/src/test-setup.ts"]
+            "setupFiles": ["projects/public-app/src/test-setup.ts"],
+            "coverage": true,
+            "coverageExclude": ["**/core/src/**"],
+            "coverageThresholds": {
+              "statements": 96,
+              "branches": 93,
+              "functions": 93,
+              "lines": 96
+            }
           }
         },
         "e2e": {
@@ -195,7 +203,15 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "setupFiles": ["projects/admin-app/src/test-setup.ts"]
+            "setupFiles": ["projects/admin-app/src/test-setup.ts"],
+            "coverage": true,
+            "coverageExclude": ["**/core/src/**"],
+            "coverageThresholds": {
+              "statements": 90,
+              "branches": 90,
+              "functions": 78,
+              "lines": 93
+            }
           }
         },
         "e2e": {
@@ -236,7 +252,14 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "tsConfig": "projects/core/tsconfig.spec.json",
-            "setupFiles": ["projects/core/src/test-setup.ts"]
+            "setupFiles": ["projects/core/src/test-setup.ts"],
+            "coverage": true,
+            "coverageThresholds": {
+              "statements": 97,
+              "branches": 95,
+              "functions": 95,
+              "lines": 97
+            }
           }
         }
       }
