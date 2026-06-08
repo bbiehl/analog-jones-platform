@@ -963,6 +963,12 @@ section.block {
   &.youtube {
     background: linear-gradient(135deg, #3a1212, var(--surface) 60%);
   }
+  &.rss {
+    background: linear-gradient(135deg, #5a2f10, var(--surface) 60%);
+  }
+  &.facebook {
+    background: linear-gradient(135deg, #11244a, var(--surface) 60%);
+  }
 
   h3 {
     font-family: 'Barlow Condensed', 'Barlow Condensed Fallback', sans-serif;
@@ -1024,5 +1030,40 @@ section.block {
   &.youtube .glyph {
     background: #ff0033;
     clip-path: polygon(0 0, 100% 50%, 0 100%);
+  }
+
+  &.rss .glyph {
+    background:
+      radial-gradient(circle 16px at 40px calc(100% - 40px), #f26522 0 16px, transparent 17px),
+      radial-gradient(
+        circle at 40px calc(100% - 40px),
+        transparent 0 56px,
+        #f26522 56px 76px,
+        transparent 77px
+      ),
+      radial-gradient(
+        circle at 40px calc(100% - 40px),
+        transparent 0 104px,
+        #f26522 104px 124px,
+        transparent 125px
+      );
+  }
+
+  &.facebook .glyph {
+    background: #1877f2;
+    border-radius: 28px;
+
+    &::before {
+      content: 'f';
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 700;
+      font-size: 150px;
+      line-height: 1;
+    }
   }
 }
