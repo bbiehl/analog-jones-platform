@@ -27,6 +27,10 @@ const ROLLOUT_ORDER = [
   { app: 'admin-app', backend: ADMIN_BACKEND },
   { app: 'public-app', backend: PUBLIC_BACKEND },
 ];
+// A change to any of these — including firestore.indexes.json — flips rulesChanged
+// and triggers the deploy. Kept in sync with the `deploy:rules` script's
+// `--only firestore:rules,firestore:indexes,storage` list so detection and deploy
+// always cover the same surface (rules AND indexes).
 const RULES_FILES = ['firestore.rules', 'firestore.indexes.json', 'storage.rules'];
 
 const autoYes = process.argv.slice(2).some((arg) => arg === '--yes' || arg === '-y');
@@ -161,7 +165,7 @@ console.log(`  Release branch: ${branch}  (cut from origin/main)`);
 console.log(
   `  Rollout order:  ${ROLLOUT_ORDER.map((r) => `${r.app} [${r.backend}]`).join('  →  ')}`,
 );
-console.log(`  Deploy rules:   ${rulesChanged ? 'YES' : 'no'} (${rulesReason})`);
+console.log(`  Rules+indexes:  ${rulesChanged ? 'YES' : 'no'} (${rulesReason})`);
 console.log(`  Probe:          probe:write-defenses (after rollouts)`);
 console.log('──────────────────────────────────────────────\n');
 
@@ -230,7 +234,7 @@ console.log('──────────────────────�
 console.log(`  Branch:  ${branch}`);
 console.log(`  admin-app:  https://${ADMIN_BACKEND}--${PROJECT}.us-central1.hosted.app`);
 console.log(`  public-app: https://${PUBLIC_BACKEND}--${PROJECT}.us-central1.hosted.app`);
-console.log(`  Rules:   ${rulesChanged ? 'deployed' : 'unchanged (skipped)'}`);
+console.log(`  Rules+indexes:  ${rulesChanged ? 'deployed' : 'unchanged (skipped)'}`);
 console.log(`  Probe:   ${probeCode === 0 ? 'PASS' : 'FAIL'}`);
 console.log('──────────────────────────────────────────────');
 
