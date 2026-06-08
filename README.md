@@ -62,7 +62,23 @@ pnpm e2e              # Playwright
 
 ## Deployment
 
-Both apps deploy via Firebase App Hosting using `apphosting.public.yaml` and `apphosting.admin.yaml`. Firestore and Storage rules/indexes are deployed separately:
+Both apps deploy via Firebase App Hosting using `apphosting.public.yaml` and `apphosting.admin.yaml`. The whole release is automated:
+
+```bash
+pnpm release          # or `pnpm release --yes` to skip the confirmation prompt
+```
+
+> Named `release`, not `deploy`, because `pnpm deploy` is a reserved pnpm built-in (it would error with `ERR_PNPM_NOTHING_TO_DEPLOY`).
+
+`pnpm release` (`scripts/deploy.mjs`):
+
+1. Cuts a dated release branch `Release_YYYY-MM-DD.V` from the latest `origin/main` (auto-incrementing `V` for same-day re-cuts) and pushes it.
+2. Rolls out **admin-app then public-app sequentially** via `firebase apphosting:rollouts:create <backend> --git-branch <branch>`. Each call blocks until its rollout is terminal, so the two never run concurrently. This targets the branch directly — the console "Live branch" setting is not touched.
+3. After both rollouts, deploys rules **only if** `firestore.rules`, `firestore.indexes.json`, or `storage.rules` changed since the previous release branch, then runs the write-defense probe once.
+
+**Prerequisites:** `pnpm exec firebase login` with an account that has App Hosting Admin on `analog-jones-v2`, and `origin` must be the GitHub repo connected to the backends (`bbiehl-analog-jones-platform`).
+
+To deploy only Firestore/Storage rules and indexes without a full release:
 
 ```bash
 pnpm deploy:rules
