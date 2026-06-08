@@ -2,20 +2,12 @@ name: ci
 
 # Build, unit-test (with coverage thresholds), and format checks. Runs as a merge
 # gate on PRs and again on main after merge. Complements e2e.yml, which owns the
-# Playwright/emulator suite. Scoped with paths so unrelated changes don't spend CI
-# minutes. No Java/Playwright needed here — none of these jobs touch the emulator.
+# Playwright/emulator suite. Runs on every PR (no paths filter) so these checks
+# always report — a required status check is treated as skipped (and blocks the
+# merge) when a paths filter excludes a PR. No Java/Playwright needed here — none
+# of these jobs touch the emulator.
 on:
   pull_request:
-    paths:
-      - 'projects/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'angular.json'
-      - 'tsconfig*.json'
-      - 'pnpm-workspace.yaml'
-      - '.prettierrc'
-      - '.prettierignore'
-      - '.github/workflows/ci.yml'
   push:
     branches: [main]
 

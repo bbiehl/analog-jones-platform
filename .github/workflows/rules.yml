@@ -4,16 +4,10 @@ name: rules
 # @firebase/rules-unit-testing) as a merge gate on PRs, and again on main after
 # merge. Kept separate from ci.yml — which is intentionally Java/emulator-free — and
 # from e2e.yml, since these rules tests need the Firestore emulator but not Playwright.
-# Path-scoped so only changes that affect the rules or their tests spend CI minutes.
+# Runs on every PR (no paths filter) so the check always reports — a required status
+# check is treated as skipped (and blocks the merge) when a paths filter excludes a PR.
 on:
   pull_request:
-    paths:
-      - 'firestore.rules'
-      - 'test/firestore-rules.spec.ts'
-      - 'firebase.json'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - '.github/workflows/rules.yml'
   push:
     branches: [main]
 

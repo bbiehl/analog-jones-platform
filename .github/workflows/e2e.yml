@@ -1,22 +1,11 @@
 name: e2e
 
 # Runs the Playwright suite as a merge gate on PRs, and again on main after merge.
-# Scoped with paths so unrelated changes (docs, etc.) don't spend CI minutes.
+# Runs on every PR (no paths filter) so the check always reports — a required
+# status check is treated as skipped (and blocks the merge) when a paths filter
+# excludes a PR.
 on:
   pull_request:
-    paths:
-      - 'e2e/**'
-      - 'projects/**'
-      - 'playwright.config.ts'
-      - 'seed-data/**'
-      - 'firebase.json'
-      - 'firestore.rules'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'angular.json'
-      - 'tsconfig*.json'
-      - 'pnpm-workspace.yaml'
-      - '.github/workflows/e2e.yml'
   push:
     branches: [main]
 
