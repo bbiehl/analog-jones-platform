@@ -1,0 +1,50 @@
+name: rules
+
+# Runs the Firestore security-rules suite (test/firestore-rules.spec.ts via
+# @firebase/rules-unit-testing) as a merge gate on PRs, and again on main after
+# merge. Kept separate from ci.yml — which is intentionally Java/emulator-free — and
+# from e2e.yml, since these rules tests need the Firestore emulator but not Playwright.
+# Path-scoped so only changes that affect the rules or their tests spend CI minutes.
+on:
+  pull_request:
+    paths:
+      - 'firestore.rules'
+      - 'test/firestore-rules.spec.ts'
+      - 'firebase.json'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/rules.yml'
+  push:
+    branches: [main]
+
+jobs:
+  rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # Reads the pinned version from package.json's "packageManager" field.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # firebase-tools 15.x requires Java 21+ to run the emulators; the default
+      # runner JDK is older, so `firebase emulators:exec` (via `pnpm test:rules`)
+      # aborts without it.
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # `pnpm test:rules` wraps `vitest run test/firestore-rules.spec.ts` in
+      # `firebase emulators:exec --only firestore`, which owns the emulator lifecycle.
+      - name: Run Firestore rules tests
+        run: pnpm test:rules
