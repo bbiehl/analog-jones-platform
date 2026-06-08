@@ -16,7 +16,7 @@
 // Named `release`, not `deploy`, in package.json: `pnpm deploy` is a reserved
 // pnpm built-in (workspace-package deploy) and would shadow this script.
 
-import { execFileSync, spawnSync } from 'node:child_process';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { createInterface } from 'node:readline';
 
 const PROJECT = 'analog-jones-v2';
@@ -32,6 +32,11 @@ const ROLLOUT_ORDER = [
 // `--only firestore:rules,firestore:indexes,storage` list so detection and deploy
 // always cover the same surface (rules AND indexes).
 const RULES_FILES = ['firestore.rules', 'firestore.indexes.json', 'storage.rules'];
+
+// deploy:rules occasionally aborts on a transient Google API 5xx (e.g. a
+// firebaserules 503) even though the rollouts already succeeded. Retry that step
+// a few times, with backoff, before giving up.
+const RULES_DEPLOY_ATTEMPTS = 3;
 
 const autoYes = process.argv.slice(2).some((arg) => arg === '--yes' || arg === '-y');
 
@@ -50,6 +55,35 @@ function run(cmd, args) {
   const res = spawnSync(cmd, args, { stdio: 'inherit' });
   if (res.error) throw res.error;
   return res.status ?? 1;
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Run a command, streaming output live AND capturing it (combined stdout+stderr)
+// so the caller can classify a failure. Resolves { code, output }.
+function runCapturing(cmd, args) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, args, { stdio: ['inherit', 'pipe', 'pipe'] });
+    let output = '';
+    const tee = (src, dest) =>
+      src.on('data', (chunk) => {
+        output += chunk;
+        dest.write(chunk);
+      });
+    tee(child.stdout, process.stdout);
+    tee(child.stderr, process.stderr);
+    child.on('error', reject);
+    child.on('close', (code) => resolve({ code: code ?? 1, output }));
+  });
+}
+
+// Transient = flaky infrastructure worth retrying (Google API 5xx, network
+// blips). Deterministic failures (rules compilation errors, 403s) deliberately
+// do NOT match, so they fail fast instead of burning every retry.
+function isTransient(output) {
+  return /HTTP Error:\s*5\d\d|\b5\d\d\b.*(unavailable|internal)|is currently unavailable|temporarily unavailable|deadline exceeded|ECONNRESET|ETIMEDOUT|EAI_AGAIN|socket hang up/i.test(
+    output,
+  );
 }
 
 function ask(question) {
@@ -216,9 +250,33 @@ for (const { app, backend } of ROLLOUT_ORDER) {
 
 if (rulesChanged) {
   console.log('\n▶ Deploying Firestore/Storage rules + indexes…');
-  const code = run('pnpm', ['run', 'deploy:rules']);
-  if (code !== 0) fail(`deploy:rules exited ${code}.`);
-  console.log('✔ Rules deployed.');
+  for (let attempt = 1; ; attempt++) {
+    const { code, output } = await runCapturing('pnpm', ['run', 'deploy:rules']);
+    if (code === 0) {
+      console.log('✔ Rules + indexes deployed.');
+      break;
+    }
+
+    const transient = isTransient(output);
+    const lastAttempt = attempt >= RULES_DEPLOY_ATTEMPTS;
+    if (!transient || lastAttempt) {
+      fail(
+        `deploy:rules exited ${code}` +
+          (transient
+            ? ` after ${attempt} attempts — transient API errors persisted.`
+            : ' — non-transient failure (see output above).') +
+          ' Both rollouts already completed, so re-run `pnpm deploy:rules` once resolved' +
+          ' (no need to re-run the full release).',
+      );
+    }
+
+    const backoffMs = 5000 * 2 ** (attempt - 1); // 5s, then 10s
+    console.log(
+      `\n⚠ deploy:rules hit a transient error (attempt ${attempt}/${RULES_DEPLOY_ATTEMPTS}). ` +
+        `Retrying in ${backoffMs / 1000}s…`,
+    );
+    await sleep(backoffMs);
+  }
 } else {
   console.log(`\nSkipping rules deploy (${rulesReason}).`);
 }
