@@ -45,6 +45,12 @@ function fail(message) {
   process.exit(1);
 }
 
+// Any unexpected throw/rejection (e.g. a spawn ENOENT, or a synchronous throw
+// from run()) should still exit via the clean abort path, not a raw stack trace.
+const failFrom = (err) => fail(err instanceof Error ? err.message : String(err));
+process.on('unhandledRejection', failFrom);
+process.on('uncaughtException', failFrom);
+
 // Capture stdout from a command. Returns trimmed stdout; throws on non-zero exit.
 function capture(cmd, args) {
   return execFileSync(cmd, args, { encoding: 'utf8' }).trim();
