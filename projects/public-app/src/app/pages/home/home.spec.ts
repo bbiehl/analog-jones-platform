@@ -382,7 +382,7 @@ describe('Home', () => {
   });
 
   describe('Listen defer block', () => {
-    it('renders Spotify and YouTube cards with external links', async () => {
+    it('renders Spotify, YouTube, and RSS cards with external links', async () => {
       const { fixture } = await setup();
       const blocks = await fixture.getDeferBlocks();
       await blocks[2].render(DeferBlockState.Complete);
@@ -392,12 +392,18 @@ describe('Home', () => {
       const youtube = fixture.nativeElement.querySelector(
         '#listen .card.youtube a.btn.primary',
       ) as HTMLAnchorElement;
+      const rss = fixture.nativeElement.querySelector(
+        '#listen .card.rss a.btn.primary',
+      ) as HTMLAnchorElement;
       expect(spotify.getAttribute('href')).toContain('open.spotify.com');
       expect(spotify.getAttribute('target')).toBe('_blank');
       expect(spotify.getAttribute('rel')).toBe('noopener');
       expect(youtube.getAttribute('href')).toContain('youtube.com');
       expect(youtube.getAttribute('target')).toBe('_blank');
       expect(youtube.getAttribute('rel')).toBe('noopener');
+      expect(rss.getAttribute('href')).toContain('feeds.megaphone.fm/analogjones');
+      expect(rss.getAttribute('target')).toBe('_blank');
+      expect(rss.getAttribute('rel')).toBe('noopener');
     });
   });
 

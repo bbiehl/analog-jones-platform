@@ -939,12 +939,12 @@ section.block {
 /* Listen */
 .listen {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 24px;
   align-items: stretch;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 980px) {
   .listen {
     grid-template-columns: 1fr;
   }
@@ -962,6 +962,9 @@ section.block {
   }
   &.youtube {
     background: linear-gradient(135deg, #3a1212, var(--surface) 60%);
+  }
+  &.rss {
+    background: linear-gradient(135deg, #5a2f10, var(--surface) 60%);
   }
 
   h3 {
@@ -1024,5 +1027,22 @@ section.block {
   &.youtube .glyph {
     background: #ff0033;
     clip-path: polygon(0 0, 100% 50%, 0 100%);
+  }
+
+  &.rss .glyph {
+    background:
+      radial-gradient(circle 16px at 40px calc(100% - 40px), #f26522 0 16px, transparent 17px),
+      radial-gradient(
+        circle at 40px calc(100% - 40px),
+        transparent 0 56px,
+        #f26522 56px 76px,
+        transparent 77px
+      ),
+      radial-gradient(
+        circle at 40px calc(100% - 40px),
+        transparent 0 104px,
+        #f26522 104px 124px,
+        transparent 125px
+      );
   }
 }
