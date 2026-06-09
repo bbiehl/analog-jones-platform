@@ -78,7 +78,7 @@ app.get('/llms.txt', async (_req, res, next) => {
     const episodeLines = episodes
       .map((episode) => {
         const url = `${CANONICAL_ORIGIN}/episodes/${episode.id}`;
-        const title = episode.title ?? 'Untitled episode';
+        const title = (episode.title ?? 'Untitled episode').replace(/[\r\n\]]+/g, ' ').trim();
         const summary = stripMarkdown(episode.intelligence);
         return summary ? `- [${title}](${url}): ${summary}` : `- [${title}](${url})`;
       })
