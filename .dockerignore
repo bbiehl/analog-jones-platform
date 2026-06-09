@@ -1,0 +1,15 @@
+# Keep the build context small and force a clean in-container install/build.
+node_modules
+**/node_modules
+dist
+out-tsc
+.angular
+.git
+.github
+.firebase
+seed-data
+e2e
+playwright-report
+test-results
+coverage
+*.log
