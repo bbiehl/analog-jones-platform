@@ -140,6 +140,18 @@ app.get('/api/episodes', async (_req, res, next) => {
   }
 });
 
+// Firebase Hosting (which fronts this service as a CDN) forwards an
+// `x-forwarded-url` header set to the request path. With `trustProxyHeaders`
+// enabled, @angular/ssr mis-parses it when reconstructing the request URL, the
+// route no longer matches, and it serves the client shell instead of SSR — so
+// server-rendered SEO silently disappears behind the CDN. Strip the header
+// before the static/render handlers; the engine then rebuilds the URL from the
+// path as usual. No effect when the header is absent (direct Cloud Run hits).
+app.use((req, _res, next) => {
+  delete req.headers['x-forwarded-url'];
+  next();
+});
+
 /**
  * Serve static files from /browser
  */
