@@ -149,10 +149,7 @@
             "server": "projects/admin-app/src/main.server.ts",
             "outputMode": "server",
             "security": {
-              "allowedHosts": [
-                "*.run.app",
-                "localhost"
-              ]
+              "allowedHosts": ["*.run.app", "localhost"]
             },
             "ssr": {
               "entry": "projects/admin-app/src/server.ts"
