@@ -97,7 +97,7 @@ describe('ImageUploadService', () => {
       expect(mockOps.ref).toHaveBeenCalledWith(expect.anything(), 'poster/ep1');
     });
 
-    it('should upload with image/webp content type', async () => {
+    it('should upload with image/webp content type and a long immutable cache header', async () => {
       setupCanvasMocks();
       const file = createFakeFile();
 
@@ -105,6 +105,7 @@ describe('ImageUploadService', () => {
 
       expect(mockOps.uploadBytes).toHaveBeenCalledWith(expect.anything(), expect.any(Blob), {
         contentType: 'image/webp',
+        cacheControl: 'public, max-age=31536000, immutable',
       });
     });
   });
