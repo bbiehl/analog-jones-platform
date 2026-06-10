@@ -25,10 +25,9 @@ export class EpisodeScroller {
 
   protected posterBg(episode: Episode): string {
     if (episode.posterUrl) {
-      return `
-        url('${episode.posterUrl}') center/contain no-repeat,
-        #050509
-      `;
+      // Solid backdrop only — the poster itself is a lazy-loaded <img> layered on
+      // top, so off-screen scroller posters aren't fetched until scrolled into view.
+      return '#050509';
     }
     const color = this.posterColor(episode);
     return `
