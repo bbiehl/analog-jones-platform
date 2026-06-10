@@ -140,6 +140,27 @@ app.get('/api/episodes', async (_req, res, next) => {
   }
 });
 
+// Firebase Hosting (our CDN) layers proxy headers on top of Cloud Run's. With
+// trustProxyHeaders enabled, @angular/ssr rebuilds the request URL from them and
+// the result matches no server route, so it serves the client shell instead of
+// SSR — server-rendered SEO silently vanishes behind the CDN. Strip the whole
+// forwarding set so a proxied request reconstructs exactly like a (proven-good)
+// direct one: bare Host header + real path. SeoService builds absolute URLs from
+// the hardcoded ORIGIN, so dropping the forwarded host/proto changes nothing in
+// the rendered canonical/og URLs.
+const FORWARDING_HEADERS = [
+  'x-forwarded-host',
+  'x-forwarded-url',
+  'x-forwarded-proto',
+  'x-forwarded-port',
+  'x-forwarded-server',
+  'forwarded',
+];
+app.use((req, _res, next) => {
+  for (const h of FORWARDING_HEADERS) delete req.headers[h];
+  next();
+});
+
 /**
  * Serve static files from /browser
  */

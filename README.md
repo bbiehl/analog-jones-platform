@@ -1,10 +1,10 @@
 # Analog Jones Platform
 
-Angular 21 multi-project workspace powering two SSR apps on Firebase App Hosting, backed by Firestore, Firebase Auth, and Cloud Storage.
+Angular 21 multi-project workspace powering two SSR apps on Cloud Run (public-app fronted by the Firebase Hosting CDN), backed by Firestore, Firebase Auth, and Cloud Storage.
 
 ## Prerequisites
 
-- Node.js 20+
+- Node.js 22+ (the deploy image runs `node:22-slim`)
 - pnpm 10.28.2 (pinned via `packageManager`)
 - Firebase CLI (installed as a dev dependency; `pnpm exec firebase ...`)
 
@@ -62,7 +62,7 @@ pnpm e2e              # Playwright
 
 ## Deployment
 
-Both apps deploy via Firebase App Hosting using `apphosting.public.yaml` and `apphosting.admin.yaml`. The whole release is automated:
+Both apps run on Cloud Run (one root `Dockerfile` builds both; the runtime `APP` env selects which `server.mjs` runs). `public-app` is fronted by the Firebase Hosting CDN via the catch-all rewrite in `firebase.json`. The whole release is automated:
 
 ```bash
 pnpm release          # or `pnpm release --yes` to skip the confirmation prompt
@@ -72,11 +72,12 @@ pnpm release          # or `pnpm release --yes` to skip the confirmation prompt
 
 `pnpm release` (`scripts/deploy.mjs`):
 
-1. Cuts a dated release branch `Release_YYYY-MM-DD.V` from the latest `origin/main` (auto-incrementing `V` for same-day re-cuts) and pushes it.
-2. Rolls out **admin-app then public-app sequentially** via `firebase apphosting:rollouts:create <backend> --git-branch <branch>`. Each call blocks until its rollout is terminal, so the two never run concurrently. This targets the branch directly — the console "Live branch" setting is not touched.
-3. After both rollouts, deploys rules **only if** `firestore.rules`, `firestore.indexes.json`, or `storage.rules` changed since the previous release branch, then runs the write-defense probe once.
+1. Cuts a dated release branch `Release_YYYY-MM-DD.V` from the latest `origin/main` (auto-incrementing `V` for same-day re-cuts) and pushes it as an immutable deploy record.
+2. Builds + deploys **admin-app then public-app sequentially** to Cloud Run via `gcloud run deploy --source` from a throwaway git worktree pinned to the `origin/main` commit (so it ships `origin/main` verbatim without touching the local checkout). Per-service caps mirror the old config: public `--max-instances 10 --memory 512Mi`, admin `--max-instances 3 --memory 256Mi`. Only `APP` is updated via `--update-env-vars`, so other env vars survive.
+3. Deploys Firebase Hosting (the CDN rewrite → `public-app`).
+4. Deploys rules **only if** `firestore.rules`, `firestore.indexes.json`, or `storage.rules` changed since the previous release branch, then runs the write-defense probe once.
 
-**Prerequisites:** `pnpm exec firebase login` with an account that has App Hosting Admin on `analog-jones-v2`, and `origin` must be the GitHub repo connected to the backends (`bbiehl-analog-jones-platform`).
+**Prerequisites:** an active `gcloud auth login` account with Cloud Run Admin + Cloud Build Editor on `analog-jones-v2`, and `pnpm exec firebase login` with an account that can deploy Firestore/Storage rules and Hosting.
 
 To deploy only Firestore/Storage rules and indexes without a full release:
 

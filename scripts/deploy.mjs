@@ -1,14 +1,19 @@
 #!/usr/bin/env node
-// Automated App Hosting deploy orchestrator. Replaces the manual console flow:
-// cut a dated release branch from main, roll out admin then public sequentially
-// (rollouts can't run concurrently — `rollouts:create` blocks until each is
-// terminal, so awaiting them in series serializes the requests for us), then
-// deploy rules once (only if they changed) and run the write-defense probe.
+// Automated Cloud Run deploy orchestrator. Replaces the old App Hosting flow:
+// cut a dated release branch from main, deploy admin then public sequentially to
+// Cloud Run, then deploy rules once (only if they changed) and run the
+// write-defense probe.
 //
-// We use `firebase apphosting:rollouts:create <backend> --git-branch <branch>`
-// to roll out a specific branch directly, so the console "Live branch" setting
-// is never touched. The release branch must exist on `origin` (the GitHub repo
-// connected to the backends) before rollout — App Hosting builds from there.
+// Why Cloud Run, not App Hosting: the Firebase App Hosting Angular adapter
+// (v17.2.17, the latest published) cannot serve Angular 21 `outputMode:"server"`
+// SSR — it ships the client shell for every route, so server-rendered SEO never
+// runs. We build the apps ourselves (one root Dockerfile, runtime `APP` env
+// selects the server) and run the proven server.mjs directly on Cloud Run.
+//
+// Each service is deployed from a throwaway git worktree of the release branch,
+// so we ship exactly origin/main without disturbing the local checkout. The
+// release branch is still cut + pushed as an immutable deploy record. App
+// Hosting's "Live branch" / rollouts are no longer involved.
 //
 // Usage: pnpm release [--yes|-y]   (a.k.a. node scripts/deploy.mjs)
 //   --yes  skip the interactive confirmation gate (for non-interactive runs)
@@ -17,15 +22,24 @@
 // pnpm built-in (workspace-package deploy) and would shadow this script.
 
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 
 const PROJECT = 'analog-jones-v2';
-const ADMIN_BACKEND = 'analog-jones-platform';
-const PUBLIC_BACKEND = 'public';
-// Admin rolls out first as a lower-traffic smoke test before public.
-const ROLLOUT_ORDER = [
-  { app: 'admin-app', backend: ADMIN_BACKEND },
-  { app: 'public-app', backend: PUBLIC_BACKEND },
+const REGION = 'us-central1';
+// Cloud Run services. One root Dockerfile builds both apps; the runtime APP env
+// selects which server.mjs runs. Admin deploys first as a lower-traffic smoke
+// test before public.
+//
+// maxInstances/memory/cpu mirror the retired apphosting.{public,admin}.yaml
+// caps. Without them Cloud Run defaults to maxInstances 100, so a burst of
+// uncached, Firestore-backed requests could fan out ~10x (public) / ~33x
+// (admin) beyond the old blast radius and amplify read cost.
+const DEPLOY_ORDER = [
+  { app: 'admin-app', service: 'admin-app', maxInstances: 3, memory: '256Mi', cpu: '1' },
+  { app: 'public-app', service: 'public-app', maxInstances: 10, memory: '512Mi', cpu: '1' },
 ];
 // A change to any of these — including firestore.indexes.json — flips rulesChanged
 // and triggers the deploy. Kept in sync with the `deploy:rules` script's
@@ -34,7 +48,7 @@ const ROLLOUT_ORDER = [
 const RULES_FILES = ['firestore.rules', 'firestore.indexes.json', 'storage.rules'];
 
 // deploy:rules occasionally aborts on a transient Google API 5xx (e.g. a
-// firebaserules 503) even though the rollouts already succeeded. Retry that step
+// firebaserules 503) even though the deploys already succeeded. Retry that step
 // a few times, with backoff, before giving up.
 const RULES_DEPLOY_ATTEMPTS = 3;
 
@@ -102,6 +116,25 @@ function ask(question) {
   });
 }
 
+// Best-effort Cloud Run service URL for the summary; never fatal.
+function serviceUrl(service) {
+  try {
+    return capture('gcloud', [
+      'run',
+      'services',
+      'describe',
+      service,
+      '--region',
+      REGION,
+      '--project',
+      PROJECT,
+      '--format=value(status.url)',
+    ]);
+  } catch {
+    return `(gcloud run services describe ${service} --region ${REGION})`;
+  }
+}
+
 // --- 1. Pre-flight -----------------------------------------------------------
 
 console.log('Fetching latest from origin…');
@@ -111,7 +144,27 @@ try {
   fail(`git fetch failed: ${err.message}`);
 }
 
-// Firebase auth must be present, or every rollout call would prompt/fail.
+// gcloud must be authed, or `gcloud run deploy` would fail mid-release.
+let gcloudAuthed = false;
+try {
+  const accounts = capture('gcloud', [
+    'auth',
+    'list',
+    '--filter=status:ACTIVE',
+    '--format=value(account)',
+  ]);
+  gcloudAuthed = /@/.test(accounts);
+} catch {
+  gcloudAuthed = false;
+}
+if (!gcloudAuthed) {
+  fail(
+    'no active gcloud account. Run `gcloud auth login` with an account that has ' +
+      `Cloud Run Admin + Cloud Build Editor on ${PROJECT}, then re-run.`,
+  );
+}
+
+// Firebase auth must be present for the rules deploy step.
 let loggedIn = false;
 try {
   const accounts = capture('pnpm', ['exec', 'firebase', 'login:list']);
@@ -122,7 +175,7 @@ try {
 if (!loggedIn) {
   fail(
     'no Firebase account is logged in. Run `pnpm exec firebase login` with an account ' +
-      `that has App Hosting Admin on ${PROJECT}, then re-run.`,
+      `that can deploy Firestore/Storage rules on ${PROJECT}, then re-run.`,
   );
 }
 
@@ -198,15 +251,17 @@ if (!prevRelease) {
 // --- 4. Confirmation gate ----------------------------------------------------
 
 console.log('\n──────────────────────────────────────────────');
-console.log('  App Hosting deploy plan');
+console.log('  Cloud Run deploy plan');
 console.log('──────────────────────────────────────────────');
 console.log(`  Project:        ${PROJECT}`);
+console.log(`  Region:         ${REGION}`);
 console.log(`  Release branch: ${branch}  (cut from origin/main)`);
 console.log(
-  `  Rollout order:  ${ROLLOUT_ORDER.map((r) => `${r.app} [${r.backend}]`).join('  →  ')}`,
+  `  Deploy order:   ${DEPLOY_ORDER.map((r) => `${r.app} [${r.service}]`).join('  →  ')}`,
 );
+console.log(`  Hosting:        firebase deploy --only hosting (CDN rewrite → public-app)`);
 console.log(`  Rules+indexes:  ${rulesChanged ? 'YES' : 'no'} (${rulesReason})`);
-console.log(`  Probe:          probe:write-defenses (after rollouts)`);
+console.log(`  Probe:          probe:write-defenses (after deploys)`);
 console.log('──────────────────────────────────────────────\n');
 
 if (!autoYes) {
@@ -228,31 +283,84 @@ try {
 }
 console.log(`Pushed ${branch}.`);
 
-// --- 6. Roll out each backend sequentially -----------------------------------
+// --- 6. Deploy each service to Cloud Run sequentially ------------------------
+// Build + deploy from a throwaway worktree pinned to the exact commit we just
+// released, so we ship origin/main verbatim and never touch the local checkout.
+// `gcloud run deploy --source` builds the root Dockerfile via Cloud Build.
 
-for (const { app, backend } of ROLLOUT_ORDER) {
-  console.log(`\n▶ Rolling out ${app} (${backend}) from ${branch}…`);
-  const code = run('pnpm', [
-    'exec',
-    'firebase',
-    'apphosting:rollouts:create',
-    backend,
-    '--git-branch',
-    branch,
-    '--force',
-    '--project',
-    PROJECT,
-  ]);
-  if (code !== 0) {
-    fail(
-      `rollout for ${app} (${backend}) exited ${code}. ` +
-        `The ${branch} branch is pushed; re-run after investigating, or roll out manually.`,
+const deploySha = capture('git', ['rev-parse', 'origin/main']);
+const worktree = mkdtempSync(join(tmpdir(), 'aj-release-'));
+try {
+  run('git', ['worktree', 'add', '--quiet', '--detach', worktree, deploySha]);
+
+  for (const { app, service, maxInstances, memory, cpu } of DEPLOY_ORDER) {
+    console.log(
+      `\n▶ Deploying ${app} → Cloud Run [${service}] from ${branch} (${deploySha.slice(0, 8)})…`,
     );
+    const code = run('gcloud', [
+      'run',
+      'deploy',
+      service,
+      '--source',
+      worktree,
+      '--region',
+      REGION,
+      '--project',
+      PROJECT,
+      // --update-env-vars (not --set-env-vars): only touch APP, so any vars/secrets
+      // added out-of-band (e.g. via the console) survive a release.
+      '--update-env-vars',
+      `APP=${service}`,
+      '--max-instances',
+      String(maxInstances),
+      '--memory',
+      memory,
+      '--cpu',
+      cpu,
+      '--allow-unauthenticated',
+      '--quiet',
+    ]);
+    if (code !== 0) {
+      fail(
+        `Cloud Run deploy for ${app} (${service}) exited ${code}. ` +
+          `The ${branch} branch is pushed; re-run after investigating, or deploy manually.`,
+      );
+    }
+    console.log(`✔ ${app} deployed.`);
   }
-  console.log(`✔ ${app} rollout complete.`);
+} finally {
+  // Always remove the throwaway worktree, even on failure.
+  spawnSync('git', ['worktree', 'remove', '--force', worktree], { stdio: 'ignore' });
 }
 
-// --- 7. Rules (once, if changed) + probe -------------------------------------
+// --- 7. Firebase Hosting (the CDN rewrite to the public-app service) ----------
+// firebase.json's hosting block is the catch-all rewrite that fronts public-app
+// with Firebase Hosting's CDN. It only takes effect once published, and
+// deploy:rules is rules/indexes/storage only — so without this step a clean
+// release would leave the CDN serving stale routing. Deploy after the Cloud Run
+// services exist so the rewrite resolves to a live target.
+console.log('\n▶ Deploying Firebase Hosting (CDN rewrite → public-app)…');
+const hostingCode = run('pnpm', [
+  'exec',
+  'firebase',
+  'deploy',
+  '--only',
+  'hosting',
+  '--project',
+  PROJECT,
+  '--non-interactive',
+]);
+if (hostingCode !== 0) {
+  fail(
+    `firebase deploy --only hosting exited ${hostingCode}. ` +
+      'Both Cloud Run services are deployed and reachable on *.run.app; re-run ' +
+      '`pnpm exec firebase deploy --only hosting` once resolved to repoint the CDN ' +
+      '(no need to re-run the full release).',
+  );
+}
+console.log('✔ Hosting deployed.');
+
+// --- 8. Rules (once, if changed) + probe -------------------------------------
 
 if (rulesChanged) {
   console.log('\n▶ Deploying Firestore/Storage rules + indexes…');
@@ -271,7 +379,7 @@ if (rulesChanged) {
           (transient
             ? ` after ${attempt} attempts — transient API errors persisted.`
             : ' — non-transient failure (see output above).') +
-          ' Both rollouts already completed, so re-run `pnpm deploy:rules` once resolved' +
+          ' Both deploys already completed, so re-run `pnpm deploy:rules` once resolved' +
           ' (no need to re-run the full release).',
       );
     }
@@ -290,14 +398,14 @@ if (rulesChanged) {
 console.log('\n▶ Running write-defense probe…');
 const probeCode = run('pnpm', ['run', 'probe:write-defenses']);
 
-// --- 8. Summary --------------------------------------------------------------
+// --- 9. Summary --------------------------------------------------------------
 
 console.log('\n──────────────────────────────────────────────');
 console.log('  Deploy summary');
 console.log('──────────────────────────────────────────────');
-console.log(`  Branch:  ${branch}`);
-console.log(`  admin-app:  https://${ADMIN_BACKEND}--${PROJECT}.us-central1.hosted.app`);
-console.log(`  public-app: https://${PUBLIC_BACKEND}--${PROJECT}.us-central1.hosted.app`);
+console.log(`  Branch:  ${branch}  (${deploySha.slice(0, 8)})`);
+console.log(`  admin-app:  ${serviceUrl('admin-app')}`);
+console.log(`  public-app: ${serviceUrl('public-app')}`);
 console.log(`  Rules+indexes:  ${rulesChanged ? 'deployed' : 'unchanged (skipped)'}`);
 console.log(`  Probe:   ${probeCode === 0 ? 'PASS' : 'FAIL'}`);
 console.log('──────────────────────────────────────────────');
