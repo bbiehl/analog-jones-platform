@@ -11,7 +11,13 @@ export class ImageUploadService {
   async uploadPoster(episodeId: string, file: File): Promise<string> {
     const compressed = await this.compressImage(file);
     const storageRef = this.ops.ref(this.storage, `poster/${episodeId}`);
-    await this.ops.uploadBytes(storageRef, compressed, { contentType: 'image/webp' });
+    // Posters are immutable per download URL: replacing one overwrites poster/<id>,
+    // which rotates Firebase's download token, so the stored posterUrl changes and
+    // busts the cache. Long-cache them so mobile clients fetch each poster once.
+    await this.ops.uploadBytes(storageRef, compressed, {
+      contentType: 'image/webp',
+      cacheControl: 'public, max-age=31536000, immutable',
+    });
     return this.ops.getDownloadURL(storageRef);
   }
 

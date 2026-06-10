@@ -19,8 +19,11 @@
       <div class="shelf" role="list">
         @for (ep of episodes(); track ep.id) {
           <article class="shelf-item" role="listitem">
-            <a [routerLink]="[routerPrefix(), ep.id]">
+            <a [routerLink]="[routerPrefix(), ep.id]" [attr.aria-label]="ep.title">
               <div class="poster" [style.background]="posterBg(ep)">
+                @if (ep.posterUrl; as poster) {
+                  <img class="poster-img" [src]="poster" loading="lazy" decoding="async" alt="" />
+                }
                 <div class="noise"></div>
               </div>
             </a>

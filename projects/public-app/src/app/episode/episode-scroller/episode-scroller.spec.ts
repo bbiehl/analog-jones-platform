@@ -118,12 +118,12 @@ describe('EpisodeScroller', () => {
   });
 
   describe('posterBg', () => {
-    it('uses url() when posterUrl is set', () => {
+    it('is a solid backdrop (no url()) when posterUrl is set — the <img> carries it', () => {
       setInputs({ episodes: [] });
       const ep = makeEpisode({ posterUrl: 'https://cdn.example/p.jpg' });
       const bg = component['posterBg'](ep);
-      expect(bg).toContain("url('https://cdn.example/p.jpg')");
       expect(bg).toContain('#050509');
+      expect(bg).not.toContain('url(');
     });
 
     it('falls back to gradient when posterUrl is null', () => {
@@ -133,6 +133,31 @@ describe('EpisodeScroller', () => {
       expect(bg).toContain('linear-gradient');
       expect(bg).toContain('repeating-linear-gradient');
       expect(bg).toContain('radial-gradient');
+    });
+  });
+
+  describe('poster image', () => {
+    it('renders a lazy-loaded <img> with the posterUrl when set', () => {
+      setInputs({ episodes: [makeEpisode({ id: 'p', posterUrl: 'https://cdn.example/p.jpg' })] });
+      fixture.detectChanges();
+      const img: HTMLImageElement | null =
+        fixture.nativeElement.querySelector('.poster .poster-img');
+      expect(img).not.toBeNull();
+      expect(img!.getAttribute('loading')).toBe('lazy');
+      expect(img!.getAttribute('src')).toBe('https://cdn.example/p.jpg');
+    });
+
+    it('renders no <img> when posterUrl is null (gradient fallback only)', () => {
+      setInputs({ episodes: [makeEpisode({ posterUrl: null })] });
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.poster .poster-img')).toBeNull();
+    });
+
+    it('gives the poster link an accessible name from the episode title', () => {
+      setInputs({ episodes: [makeEpisode({ title: 'Tape 99' })] });
+      fixture.detectChanges();
+      const anchor: HTMLAnchorElement = fixture.nativeElement.querySelector('.shelf-item a');
+      expect(anchor.getAttribute('aria-label')).toBe('Tape 99');
     });
   });
 
