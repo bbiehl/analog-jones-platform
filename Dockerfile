@@ -12,7 +12,7 @@
 # public-app server-renders; admin-app is RenderMode.Client by design and serves
 # its SPA shell. Building both keeps one Dockerfile and one deploy path; the
 # extra build time is a few seconds and the monorepo already shares one install.
-FROM node:20-slim
+FROM node:22-slim
 
 WORKDIR /app
 

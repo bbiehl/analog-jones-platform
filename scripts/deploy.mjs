@@ -32,9 +32,14 @@ const REGION = 'us-central1';
 // Cloud Run services. One root Dockerfile builds both apps; the runtime APP env
 // selects which server.mjs runs. Admin deploys first as a lower-traffic smoke
 // test before public.
+//
+// maxInstances/memory/cpu mirror the retired apphosting.{public,admin}.yaml
+// caps. Without them Cloud Run defaults to maxInstances 100, so a burst of
+// uncached, Firestore-backed requests could fan out ~10x (public) / ~33x
+// (admin) beyond the old blast radius and amplify read cost.
 const DEPLOY_ORDER = [
-  { app: 'admin-app', service: 'admin-app' },
-  { app: 'public-app', service: 'public-app' },
+  { app: 'admin-app', service: 'admin-app', maxInstances: 3, memory: '256Mi', cpu: '1' },
+  { app: 'public-app', service: 'public-app', maxInstances: 10, memory: '512Mi', cpu: '1' },
 ];
 // A change to any of these — including firestore.indexes.json — flips rulesChanged
 // and triggers the deploy. Kept in sync with the `deploy:rules` script's
@@ -254,6 +259,7 @@ console.log(`  Release branch: ${branch}  (cut from origin/main)`);
 console.log(
   `  Deploy order:   ${DEPLOY_ORDER.map((r) => `${r.app} [${r.service}]`).join('  →  ')}`,
 );
+console.log(`  Hosting:        firebase deploy --only hosting (CDN rewrite → public-app)`);
 console.log(`  Rules+indexes:  ${rulesChanged ? 'YES' : 'no'} (${rulesReason})`);
 console.log(`  Probe:          probe:write-defenses (after deploys)`);
 console.log('──────────────────────────────────────────────\n');
@@ -287,7 +293,7 @@ const worktree = mkdtempSync(join(tmpdir(), 'aj-release-'));
 try {
   run('git', ['worktree', 'add', '--quiet', '--detach', worktree, deploySha]);
 
-  for (const { app, service } of DEPLOY_ORDER) {
+  for (const { app, service, maxInstances, memory, cpu } of DEPLOY_ORDER) {
     console.log(
       `\n▶ Deploying ${app} → Cloud Run [${service}] from ${branch} (${deploySha.slice(0, 8)})…`,
     );
@@ -301,8 +307,16 @@ try {
       REGION,
       '--project',
       PROJECT,
-      '--set-env-vars',
+      // --update-env-vars (not --set-env-vars): only touch APP, so any vars/secrets
+      // added out-of-band (e.g. via the console) survive a release.
+      '--update-env-vars',
       `APP=${service}`,
+      '--max-instances',
+      String(maxInstances),
+      '--memory',
+      memory,
+      '--cpu',
+      cpu,
       '--allow-unauthenticated',
       '--quiet',
     ]);
@@ -319,7 +333,34 @@ try {
   spawnSync('git', ['worktree', 'remove', '--force', worktree], { stdio: 'ignore' });
 }
 
-// --- 7. Rules (once, if changed) + probe -------------------------------------
+// --- 7. Firebase Hosting (the CDN rewrite to the public-app service) ----------
+// firebase.json's hosting block is the catch-all rewrite that fronts public-app
+// with Firebase Hosting's CDN. It only takes effect once published, and
+// deploy:rules is rules/indexes/storage only — so without this step a clean
+// release would leave the CDN serving stale routing. Deploy after the Cloud Run
+// services exist so the rewrite resolves to a live target.
+console.log('\n▶ Deploying Firebase Hosting (CDN rewrite → public-app)…');
+const hostingCode = run('pnpm', [
+  'exec',
+  'firebase',
+  'deploy',
+  '--only',
+  'hosting',
+  '--project',
+  PROJECT,
+  '--non-interactive',
+]);
+if (hostingCode !== 0) {
+  fail(
+    `firebase deploy --only hosting exited ${hostingCode}. ` +
+      'Both Cloud Run services are deployed and reachable on *.run.app; re-run ' +
+      '`pnpm exec firebase deploy --only hosting` once resolved to repoint the CDN ' +
+      '(no need to re-run the full release).',
+  );
+}
+console.log('✔ Hosting deployed.');
+
+// --- 8. Rules (once, if changed) + probe -------------------------------------
 
 if (rulesChanged) {
   console.log('\n▶ Deploying Firestore/Storage rules + indexes…');
@@ -357,7 +398,7 @@ if (rulesChanged) {
 console.log('\n▶ Running write-defense probe…');
 const probeCode = run('pnpm', ['run', 'probe:write-defenses']);
 
-// --- 8. Summary --------------------------------------------------------------
+// --- 9. Summary --------------------------------------------------------------
 
 console.log('\n──────────────────────────────────────────────');
 console.log('  Deploy summary');
