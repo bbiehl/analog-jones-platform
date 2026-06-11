@@ -198,12 +198,12 @@ describe('Home', () => {
   });
 
   describe('posterBg / posterColor / monitorGlow', () => {
-    it('posterBg uses url() when posterUrl is set', async () => {
+    it('posterBg is always a gradient backdrop (no url()) — the <img> carries the poster', async () => {
       const { component } = await setup();
       const ep = makeEpisode({ posterUrl: 'https://cdn/p.jpg' });
       const bg = component['posterBg'](ep);
-      expect(bg).toContain("url('https://cdn/p.jpg')");
-      expect(bg).toContain('#050509');
+      expect(bg).not.toContain('url(');
+      expect(bg).toContain('linear-gradient');
     });
 
     it('posterBg falls back to gradient when posterUrl is null', async () => {

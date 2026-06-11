@@ -151,13 +151,14 @@ describe('EpisodeProperties', () => {
       return (c as unknown as { sleeveBackground: () => string }).sleeveBackground();
     }
 
-    it('uses url() and fallback color when posterUrl is set', () => {
+    it('is always a gradient backdrop (no url()) — the <img> carries the poster', () => {
       setInputs({
         episode: makeEpisode({ posterUrl: 'https://cdn.example/p.jpg' }),
       });
       const bg = readSleeveBg(component);
-      expect(bg).toContain("url('https://cdn.example/p.jpg')");
-      expect(bg).toContain('#050509');
+      expect(bg).not.toContain('url(');
+      expect(bg).toContain('linear-gradient');
+      expect(component['posterUrl']()).toBe('https://cdn.example/p.jpg');
     });
 
     it('uses gradient stack when posterUrl is null', () => {

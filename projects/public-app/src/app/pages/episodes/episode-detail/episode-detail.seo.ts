@@ -13,6 +13,7 @@ export function buildEpisodeSeoInput(ep: EpisodeWithRelations, origin: string): 
     description,
     path,
     image: ep.posterUrl ?? undefined,
+    preloadImage: ep.posterUrl ?? undefined,
     type: 'article',
     jsonLd: [
       organization(origin),
