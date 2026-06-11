@@ -133,12 +133,8 @@ export class Home implements OnInit {
   }
 
   protected posterBg(episode: Episode): string {
-    if (episode.posterUrl) {
-      return `
-        url('${episode.posterUrl}') center/contain no-repeat,
-        #050509
-      `;
-    }
+    // Always a gradient/solid backdrop — the poster is layered on top as a
+    // lazy <img> so it's deferrable and preload-scanner discoverable.
     const color = this.posterColor(episode);
     return `
       linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,.8) 100%),

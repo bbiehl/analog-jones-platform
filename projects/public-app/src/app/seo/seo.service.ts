@@ -12,6 +12,8 @@ export interface SeoInput {
   robots?: string;
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   titleSuffix?: boolean;
+  /** Preloads the LCP image (e.g. the episode poster) with high priority in SSR head. */
+  preloadImage?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -50,6 +52,7 @@ export class SeoService {
     this.upsertName('twitter:image', image);
 
     this.setCanonical(url);
+    this.setPreloadImage(input.preloadImage);
     this.setJsonLd(input.jsonLd);
   }
 
@@ -78,6 +81,21 @@ export class SeoService {
       head.appendChild(link);
     }
     link.setAttribute('href', href);
+  }
+
+  private setPreloadImage(href: string | undefined): void {
+    const head = this.document.head;
+    head
+      .querySelectorAll('link[rel="preload"][as="image"][data-seo]')
+      .forEach((node) => node.remove());
+    if (!href) return;
+    const link = this.document.createElement('link');
+    link.setAttribute('rel', 'preload');
+    link.setAttribute('as', 'image');
+    link.setAttribute('href', href);
+    link.setAttribute('fetchpriority', 'high');
+    link.setAttribute('data-seo', '');
+    head.appendChild(link);
   }
 
   private setJsonLd(jsonLd: SeoInput['jsonLd']): void {
