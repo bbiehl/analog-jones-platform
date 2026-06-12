@@ -20,7 +20,6 @@ function makeEpisode(overrides: Partial<Episode> = {}): Episode {
     intelligence: null,
     isVisible: true,
     links: {},
-    posterUrl: null,
     title: 'Episode One',
     ...overrides,
   };

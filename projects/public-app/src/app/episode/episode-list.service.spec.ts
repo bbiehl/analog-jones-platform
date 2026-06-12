@@ -22,7 +22,6 @@ function ep(id: string, millis: number, isVisible = true): Episode {
     intelligence: null,
     isVisible,
     links: {},
-    posterUrl: null,
     title: id,
   };
 }

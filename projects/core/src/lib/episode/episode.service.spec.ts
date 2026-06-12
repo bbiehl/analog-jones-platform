@@ -4,7 +4,6 @@ import { FIRESTORE, FIRESTORE_OPS, FirestoreOps } from '../shared/firebase.token
 import { EpisodeCategoryService } from '../junction/episode-category.service';
 import { EpisodeGenreService } from '../junction/episode-genre.service';
 import { EpisodeTagService } from '../junction/episode-tag.service';
-import { ImageUploadService } from '../shared/image-upload.service';
 import { EpisodeService } from './episode.service';
 import type { Firestore } from 'firebase/firestore';
 
@@ -19,8 +18,6 @@ describe('EpisodeService', () => {
   let mockEpisodeGenreService: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockEpisodeTagService: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockImageUploadService: any;
 
   beforeEach(() => {
     let autoIdCounter = 0;
@@ -66,10 +63,6 @@ describe('EpisodeService', () => {
       createEpisodeTag: vi.fn(),
       deleteEpisodeTagsByEpisodeId: vi.fn(),
     };
-    mockImageUploadService = {
-      uploadPoster: vi.fn(),
-      deletePoster: vi.fn().mockResolvedValue(undefined),
-    };
 
     TestBed.configureTestingModule({
       providers: [
@@ -79,7 +72,6 @@ describe('EpisodeService', () => {
         { provide: EpisodeCategoryService, useValue: mockEpisodeCategoryService },
         { provide: EpisodeGenreService, useValue: mockEpisodeGenreService },
         { provide: EpisodeTagService, useValue: mockEpisodeTagService },
-        { provide: ImageUploadService, useValue: mockImageUploadService },
       ],
     });
 
@@ -278,7 +270,6 @@ describe('EpisodeService', () => {
       intelligence: null,
       isVisible: true,
       links: { spotify: 'https://spotify.com/ep1' },
-      posterUrl: null,
       title: 'New Episode',
     } as never;
 
@@ -293,43 +284,12 @@ describe('EpisodeService', () => {
       // First set is the episode itself with no id field
       expect(batch.set.mock.calls[0][1]).not.toHaveProperty('id');
       expect(batch.set.mock.calls[0][1].title).toBe('New Episode');
-      expect(batch.set.mock.calls[0][1].posterUrl).toBeNull();
       expect(batch.commit).toHaveBeenCalledTimes(1);
       expect(typeof result).toBe('string');
       expect(result.startsWith('auto-')).toBe(true);
     });
 
-    it('should upload poster before batch and embed the resulting URL', async () => {
-      const batch = { set: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
-      ops.writeBatch.mockReturnValueOnce(batch);
-      mockImageUploadService.uploadPoster.mockResolvedValueOnce(
-        'https://storage.example.com/poster.webp',
-      );
-      const file = new File(['img'], 'p.png', { type: 'image/png' });
-
-      await service.createEpisode(baseEpisode, [], [], [], file);
-
-      expect(mockImageUploadService.uploadPoster).toHaveBeenCalled();
-      expect(batch.set.mock.calls[0][1].posterUrl).toBe('https://storage.example.com/poster.webp');
-    });
-
-    it('should rollback the poster upload when the batch commit fails', async () => {
-      const batch = {
-        set: vi.fn(),
-        commit: vi.fn().mockRejectedValueOnce(new Error('write failed')),
-      };
-      ops.writeBatch.mockReturnValueOnce(batch);
-      mockImageUploadService.uploadPoster.mockResolvedValueOnce('url');
-      const file = new File(['img'], 'p.png', { type: 'image/png' });
-
-      await expect(service.createEpisode(baseEpisode, [], [], [], file)).rejects.toThrow(
-        'write failed',
-      );
-
-      expect(mockImageUploadService.deletePoster).toHaveBeenCalled();
-    });
-
-    it('should not attempt to delete a poster when commit fails and no poster was uploaded', async () => {
+    it('should propagate the error when the batch commit fails', async () => {
       const batch = {
         set: vi.fn(),
         commit: vi.fn().mockRejectedValueOnce(new Error('write failed')),
@@ -337,8 +297,6 @@ describe('EpisodeService', () => {
       ops.writeBatch.mockReturnValueOnce(batch);
 
       await expect(service.createEpisode(baseEpisode, [], [], [])).rejects.toThrow('write failed');
-
-      expect(mockImageUploadService.deletePoster).not.toHaveBeenCalled();
     });
   });
 
@@ -356,52 +314,6 @@ describe('EpisodeService', () => {
 
       expect(batch.update).toHaveBeenCalledWith({ __doc: 'episodes/ep1' }, { title: 'Updated' });
       expect(batch.commit).toHaveBeenCalledTimes(1);
-    });
-
-    it('should upload a new poster and include the resulting URL in the update', async () => {
-      const batch = {
-        update: vi.fn(),
-        set: vi.fn(),
-        delete: vi.fn(),
-        commit: vi.fn().mockResolvedValue(undefined),
-      };
-      ops.writeBatch.mockReturnValueOnce(batch);
-      mockImageUploadService.uploadPoster.mockResolvedValueOnce('new-url');
-
-      const file = new File(['img'], 'p.png', { type: 'image/png' });
-      await service.updateEpisode('ep1', { title: 'X' }, undefined, undefined, undefined, file);
-
-      expect(mockImageUploadService.uploadPoster).toHaveBeenCalledWith('ep1', file);
-      expect(batch.update).toHaveBeenCalledWith(
-        { __doc: 'episodes/ep1' },
-        { title: 'X', posterUrl: 'new-url' },
-      );
-    });
-
-    it('should null out posterUrl when removePoster is true', async () => {
-      const batch = {
-        update: vi.fn(),
-        set: vi.fn(),
-        delete: vi.fn(),
-        commit: vi.fn().mockResolvedValue(undefined),
-      };
-      ops.writeBatch.mockReturnValueOnce(batch);
-
-      await service.updateEpisode(
-        'ep1',
-        { title: 'X' },
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        true,
-      );
-
-      expect(mockImageUploadService.deletePoster).toHaveBeenCalledWith('ep1');
-      expect(batch.update).toHaveBeenCalledWith(
-        { __doc: 'episodes/ep1' },
-        { title: 'X', posterUrl: null },
-      );
     });
 
     it('should delete existing junctions and recreate them when relation arrays are provided', async () => {
@@ -433,7 +345,7 @@ describe('EpisodeService', () => {
   });
 
   describe('deleteEpisode', () => {
-    it('should batch-delete all junctions and the episode doc, then delete the poster', async () => {
+    it('should batch-delete all junctions and the episode doc', async () => {
       ops.getDocs
         .mockResolvedValueOnce({ docs: [{ ref: 'cat1' }, { ref: 'cat2' }] })
         .mockResolvedValueOnce({ docs: [{ ref: 'gen1' }] })
@@ -447,19 +359,6 @@ describe('EpisodeService', () => {
       expect(batch.delete).toHaveBeenCalledTimes(5);
       expect(batch.delete).toHaveBeenLastCalledWith({ __doc: 'episodes/ep1' });
       expect(batch.commit).toHaveBeenCalledTimes(1);
-      expect(mockImageUploadService.deletePoster).toHaveBeenCalledWith('ep1');
-    });
-
-    it('should swallow poster deletion errors after the batch succeeds', async () => {
-      ops.getDocs
-        .mockResolvedValueOnce({ docs: [] })
-        .mockResolvedValueOnce({ docs: [] })
-        .mockResolvedValueOnce({ docs: [] });
-      const batch = { delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
-      ops.writeBatch.mockReturnValueOnce(batch);
-      mockImageUploadService.deletePoster.mockRejectedValueOnce(new Error('storage gone'));
-
-      await expect(service.deleteEpisode('ep1')).resolves.toBeUndefined();
     });
   });
 });

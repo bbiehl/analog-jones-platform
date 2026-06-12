@@ -8,15 +8,7 @@
 }
 
 .tape-file-skel {
-  display: grid;
-  grid-template-columns: minmax(280px, 400px) 1fr;
-  gap: 56px;
-  align-items: start;
-
-  @media (max-width: 960px) {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
+  max-width: 1080px;
 }
 
 .pulse {
@@ -39,50 +31,6 @@
   }
   to {
     transform: translateX(100%);
-  }
-}
-
-/* Sleeve skeleton — mirrors .sleeve in episode-properties */
-.sleeve-skel {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 18px 18px 20px;
-  border: 1px solid var(--sk-line);
-  background: linear-gradient(180deg, #13131e, #0e0e18);
-
-  @media (max-width: 960px) {
-    width: 100%;
-    max-width: 420px;
-    margin: 0 auto;
-  }
-}
-
-.cover-skel {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 2 / 3;
-  border: 1px solid #2d2246;
-  overflow: hidden;
-
-  .cover-scan {
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 40%;
-    top: -20%;
-    background: linear-gradient(180deg, transparent, rgba(103, 232, 249, 0.18), transparent);
-    animation: cover-scan 5.5s linear infinite;
-    mix-blend-mode: screen;
-  }
-}
-
-@keyframes cover-scan {
-  0% {
-    transform: translateY(-10%);
-  }
-  100% {
-    transform: translateY(280%);
   }
 }
 

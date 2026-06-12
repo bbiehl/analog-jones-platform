@@ -12,7 +12,6 @@ function makeEpisode(overrides: Partial<EpisodeWithRelations> = {}): EpisodeWith
     intelligence: null,
     isVisible: true,
     links: {},
-    posterUrl: null,
     categories: [],
     genres: [],
     tags: [],
@@ -146,52 +145,12 @@ describe('EpisodeProperties', () => {
     });
   });
 
-  describe('sleeveBackground', () => {
-    function readSleeveBg(c: EpisodeProperties): string {
-      return (c as unknown as { sleeveBackground: () => string }).sleeveBackground();
-    }
-
-    it('is always a gradient backdrop (no url()) — the <img> carries the poster', () => {
-      setInputs({
-        episode: makeEpisode({ posterUrl: 'https://cdn.example/p.jpg' }),
-      });
-      const bg = readSleeveBg(component);
-      expect(bg).not.toContain('url(');
-      expect(bg).toContain('linear-gradient');
-      expect(component['posterUrl']()).toBe('https://cdn.example/p.jpg');
-    });
-
-    it('uses gradient stack when posterUrl is null', () => {
-      setInputs({ episode: makeEpisode({ posterUrl: null }) });
-      const bg = readSleeveBg(component);
-      expect(bg).toContain('linear-gradient');
-      expect(bg).toContain('radial-gradient');
-      expect(bg).toContain('repeating-linear-gradient');
-      expect(bg).toMatch(/hsl\(\d{1,3}, 55%, 42%\)/);
-    });
-
-    it('seeds color by id when present, independent of title', () => {
-      setInputs({ episode: makeEpisode({ id: 'same', title: 'Alpha' }) });
-      const byId = readSleeveBg(component);
-
-      const fixture2 = TestBed.createComponent(EpisodeProperties);
-      fixture2.componentRef.setInput(
-        'episode',
-        makeEpisode({ id: 'same', title: 'CompletelyDifferentTitle' }),
-      );
-      const byIdAgain = readSleeveBg(fixture2.componentInstance);
-
-      expect(byId).toBe(byIdAgain);
-    });
-
-    it('falls back to title as color seed when id is absent', () => {
-      const fixture3 = TestBed.createComponent(EpisodeProperties);
-      fixture3.componentRef.setInput(
-        'episode',
-        makeEpisode({ id: undefined, title: 'only-title-seed' }),
-      );
-      const bg = readSleeveBg(fixture3.componentInstance);
-      expect(bg).toMatch(/hsl\(\d{1,3}, 55%, 42%\)/);
+  describe('sleeve', () => {
+    it('renders no decorative sleeve/cover element', () => {
+      setInputs({ episode: makeEpisode({}) });
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.sleeve')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.sleeve-cover')).toBeNull();
     });
   });
 });

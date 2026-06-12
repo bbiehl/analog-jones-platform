@@ -43,9 +43,9 @@ const DEPLOY_ORDER = [
 ];
 // A change to any of these — including firestore.indexes.json — flips rulesChanged
 // and triggers the deploy. Kept in sync with the `deploy:rules` script's
-// `--only firestore:rules,firestore:indexes,storage` list so detection and deploy
+// `--only firestore:rules,firestore:indexes` list so detection and deploy
 // always cover the same surface (rules AND indexes).
-const RULES_FILES = ['firestore.rules', 'firestore.indexes.json', 'storage.rules'];
+const RULES_FILES = ['firestore.rules', 'firestore.indexes.json'];
 
 // deploy:rules occasionally aborts on a transient Google API 5xx (e.g. a
 // firebaserules 503) even though the deploys already succeeded. Retry that step
@@ -336,7 +336,7 @@ try {
 // --- 7. Firebase Hosting (the CDN rewrite to the public-app service) ----------
 // firebase.json's hosting block is the catch-all rewrite that fronts public-app
 // with Firebase Hosting's CDN. It only takes effect once published, and
-// deploy:rules is rules/indexes/storage only — so without this step a clean
+// deploy:rules is rules/indexes only — so without this step a clean
 // release would leave the CDN serving stale routing. Deploy after the Cloud Run
 // services exist so the rewrite resolves to a live target.
 console.log('\n▶ Deploying Firebase Hosting (CDN rewrite → public-app)…');

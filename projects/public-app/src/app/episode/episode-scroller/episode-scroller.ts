@@ -22,30 +22,4 @@ export class EpisodeScroller {
   protected toDate(episode: Episode): Date {
     return episode.episodeDate.toDate();
   }
-
-  protected posterBg(episode: Episode): string {
-    if (episode.posterUrl) {
-      // Solid backdrop only — the poster itself is a lazy-loaded <img> layered on
-      // top, so off-screen scroller posters aren't fetched until scrolled into view.
-      return '#050509';
-    }
-    const color = this.posterColor(episode);
-    return `
-      linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,.8) 100%),
-      radial-gradient(ellipse at 30% 20%, ${color}55, transparent 55%),
-      radial-gradient(ellipse at 80% 70%, #00000088, transparent 60%),
-      repeating-linear-gradient(135deg, ${color}22 0 8px, #0a0612 8px 16px),
-      #140a22
-    `;
-  }
-
-  private posterColor(episode: Episode): string {
-    const id = episode.id ?? episode.title;
-    let hash = 0;
-    for (let i = 0; i < id.length; i++) {
-      hash = (hash * 31 + id.charCodeAt(i)) & 0xffffffff;
-    }
-    const hue = Math.abs(hash) % 360;
-    return `hsl(${hue}, 55%, 42%)`;
-  }
 }

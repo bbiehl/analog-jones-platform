@@ -11,7 +11,7 @@ test.describe('Episodes browse', () => {
     expect(await episodes.episodeItems.count()).toBeGreaterThan(0);
   });
 
-  test('clicking a poster opens that episode detail page', async ({ page }) => {
+  test('clicking an episode opens that episode detail page', async ({ page }) => {
     const episodes = new EpisodesPage(page);
     await episodes.goto();
 

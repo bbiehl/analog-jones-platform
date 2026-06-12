@@ -41,33 +41,6 @@ describe('SeoService', () => {
     expect(canonical?.getAttribute('href')).toBe('https://example.test/my-page');
   });
 
-  it('should preload the LCP image with high priority when preloadImage is set', () => {
-    service.setHead({
-      title: 'My Page',
-      description: 'desc',
-      path: '/my-page',
-      preloadImage: 'https://cdn.test/poster.webp',
-    });
-
-    const preload = document.head.querySelector<HTMLLinkElement>(
-      'link[rel="preload"][as="image"][data-seo]',
-    );
-    expect(preload?.getAttribute('href')).toBe('https://cdn.test/poster.webp');
-    expect(preload?.getAttribute('fetchpriority')).toBe('high');
-  });
-
-  it('should not leave a stale image preload when navigating to a page without one', () => {
-    service.setHead({
-      title: 'Has Poster',
-      description: 'desc',
-      path: '/a',
-      preloadImage: 'https://cdn.test/poster.webp',
-    });
-    service.setHead({ title: 'No Poster', description: 'desc', path: '/b' });
-
-    expect(document.head.querySelector('link[rel="preload"][as="image"][data-seo]')).toBeNull();
-  });
-
   it('should populate og, twitter, description, and robots meta tags with defaults', () => {
     service.setHead({
       title: 'My Page',

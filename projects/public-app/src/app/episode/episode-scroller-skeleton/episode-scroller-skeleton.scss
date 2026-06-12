@@ -55,13 +55,9 @@ section.block {
 .shelf-item {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.poster {
-  aspect-ratio: 2 / 3;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 2px;
+  gap: 14px;
+  padding: 22px 20px;
+  border: 1px solid var(--es-line);
 }
 
 .meta {
@@ -72,7 +68,7 @@ section.block {
 }
 
 .name {
-  height: 22px;
+  height: 24px;
   width: 80%;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 2px;

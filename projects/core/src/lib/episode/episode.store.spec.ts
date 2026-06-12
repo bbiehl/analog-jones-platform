@@ -16,7 +16,6 @@ describe('EpisodeStore', () => {
       intelligence: 'Some notes',
       isVisible: true,
       links: { spotify: 'https://spotify.com/ep1', youtube: 'https://youtube.com/ep1' },
-      posterUrl: 'https://storage.example.com/poster/ep1',
       title: 'Episode One',
     },
     {
@@ -26,7 +25,6 @@ describe('EpisodeStore', () => {
       intelligence: null,
       isVisible: false,
       links: {},
-      posterUrl: null,
       title: 'Episode Two',
     },
   ];
@@ -317,7 +315,6 @@ describe('EpisodeStore', () => {
         intelligence: null,
         isVisible: true,
         links: {},
-        posterUrl: null,
         title: 'New Episode',
       };
       const categoryIds = ['c1'];
@@ -331,34 +328,10 @@ describe('EpisodeStore', () => {
         categoryIds,
         genreIds,
         tagIds,
-        undefined,
       );
       expect(mockEpisodeService.getAllEpisodes).toHaveBeenCalled();
       expect(store.episodes()).toEqual(mockEpisodes);
       expect(store.loading()).toBe(false);
-    });
-
-    it('should pass poster file when provided', async () => {
-      const newEpisode: Omit<Episode, 'id'> = {
-        createdAt: Timestamp.fromDate(new Date('2026-03-01')),
-        episodeDate: Timestamp.fromDate(new Date('2026-03-01')),
-        intelligence: null,
-        isVisible: true,
-        links: {},
-        posterUrl: null,
-        title: 'New Episode',
-      };
-      const posterFile = new File(['img'], 'poster.png', { type: 'image/png' });
-
-      await store.createEpisode(newEpisode, [], [], [], posterFile);
-
-      expect(mockEpisodeService.createEpisode).toHaveBeenCalledWith(
-        newEpisode,
-        [],
-        [],
-        [],
-        posterFile,
-      );
     });
 
     it('should set error on failure', async () => {
@@ -370,7 +343,6 @@ describe('EpisodeStore', () => {
         intelligence: null,
         isVisible: true,
         links: {},
-        posterUrl: null,
         title: 'New Episode',
       };
 
@@ -391,35 +363,10 @@ describe('EpisodeStore', () => {
         ['c1'],
         ['g1'],
         ['t1'],
-        undefined,
-        undefined,
       );
       expect(mockEpisodeService.getAllEpisodes).toHaveBeenCalled();
       expect(store.episodes()).toEqual(mockEpisodes);
       expect(store.loading()).toBe(false);
-    });
-
-    it('should pass poster file when provided', async () => {
-      const posterFile = new File(['img'], 'poster.png', { type: 'image/png' });
-
-      await store.updateEpisode(
-        'ep1',
-        { title: 'Updated' },
-        undefined,
-        undefined,
-        undefined,
-        posterFile,
-      );
-
-      expect(mockEpisodeService.updateEpisode).toHaveBeenCalledWith(
-        'ep1',
-        { title: 'Updated' },
-        undefined,
-        undefined,
-        undefined,
-        posterFile,
-        undefined,
-      );
     });
 
     it('should set error on failure', async () => {
@@ -554,28 +501,6 @@ describe('EpisodeStore', () => {
   });
 
   describe('updateEpisode edge cases', () => {
-    it('should pass removePoster=true through to the service', async () => {
-      await store.updateEpisode(
-        'ep1',
-        { title: 'Updated' },
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        true,
-      );
-
-      expect(mockEpisodeService.updateEpisode).toHaveBeenCalledWith(
-        'ep1',
-        { title: 'Updated' },
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        true,
-      );
-    });
-
     it('should accept empty relation arrays', async () => {
       await store.updateEpisode('ep1', { title: 'Updated' }, [], [], []);
 
@@ -585,8 +510,6 @@ describe('EpisodeStore', () => {
         [],
         [],
         [],
-        undefined,
-        undefined,
       );
     });
   });

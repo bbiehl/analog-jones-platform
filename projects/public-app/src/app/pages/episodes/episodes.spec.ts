@@ -17,7 +17,6 @@ function makeEpisode(id: string, title: string): Episode {
     intelligence: null,
     isVisible: true,
     links: {},
-    posterUrl: null,
     title,
   };
 }

@@ -65,8 +65,6 @@ export class EpisodeAdd implements OnInit {
     tagIds: [[] as string[]],
   });
 
-  protected readonly posterFile = signal<File | null>(null);
-  protected readonly posterPreview = signal<string | null>(null);
   protected readonly showMarkdownPreview = signal(false);
   protected readonly submitting = signal(false);
   protected readonly submitError = signal<string | null>(null);
@@ -85,22 +83,6 @@ export class EpisodeAdd implements OnInit {
     this.categoryStore.loadCategories();
     this.genreStore.loadGenres();
     this.tagStore.loadTags();
-  }
-
-  protected onPosterSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (file) {
-      this.posterFile.set(file);
-      const reader = new FileReader();
-      reader.onload = () => this.posterPreview.set(reader.result as string);
-      reader.readAsDataURL(file);
-    }
-  }
-
-  protected removePoster(): void {
-    this.posterFile.set(null);
-    this.posterPreview.set(null);
   }
 
   protected togglePreview(): void {
@@ -124,13 +106,11 @@ export class EpisodeAdd implements OnInit {
             ...(v.spotifyLink ? { spotify: v.spotifyLink } : {}),
             ...(v.youtubeLink ? { youtube: v.youtubeLink } : {}),
           },
-          posterUrl: null,
           title: v.title,
         },
         v.categoryIds,
         v.genreIds,
         v.tagIds,
-        this.posterFile() ?? undefined,
       );
       const error = this.episodeStore.error();
       if (error) {

@@ -21,7 +21,6 @@ describe('ExploreSearchService', () => {
     intelligence: null,
     isVisible: true,
     links: {},
-    posterUrl: null,
     title,
   });
 

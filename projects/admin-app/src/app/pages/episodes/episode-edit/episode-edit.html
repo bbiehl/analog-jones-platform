@@ -46,31 +46,6 @@
         </mat-form-field>
       </div>
 
-      <!-- Poster Upload -->
-      <div class="flex flex-col gap-2">
-        <label class="text-sm text-gray-400">Poster Image</label>
-        @if (posterPreview()) {
-          <div class="relative w-40">
-            <img [src]="posterPreview()" alt="Poster preview" class="w-40 rounded" />
-            <button
-              mat-icon-button
-              type="button"
-              class="absolute top-0 right-0"
-              aria-label="Remove poster"
-              (click)="removePoster()"
-            >
-              <mat-icon>close</mat-icon>
-            </button>
-          </div>
-        } @else {
-          <button mat-stroked-button type="button" (click)="fileInput.click()">
-            <mat-icon>upload</mat-icon>
-            Choose Image
-          </button>
-        }
-        <input #fileInput type="file" accept="image/*" hidden (change)="onPosterSelected($event)" />
-      </div>
-
       <!-- Categories -->
       <mat-form-field>
         <mat-label>Categories</mat-label>

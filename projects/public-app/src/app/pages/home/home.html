@@ -77,22 +77,6 @@
     </div>
     <div class="drop">
       @if (featured(); as f) {
-        <div class="poster-big">
-          <div class="poster poster--big" [style.background]="posterBg(f)">
-            @if (f.posterUrl; as poster) {
-              <img
-                class="poster-img"
-                [src]="poster"
-                width="966"
-                height="1449"
-                loading="lazy"
-                decoding="async"
-                alt=""
-              />
-            }
-            <div class="noise"></div>
-          </div>
-        </div>
         <div class="body">
           <div class="meta-row">
             <span class="chip">{{ toDate(f) | date: 'MMM dd · yyyy' | uppercase }}</span>
@@ -122,9 +106,6 @@
           </div>
         </div>
       } @else {
-        <div class="poster-big" aria-hidden="true">
-          <div class="poster poster--big"></div>
-        </div>
         <div class="body" aria-hidden="true"></div>
       }
     </div>

@@ -18,7 +18,6 @@ function makeEpisode(overrides: Partial<EpisodeWithRelations> = {}): EpisodeWith
     intelligence: null,
     isVisible: true,
     links: {},
-    posterUrl: null,
     categories: [],
     genres: [],
     tags: [],

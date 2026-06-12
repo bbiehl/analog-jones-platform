@@ -81,7 +81,6 @@ describe('podcastEpisode', () => {
       title: 'A Great Episode',
       intelligence: 'Some **bold** intelligence about the film.',
       links: {},
-      posterUrl: null,
       categories: [],
       genres: [],
       tags: [],
@@ -125,15 +124,7 @@ describe('podcastEpisode', () => {
     expect((result['description'] as string).endsWith('…')).toBe(true);
   });
 
-  it('uses posterUrl when present', () => {
-    const result = podcastEpisode(
-      makeEpisode({ posterUrl: 'https://cdn.example/poster.jpg' }),
-      ORIGIN,
-    );
-    expect(result['image']).toBe('https://cdn.example/poster.jpg');
-  });
-
-  it('falls back to the default OG image when posterUrl is missing', () => {
+  it('uses the default OG image', () => {
     const result = podcastEpisode(makeEpisode(), ORIGIN);
     expect(result['image']).toBe(`${ORIGIN}/og-default.png`);
   });
@@ -165,7 +156,6 @@ describe('podcastEpisode', () => {
   it('includes a YouTube VideoObject when links.youtube is set', () => {
     const episode = makeEpisode({
       links: { youtube: 'https://youtube.test/watch' },
-      posterUrl: 'https://cdn.example/poster.jpg',
     });
     const result = podcastEpisode(episode, ORIGIN);
     expect(result['associatedMedia']).toEqual([
@@ -174,7 +164,7 @@ describe('podcastEpisode', () => {
         name: 'A Great Episode',
         contentUrl: 'https://youtube.test/watch',
         embedUrl: 'https://youtube.test/watch',
-        thumbnailUrl: 'https://cdn.example/poster.jpg',
+        thumbnailUrl: `${ORIGIN}/og-default.png`,
         uploadDate: '2024-01-15T00:00:00.000Z',
         description: 'Some bold intelligence about the film.',
       },

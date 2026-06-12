@@ -27,11 +27,10 @@ describe('EpisodeScrollerSkeleton', () => {
     expect(region.getAttribute('aria-label')).toBe('Loading episodes');
   });
 
-  it('renders a shelf of poster placeholders that match the scroller footprint', () => {
+  it('renders a shelf of card placeholders that match the scroller footprint', () => {
     const items = fixture.nativeElement.querySelectorAll('.shelf .shelf-item');
     expect(items.length).toBe(6);
-    const posters = fixture.nativeElement.querySelectorAll('.shelf .poster');
-    expect(posters.length).toBe(6);
+    expect(fixture.nativeElement.querySelector('.shelf .poster')).toBeNull();
   });
 
   it('renders a heading placeholder', () => {

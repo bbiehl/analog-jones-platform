@@ -53,7 +53,7 @@ export function podcastEpisode(
   const url = absoluteUrl(origin, path);
   const description = stripMarkdown(episode.intelligence, 300);
   const datePublished = episode.episodeDate?.toDate?.().toISOString();
-  const image = episode.posterUrl ?? absoluteUrl(origin, '/og-default.png');
+  const image = absoluteUrl(origin, '/og-default.png');
 
   const associatedMedia: Record<string, unknown>[] = [];
   if (episode.links?.spotify) {

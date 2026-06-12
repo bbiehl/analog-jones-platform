@@ -9,7 +9,7 @@ projects/core/src/
   lib/
     category/  episode/  genre/  tag/  user/   # domain folders
     junction/                                  # episode-<x> many-to-many services
-    shared/                                    # firebase.token, image-upload.service
+    shared/                                    # firebase.token, transfer-state.helpers
     styles/                                    # theme.scss / theme-public.scss
   public-api.ts
   test-setup.ts
@@ -30,7 +30,7 @@ Services use the Firebase modular SDK via injection tokens. Tests mock those tok
 
 ### Guiding principles
 
-- **Mock via injection tokens.** Provide fakes for `FIRESTORE`, `STORAGE`, `STORAGE_OPS`, or other injected services in `TestBed.configureTestingModule`.
+- **Mock via injection tokens.** Provide fakes for `FIRESTORE`, `FIRESTORE_OPS`, `AUTH`, or other injected services in `TestBed.configureTestingModule`.
 - **Do not use `vi.mock()`.** Conflicts with `@angular/build`'s vitest-mock-patch. Mock via TestBed providers instead.
 - **Use `vi.stubGlobal()` for browser APIs** unavailable in jsdom (`OffscreenCanvas`, `createImageBitmap`). Always clean up with `vi.unstubAllGlobals()` in `afterEach`.
 - **Test data transformations inline.** Since Firebase SDK functions are module-level imports, test the mapping/transformation logic directly rather than trying to mock `getDocs`, `getDoc`, etc.
@@ -80,27 +80,6 @@ describe('CategoryService', () => {
 });
 ```
 
-### Storage service (when using `STORAGE` + `STORAGE_OPS`)
-
-```typescript
-function createMockStorageOps() {
-  return {
-    ref: vi.fn((_storage: unknown, path: string) => ({ fullPath: path })),
-    uploadBytes: vi.fn(() => Promise.resolve()),
-    getDownloadURL: vi.fn(() => Promise.resolve('https://storage.example.com/poster/ep1')),
-    deleteObject: vi.fn(() => Promise.resolve()),
-  };
-}
-
-TestBed.configureTestingModule({
-  providers: [
-    ImageUploadService,
-    { provide: STORAGE, useValue: {} as FirebaseStorage },
-    { provide: STORAGE_OPS, useValue: createMockStorageOps() },
-  ],
-});
-```
-
 ### Junction service (Firestore-only)
 
 ```typescript
@@ -111,13 +90,11 @@ TestBed.configureTestingModule({
 
 ### Token quick-reference
 
-| Token          | Type              | When to provide                                                         |
-| -------------- | ----------------- | ----------------------------------------------------------------------- |
-| `FIRESTORE`    | `Firestore`       | All services (always required)                                          |
-| `STORAGE`      | `FirebaseStorage` | Services using Firebase Storage                                         |
-| `STORAGE_OPS`  | `StorageOps`      | Services calling `ref`, `uploadBytes`, `getDownloadURL`, `deleteObject` |
-| `AUTH`         | `Auth`            | Services using Firebase Auth                                            |
-| Other services | class ref         | Services that `inject()` another service (e.g., junction services)      |
+| Token          | Type        | When to provide                                                    |
+| -------------- | ----------- | ------------------------------------------------------------------ |
+| `FIRESTORE`    | `Firestore` | All services (always required)                                     |
+| `AUTH`         | `Auth`      | Services using Firebase Auth                                       |
+| Other services | class ref   | Services that `inject()` another service (e.g., junction services) |
 
 ## Unit Test Pattern (lib stores)
 

@@ -20,17 +20,11 @@
         @for (ep of episodes(); track ep.id) {
           <article class="shelf-item" role="listitem">
             <a [routerLink]="[routerPrefix(), ep.id]" [attr.aria-label]="ep.title">
-              <div class="poster" [style.background]="posterBg(ep)">
-                @if (ep.posterUrl; as poster) {
-                  <img class="poster-img" [src]="poster" loading="lazy" decoding="async" alt="" />
-                }
-                <div class="noise"></div>
+              <div class="meta">
+                <span>{{ toDate(ep) | date: 'MMM dd · yyyy' | uppercase }}</span>
               </div>
+              <div class="name">{{ ep.title }}</div>
             </a>
-            <div class="meta">
-              <span>{{ toDate(ep) | date: 'MMM dd · yyyy' | uppercase }}</span>
-            </div>
-            <div class="name">{{ ep.title }}</div>
           </article>
         }
       </div>

@@ -15,7 +15,6 @@ function makeEpisode(overrides: Partial<Episode> = {}): Episode {
     intelligence: null,
     isVisible: true,
     links: {},
-    posterUrl: null,
     ...overrides,
   };
 }
@@ -117,62 +116,21 @@ describe('EpisodeScroller', () => {
     expect(anchor.getAttribute('href')).toBe('/archive/ep-7');
   });
 
-  describe('posterBg', () => {
-    it('is a solid backdrop (no url()) when posterUrl is set — the <img> carries it', () => {
-      setInputs({ episodes: [] });
-      const ep = makeEpisode({ posterUrl: 'https://cdn.example/p.jpg' });
-      const bg = component['posterBg'](ep);
-      expect(bg).toContain('#050509');
-      expect(bg).not.toContain('url(');
-    });
-
-    it('falls back to gradient when posterUrl is null', () => {
-      setInputs({ episodes: [] });
-      const ep = makeEpisode({ posterUrl: null });
-      const bg = component['posterBg'](ep);
-      expect(bg).toContain('linear-gradient');
-      expect(bg).toContain('repeating-linear-gradient');
-      expect(bg).toContain('radial-gradient');
-    });
-  });
-
-  describe('poster image', () => {
-    it('renders a lazy-loaded <img> with the posterUrl when set', () => {
-      setInputs({ episodes: [makeEpisode({ id: 'p', posterUrl: 'https://cdn.example/p.jpg' })] });
+  describe('shelf item', () => {
+    it('renders each episode as a text card with no poster frame', () => {
+      setInputs({ episodes: [makeEpisode({ id: 'p', title: 'Tape 99' })] });
       fixture.detectChanges();
-      const img: HTMLImageElement | null =
-        fixture.nativeElement.querySelector('.poster .poster-img');
-      expect(img).not.toBeNull();
-      expect(img!.getAttribute('loading')).toBe('lazy');
-      expect(img!.getAttribute('src')).toBe('https://cdn.example/p.jpg');
+      expect(fixture.nativeElement.querySelector('.poster')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.shelf-item .name').textContent).toContain(
+        'Tape 99',
+      );
     });
 
-    it('renders no <img> when posterUrl is null (gradient fallback only)', () => {
-      setInputs({ episodes: [makeEpisode({ posterUrl: null })] });
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.poster .poster-img')).toBeNull();
-    });
-
-    it('gives the poster link an accessible name from the episode title', () => {
+    it('gives the shelf-item link an accessible name from the episode title', () => {
       setInputs({ episodes: [makeEpisode({ title: 'Tape 99' })] });
       fixture.detectChanges();
       const anchor: HTMLAnchorElement = fixture.nativeElement.querySelector('.shelf-item a');
       expect(anchor.getAttribute('aria-label')).toBe('Tape 99');
-    });
-  });
-
-  describe('posterColor', () => {
-    it('is deterministic for the same id', () => {
-      setInputs({ episodes: [] });
-      const a = makeEpisode({ id: 'same' });
-      const b = makeEpisode({ id: 'same', title: 'different' });
-      expect(component['posterColor'](a)).toBe(component['posterColor'](b));
-    });
-
-    it('returns an hsl(...) string', () => {
-      setInputs({ episodes: [] });
-      const color = component['posterColor'](makeEpisode({ id: 'x' }));
-      expect(color).toMatch(/^hsl\(\d{1,3}, 55%, 42%\)$/);
     });
   });
 

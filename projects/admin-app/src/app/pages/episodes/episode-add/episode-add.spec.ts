@@ -264,20 +264,17 @@ describe('EpisodeAdd', () => {
     await c.onSubmit();
 
     expect(mockEpisodeStore.createEpisode).toHaveBeenCalledTimes(1);
-    const [data, categoryIds, genreIds, tagIds, posterFile] =
-      mockEpisodeStore.createEpisode.mock.calls[0];
+    const [data, categoryIds, genreIds, tagIds] = mockEpisodeStore.createEpisode.mock.calls[0];
     expect(data).toMatchObject({
       title: 'My Title',
       intelligence: '# hi',
       isVisible: true,
       links: { spotify: 'https://spotify.example/x', youtube: 'https://youtube.example/y' },
-      posterUrl: null,
     });
     expect(data.episodeDate.toDate().getTime()).toBe(date.getTime());
     expect(categoryIds).toEqual(['c1']);
     expect(genreIds).toEqual(['g1', 'g2']);
     expect(tagIds).toEqual(['t1']);
-    expect(posterFile).toBeUndefined();
   });
 
   it('should omit empty link fields and send null intelligence when blank', async () => {
@@ -317,63 +314,6 @@ describe('EpisodeAdd', () => {
     expect(preview).not.toBeNull();
     expect(preview.innerHTML).toContain('<h1');
     expect(preview.innerHTML).toContain('Heading');
-  });
-
-  it('should clear the poster file and preview when removePoster is called', () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const c = component as any;
-    c.posterFile.set(new File(['x'], 'x.png', { type: 'image/png' }));
-    c.posterPreview.set('data:image/png;base64,abc');
-
-    c.removePoster();
-
-    expect(c.posterFile()).toBeNull();
-    expect(c.posterPreview()).toBeNull();
-  });
-
-  it('should set the poster file and preview when a file is selected', async () => {
-    const dataUrl = 'data:image/png;base64,Zm9v';
-    class FakeFileReader {
-      result: string | null = null;
-      onload: (() => void) | null = null;
-      readAsDataURL(_blob: Blob): void {
-        this.result = dataUrl;
-        queueMicrotask(() => this.onload?.());
-      }
-    }
-    vi.stubGlobal('FileReader', FakeFileReader);
-
-    const file = new File(['x'], 'poster.png', { type: 'image/png' });
-    const event = {
-      target: { files: [file] } as unknown as HTMLInputElement,
-    } as unknown as Event;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const c = component as any;
-    c.onPosterSelected(event);
-
-    await new Promise((r) => setTimeout(r, 0));
-
-    expect(c.posterFile()).toBe(file);
-    expect(c.posterPreview()).toBe(dataUrl);
-
-    vi.unstubAllGlobals();
-  });
-
-  it('should pass the selected poster file to createEpisode', async () => {
-    const router = TestBed.inject(Router);
-    vi.spyOn(router, 'navigate').mockResolvedValue(true);
-
-    const file = new File(['x'], 'poster.png', { type: 'image/png' });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const c = component as any;
-    c.posterFile.set(file);
-    c.form.patchValue({ title: 'Title' });
-
-    await c.onSubmit();
-
-    const [, , , , posterFile] = mockEpisodeStore.createEpisode.mock.calls[0];
-    expect(posterFile).toBe(file);
   });
 
   it('should disable the Save button when the form is invalid', async () => {
