@@ -9,7 +9,7 @@ projects/core/src/
   lib/
     category/  episode/  genre/  tag/  user/   # domain folders
     junction/                                  # episode-<x> many-to-many services
-    shared/                                    # firebase.token, image-upload.service
+    shared/                                    # firebase.token, transfer-state.helpers
     styles/                                    # theme.scss / theme-public.scss
   public-api.ts
   test-setup.ts
@@ -90,11 +90,11 @@ TestBed.configureTestingModule({
 
 ### Token quick-reference
 
-| Token          | Type              | When to provide                                                         |
-| -------------- | ----------------- | ----------------------------------------------------------------------- |
-| `FIRESTORE`    | `Firestore`       | All services (always required)                                          |
-| `AUTH`         | `Auth`            | Services using Firebase Auth                                            |
-| Other services | class ref         | Services that `inject()` another service (e.g., junction services)      |
+| Token          | Type        | When to provide                                                    |
+| -------------- | ----------- | ------------------------------------------------------------------ |
+| `FIRESTORE`    | `Firestore` | All services (always required)                                     |
+| `AUTH`         | `Auth`      | Services using Firebase Auth                                       |
+| Other services | class ref   | Services that `inject()` another service (e.g., junction services) |
 
 ## Unit Test Pattern (lib stores)
 
