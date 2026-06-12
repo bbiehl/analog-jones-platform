@@ -196,15 +196,7 @@ describe('Home', () => {
     });
   });
 
-  describe('posterBg / posterColor / monitorGlow', () => {
-    it('posterBg is always a gradient backdrop (no url())', async () => {
-      const { component } = await setup();
-      const bg = component['posterBg'](makeEpisode({}));
-      expect(bg).not.toContain('url(');
-      expect(bg).toContain('linear-gradient');
-      expect(bg).toContain('repeating-linear-gradient');
-    });
-
+  describe('posterColor / monitorGlow', () => {
     it('posterColor is deterministic and well-formed', async () => {
       const { component } = await setup();
       const a = component['posterColor'](makeEpisode({ id: 'k' }));

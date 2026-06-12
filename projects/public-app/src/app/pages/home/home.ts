@@ -132,18 +132,6 @@ export class Home implements OnInit {
     return `hsl(${hue}, 55%, 42%)`;
   }
 
-  protected posterBg(episode: Episode): string {
-    // Procedurally generated gradient backdrop keyed off the episode id.
-    const color = this.posterColor(episode);
-    return `
-      linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,.8) 100%),
-      radial-gradient(ellipse at 30% 20%, ${color}55, transparent 55%),
-      radial-gradient(ellipse at 80% 70%, #00000088, transparent 60%),
-      repeating-linear-gradient(135deg, ${color}22 0 8px, #0a0612 8px 16px),
-      #140a22
-    `;
-  }
-
   protected monitorGlow(episode: Episode): string {
     const color = this.posterColor(episode);
     return `
