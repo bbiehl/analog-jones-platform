@@ -1,10 +1,10 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter, TitleStrategy, withInMemoryScrolling } from '@angular/router';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
-import { FIRESTORE, STORAGE } from '@aj/core';
+import { FIRESTORE } from '@aj/core';
 import { SeoTitleStrategy } from './seo/seo-title.strategy';
 import { routes } from './app.routes';
-import { firestore, storage } from './firebase';
+import { firestore } from './firebase';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -19,6 +19,5 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(withEventReplay()),
     { provide: TitleStrategy, useClass: SeoTitleStrategy },
     { provide: FIRESTORE, useValue: firestore },
-    { provide: STORAGE, useValue: storage },
   ],
 };

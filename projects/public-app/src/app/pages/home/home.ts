@@ -133,8 +133,7 @@ export class Home implements OnInit {
   }
 
   protected posterBg(episode: Episode): string {
-    // Always a gradient/solid backdrop — the poster is layered on top as a
-    // lazy <img> so it's deferrable and preload-scanner discoverable.
+    // Procedurally generated gradient backdrop keyed off the episode id.
     const color = this.posterColor(episode);
     return `
       linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,.8) 100%),

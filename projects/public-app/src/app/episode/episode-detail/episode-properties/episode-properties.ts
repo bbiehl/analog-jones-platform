@@ -26,13 +26,7 @@ export class EpisodeProperties {
     return !!(links.spotify || links.youtube);
   });
 
-  protected readonly posterUrl = computed<string | null>(() => this.episode().posterUrl);
-
-  /**
-   * Always a gradient/solid backdrop — the poster itself is rendered as a
-   * prioritized <img> layered on top, so it's discoverable by the preload
-   * scanner and can carry fetchpriority="high" (it's the LCP element).
-   */
+  /** Procedurally generated gradient/solid sleeve backdrop keyed off the episode id. */
   protected readonly sleeveBackground = computed<string>(() => {
     const ep = this.episode();
     const color = this.sleeveColor(ep.id ?? ep.title);

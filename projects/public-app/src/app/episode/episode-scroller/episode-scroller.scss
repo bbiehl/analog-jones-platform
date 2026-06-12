@@ -135,15 +135,6 @@ section.block {
     inset 0 0 0 1px rgba(255, 255, 255, 0.03);
   isolation: isolate;
 
-  .poster-img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
-  }
-
   .noise {
     position: absolute;
     inset: 0;

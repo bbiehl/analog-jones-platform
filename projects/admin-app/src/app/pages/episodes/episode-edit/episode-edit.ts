@@ -68,9 +68,6 @@ export class EpisodeEdit implements OnInit, OnDestroy {
     tagIds: [[] as string[]],
   });
 
-  protected readonly posterFile = signal<File | null>(null);
-  protected readonly posterPreview = signal<string | null>(null);
-  protected readonly posterRemoved = signal(false);
   protected readonly showMarkdownPreview = signal(false);
   protected readonly submitting = signal(false);
   protected readonly submitError = signal<string | null>(null);
@@ -106,9 +103,6 @@ export class EpisodeEdit implements OnInit, OnDestroy {
           genreIds: episode.genres.map((g) => g.id!),
           tagIds: episode.tags.map((t) => t.id!),
         });
-        if (episode.posterUrl) {
-          this.posterPreview.set(episode.posterUrl);
-        }
       }
     });
   }
@@ -123,24 +117,6 @@ export class EpisodeEdit implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.episodeStore.clearSelectedEpisode();
-  }
-
-  protected onPosterSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (file) {
-      this.posterFile.set(file);
-      this.posterRemoved.set(false);
-      const reader = new FileReader();
-      reader.onload = () => this.posterPreview.set(reader.result as string);
-      reader.readAsDataURL(file);
-    }
-  }
-
-  protected removePoster(): void {
-    this.posterFile.set(null);
-    this.posterPreview.set(null);
-    this.posterRemoved.set(true);
   }
 
   protected togglePreview(): void {
@@ -169,8 +145,6 @@ export class EpisodeEdit implements OnInit, OnDestroy {
         v.categoryIds,
         v.genreIds,
         v.tagIds,
-        this.posterFile() ?? undefined,
-        this.posterRemoved(),
       );
       const error = this.episodeStore.error();
       if (error) {

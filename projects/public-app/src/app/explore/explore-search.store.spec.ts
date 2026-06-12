@@ -22,7 +22,6 @@ describe('ExploreSearchStore', () => {
       intelligence: null,
       isVisible: true,
       links: {},
-      posterUrl: null,
       title: 'Hello World',
     },
   ];
@@ -168,7 +167,6 @@ describe('ExploreSearchStore', () => {
         intelligence: null,
         isVisible: true,
         links: {},
-        posterUrl: null,
         title: 'Refreshed',
       },
     ];
@@ -189,7 +187,6 @@ describe('ExploreSearchStore', () => {
         intelligence: null,
         isVisible: true,
         links: {},
-        posterUrl: null,
         title: 'Stale',
       },
     ];

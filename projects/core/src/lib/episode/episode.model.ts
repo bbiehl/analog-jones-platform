@@ -13,7 +13,6 @@ export interface Episode {
     spotify?: string;
     youtube?: string;
   };
-  posterUrl: string | null;
   title: string;
 }
 

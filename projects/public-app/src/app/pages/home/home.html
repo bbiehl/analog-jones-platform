@@ -79,17 +79,6 @@
       @if (featured(); as f) {
         <div class="poster-big">
           <div class="poster poster--big" [style.background]="posterBg(f)">
-            @if (f.posterUrl; as poster) {
-              <img
-                class="poster-img"
-                [src]="poster"
-                width="966"
-                height="1449"
-                loading="lazy"
-                decoding="async"
-                alt=""
-              />
-            }
             <div class="noise"></div>
           </div>
         </div>

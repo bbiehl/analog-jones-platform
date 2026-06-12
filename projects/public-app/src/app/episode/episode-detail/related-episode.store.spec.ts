@@ -14,7 +14,6 @@ describe('RelatedEpisodeStore', () => {
     intelligence: null,
     isVisible: true,
     links: {},
-    posterUrl: null,
     title: 'Source',
     categories: [],
     genres: [],
@@ -29,7 +28,6 @@ describe('RelatedEpisodeStore', () => {
       intelligence: null,
       isVisible: true,
       links: {},
-      posterUrl: null,
       title: 'Related 1',
     },
   ];

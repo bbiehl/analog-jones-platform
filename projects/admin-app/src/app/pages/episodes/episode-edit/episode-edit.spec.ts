@@ -153,7 +153,6 @@ describe('EpisodeEdit', () => {
       intelligence: null,
       isVisible: false,
       links: {},
-      posterUrl: null,
       categories: [],
       genres: [],
       tags: [],
@@ -255,7 +254,7 @@ describe('EpisodeEdit', () => {
     expect(fixture.nativeElement.querySelector('form')).toBeNull();
   });
 
-  it('should populate the form and poster preview from the selected episode', () => {
+  it('should populate the form from the selected episode', () => {
     const episodeDate = new Date('2025-01-15T00:00:00Z');
     mockEpisodeStore.selectedEpisode.mockReturnValue({
       id: 'ep1',
@@ -264,7 +263,6 @@ describe('EpisodeEdit', () => {
       intelligence: '# heading',
       isVisible: true,
       links: { spotify: 'https://spot', youtube: 'https://yt' },
-      posterUrl: 'https://example.com/poster.jpg',
       categories: [{ id: 'c1' }, { id: 'c2' }],
       genres: [{ id: 'g1' }],
       tags: [{ id: 't1' }],
@@ -285,39 +283,6 @@ describe('EpisodeEdit', () => {
     expect(c.form.controls.categoryIds.value).toEqual(['c1', 'c2']);
     expect(c.form.controls.genreIds.value).toEqual(['g1']);
     expect(c.form.controls.tagIds.value).toEqual(['t1']);
-    expect(c.posterPreview()).toBe('https://example.com/poster.jpg');
-  });
-
-  it('should clear poster preview and mark removed when removePoster is called', () => {
-    mockEpisodeStore.selectedEpisode.mockReturnValue({
-      id: 'ep1',
-      title: 'T',
-      episodeDate: { toDate: () => new Date() },
-      intelligence: null,
-      isVisible: false,
-      links: {},
-      posterUrl: 'https://example.com/p.jpg',
-      categories: [],
-      genres: [],
-      tags: [],
-    });
-    fixture.destroy();
-    fixture = TestBed.createComponent(EpisodeEdit);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const c = component as any;
-    expect(c.posterPreview()).toBe('https://example.com/p.jpg');
-
-    c.removePoster();
-    fixture.detectChanges();
-
-    expect(c.posterPreview()).toBeNull();
-    expect(c.posterFile()).toBeNull();
-    expect(c.posterRemoved()).toBe(true);
-    // The "Choose Image" button should now be visible (no preview)
-    expect(fixture.nativeElement.querySelector('img[alt="Poster preview"]')).toBeNull();
   });
 
   it('should toggle the markdown preview', () => {
@@ -328,7 +293,6 @@ describe('EpisodeEdit', () => {
       intelligence: '# hi',
       isVisible: false,
       links: {},
-      posterUrl: null,
       categories: [],
       genres: [],
       tags: [],
@@ -348,7 +312,7 @@ describe('EpisodeEdit', () => {
     expect(fixture.nativeElement.querySelector('textarea')).toBeNull();
   });
 
-  it('should call updateEpisode with form values, ids, poster flags, and a Timestamp', async () => {
+  it('should call updateEpisode with form values, ids, and a Timestamp', async () => {
     mockEpisodeStore.selectedEpisode.mockReturnValue({ id: 'ep1' });
     fixture.detectChanges();
 
@@ -385,8 +349,6 @@ describe('EpisodeEdit', () => {
     expect(args[2]).toEqual(['c1']);
     expect(args[3]).toEqual(['g1']);
     expect(args[4]).toEqual(['t1', 't2']);
-    expect(args[5]).toBeUndefined();
-    expect(args[6]).toBe(false);
 
     expect(navigateSpy).toHaveBeenCalledWith(['/episodes']);
   });
@@ -431,23 +393,6 @@ describe('EpisodeEdit', () => {
 
     const saveButton = await loader.getHarness(MatButtonHarness.with({ text: /Save/ }));
     expect(await saveButton.isDisabled()).toBe(true);
-  });
-
-  it('should pass the chosen poster file through to updateEpisode', async () => {
-    mockEpisodeStore.selectedEpisode.mockReturnValue({ id: 'ep1' });
-    fixture.detectChanges();
-    const router = TestBed.inject(Router);
-    vi.spyOn(router, 'navigate').mockResolvedValue(true);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const c = component as any;
-    const file = new File(['x'], 'p.png', { type: 'image/png' });
-    c.posterFile.set(file);
-    c.form.patchValue({ title: 'T' });
-
-    await c.onSubmit();
-
-    expect(mockEpisodeStore.updateEpisode.mock.calls[0][5]).toBe(file);
   });
 
   it('should not submit twice if already submitting', async () => {

@@ -22,7 +22,6 @@ const SITE_DESCRIPTION =
 interface EpisodeDoc {
   title?: string;
   intelligence?: string | null;
-  posterUrl?: string | null;
   links?: { spotify?: string; youtube?: string };
   episodeDate?: { toDate?: () => Date };
 }
@@ -123,7 +122,6 @@ app.get('/api/episodes', async (_req, res, next) => {
         url: `${CANONICAL_ORIGIN}/episodes/${episode.id}`,
         episodeDate: episode.episodeDate?.toDate?.().toISOString() ?? null,
         summary: stripMarkdown(episode.intelligence),
-        posterUrl: episode.posterUrl ?? null,
         links: {
           spotify: episode.links?.spotify ?? null,
           youtube: episode.links?.youtube ?? null,

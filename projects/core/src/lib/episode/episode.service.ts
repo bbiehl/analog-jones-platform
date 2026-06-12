@@ -3,7 +3,6 @@ import { FIRESTORE, FIRESTORE_OPS } from '../shared/firebase.token';
 import { EpisodeCategoryService } from '../junction/episode-category.service';
 import { EpisodeGenreService } from '../junction/episode-genre.service';
 import { EpisodeTagService } from '../junction/episode-tag.service';
-import { ImageUploadService } from '../shared/image-upload.service';
 import { TransferCacheService } from '../shared/transfer-state.helpers';
 import { Episode, EpisodeWithRelations } from './episode.model';
 
@@ -21,7 +20,6 @@ export class EpisodeService {
   private episodeCategoryService = inject(EpisodeCategoryService);
   private episodeGenreService = inject(EpisodeGenreService);
   private episodeTagService = inject(EpisodeTagService);
-  private imageUploadService = inject(ImageUploadService);
   private transferCache = inject(TransferCacheService);
 
   async getHomeEpisodes(
@@ -135,59 +133,43 @@ export class EpisodeService {
     categoryIds: string[],
     genreIds: string[],
     tagIds: string[],
-    posterFile?: File,
   ): Promise<string> {
     const episodeRef = this.ops.doc(this.ops.collection(this.firestore, 'episodes'));
     const episodeId = episodeRef.id;
 
-    // Upload poster before batch — Storage can't participate in Firestore batches
-    let posterUrl: string | null = null;
-    if (posterFile) {
-      posterUrl = await this.imageUploadService.uploadPoster(episodeId, posterFile);
-    }
+    // Batch episode doc + all junction docs in a single atomic write
+    const batch = this.ops.writeBatch(this.firestore);
 
-    try {
-      // Batch episode doc + all junction docs in a single atomic write
-      const batch = this.ops.writeBatch(this.firestore);
+    batch.set(episodeRef, {
+      createdAt: episode.createdAt,
+      episodeDate: episode.episodeDate,
+      intelligence: episode.intelligence,
+      isVisible: episode.isVisible,
+      links: episode.links,
+      title: episode.title,
+    });
 
-      batch.set(episodeRef, {
-        createdAt: episode.createdAt,
-        episodeDate: episode.episodeDate,
-        intelligence: episode.intelligence,
-        isVisible: episode.isVisible,
-        links: episode.links,
-        posterUrl,
-        title: episode.title,
+    for (const cId of categoryIds) {
+      batch.set(this.ops.doc(this.ops.collection(this.firestore, 'episodeCategories')), {
+        episodeId,
+        categoryId: cId,
       });
-
-      for (const cId of categoryIds) {
-        batch.set(this.ops.doc(this.ops.collection(this.firestore, 'episodeCategories')), {
-          episodeId,
-          categoryId: cId,
-        });
-      }
-      for (const gId of genreIds) {
-        batch.set(this.ops.doc(this.ops.collection(this.firestore, 'episodeGenres')), {
-          episodeId,
-          genreId: gId,
-        });
-      }
-      for (const tId of tagIds) {
-        batch.set(this.ops.doc(this.ops.collection(this.firestore, 'episodeTags')), {
-          episodeId,
-          tagId: tId,
-        });
-      }
-
-      await batch.commit();
-      return episodeId;
-    } catch (e) {
-      // Rollback poster upload if batch fails
-      if (posterUrl) {
-        await this.imageUploadService.deletePoster(episodeId).catch(() => {});
-      }
-      throw e;
     }
+    for (const gId of genreIds) {
+      batch.set(this.ops.doc(this.ops.collection(this.firestore, 'episodeGenres')), {
+        episodeId,
+        genreId: gId,
+      });
+    }
+    for (const tId of tagIds) {
+      batch.set(this.ops.doc(this.ops.collection(this.firestore, 'episodeTags')), {
+        episodeId,
+        tagId: tId,
+      });
+    }
+
+    await batch.commit();
+    return episodeId;
   }
 
   async updateEpisode(
@@ -196,18 +178,8 @@ export class EpisodeService {
     categoryIds?: string[],
     genreIds?: string[],
     tagIds?: string[],
-    posterFile?: File,
-    removePoster?: boolean,
   ): Promise<void> {
     const { id: _id, ...data } = episode as Episode;
-
-    // Handle poster outside batch — Storage can't participate in Firestore batches
-    if (posterFile) {
-      data.posterUrl = await this.imageUploadService.uploadPoster(id, posterFile);
-    } else if (removePoster) {
-      await this.imageUploadService.deletePoster(id);
-      data.posterUrl = null;
-    }
 
     // Query existing junctions that need replacement (reads before batch)
     const [existingCategories, existingGenres, existingTags] = await Promise.all([
@@ -305,8 +277,5 @@ export class EpisodeService {
     tags.docs.forEach((d) => batch.delete(d.ref));
     batch.delete(this.ops.doc(this.firestore, 'episodes', id));
     await batch.commit();
-
-    // Best-effort poster cleanup after Firestore state is consistent
-    await this.imageUploadService.deletePoster(id).catch(() => {});
   }
 }

@@ -14,8 +14,7 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore';
-import { deleteObject, getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { AUTH, AUTH_OPS, FIRESTORE, FIRESTORE_OPS, STORAGE, STORAGE_OPS } from './firebase.token';
+import { AUTH, AUTH_OPS, FIRESTORE, FIRESTORE_OPS } from './firebase.token';
 
 describe('firebase tokens (no factory)', () => {
   beforeEach(() => {
@@ -28,10 +27,6 @@ describe('firebase tokens (no factory)', () => {
 
   it('FIRESTORE throws when injected without a provider', () => {
     expect(() => TestBed.inject(FIRESTORE)).toThrow();
-  });
-
-  it('STORAGE throws when injected without a provider', () => {
-    expect(() => TestBed.inject(STORAGE)).toThrow();
   });
 
   it('returns the value provided in TestBed for AUTH', () => {
@@ -65,32 +60,6 @@ describe('AUTH_OPS default factory', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({ providers: [{ provide: AUTH_OPS, useValue: stub }] });
     expect(TestBed.inject(AUTH_OPS)).toBe(stub);
-  });
-});
-
-describe('STORAGE_OPS default factory', () => {
-  beforeEach(() => {
-    TestBed.configureTestingModule({});
-  });
-
-  it('exposes the real firebase/storage functions', () => {
-    const ops = TestBed.inject(STORAGE_OPS);
-    expect(ops.ref).toBe(ref);
-    expect(ops.uploadBytes).toBe(uploadBytes);
-    expect(ops.getDownloadURL).toBe(getDownloadURL);
-    expect(ops.deleteObject).toBe(deleteObject);
-  });
-
-  it('can be overridden by a test provider', () => {
-    const stub = {
-      ref: (() => undefined) as unknown as typeof ref,
-      uploadBytes: (() => Promise.resolve()) as unknown as typeof uploadBytes,
-      getDownloadURL: (() => Promise.resolve('')) as unknown as typeof getDownloadURL,
-      deleteObject: (() => Promise.resolve()) as unknown as typeof deleteObject,
-    };
-    TestBed.resetTestingModule();
-    TestBed.configureTestingModule({ providers: [{ provide: STORAGE_OPS, useValue: stub }] });
-    expect(TestBed.inject(STORAGE_OPS)).toBe(stub);
   });
 });
 

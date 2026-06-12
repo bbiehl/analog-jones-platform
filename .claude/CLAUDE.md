@@ -14,7 +14,7 @@ Angular v21 multi-project workspace with pnpm. Two apps:
 - **Angular Material + CDK** for UI components
 - **@ngrx/signals** for state management
 - **Vitest** for unit testing (with `jsdom`)
-- **Firebase** — Auth, Firestore, Storage (project: `analog-jones-v2`)
+- **Firebase** — Auth, Firestore (project: `analog-jones-v2`; Cloud Storage is not used)
 - **Playwright** for e2e testing (Chromium, Firefox, WebKit)
 - **Prettier** for formatting (single quotes, 100 char width)
 
@@ -26,7 +26,7 @@ Subfolders under `projects/core/src/lib/`:
 
 - `category/`, `episode/`, `genre/`, `tag/`, `user/` — each with `<domain>.model.ts`, `<domain>.service.ts`, `<domain>.store.ts` (+ specs)
 - `junction/` — many-to-many services: `episode-category.service.ts`, `episode-genre.service.ts`, `episode-tag.service.ts`
-- `shared/` — cross-cutting infra only: `firebase.token.ts` (injection tokens `AUTH`, `FIRESTORE`, `STORAGE`, `STORAGE_OPS`) and `image-upload.service.ts`
+- `shared/` — cross-cutting infra only: `firebase.token.ts` (injection tokens `AUTH`, `FIRESTORE`, and the `*_OPS` SDK-wrapper tokens) and `transfer-state.helpers.ts`
 - `styles/` — `theme.scss`, `theme-public.scss` (consumed via Sass `@use`, not exported from `public-api.ts`)
 
 Each domain follows the same pattern:
@@ -40,22 +40,21 @@ Each domain follows the same pattern:
 
 ### Firebase
 
-Each app has `projects/<app>/src/app/firebase.ts` exporting `auth`, `firestore`, `storage` directly. Uses Firebase modular SDK — NOT `@angular/fire`. Import instances directly in services.
+Each app has `projects/<app>/src/app/firebase.ts` exporting `auth`, `firestore` directly. Uses Firebase modular SDK — NOT `@angular/fire`. Import instances directly in services.
 
 Provided via injection tokens in each app's `app.config.ts`:
 
-- **admin-app**: `AUTH`, `FIRESTORE`, `STORAGE`
-- **public-app**: `FIRESTORE`, `STORAGE` only (no auth)
+- **admin-app**: `AUTH`, `FIRESTORE`
+- **public-app**: `FIRESTORE` only (no auth)
 
 Connects to emulators when `environment.useEmulators` is true.
 
-**Static SDK functions are wrapped in injection tokens.** Because `vi.mock()` is banned (see Testing), services do not call `firebase/firestore`, `firebase/storage`, or `firebase/auth` static functions directly. Instead they inject:
+**Static SDK functions are wrapped in injection tokens.** Because `vi.mock()` is banned (see Testing), services do not call `firebase/firestore` or `firebase/auth` static functions directly. Instead they inject:
 
 - `FIRESTORE_OPS` — `collection`, `doc`, `query`, `orderBy`, `where`, `limit`, `getDoc`, `getDocs`, `addDoc`, `updateDoc`, `writeBatch`
-- `STORAGE_OPS` — `ref`, `uploadBytes`, `getDownloadURL`, `deleteObject`
 - `AUTH_OPS` — `GoogleAuthProvider`, `signInWithPopup`, `signOut`, `onAuthStateChanged`
 
-All three are defined in `projects/core/src/lib/shared/firebase.token.ts` with default factories that return the real implementations, so app code is unaffected. Tests override them via `TestBed.configureTestingModule({ providers: [{ provide: <TOKEN>, useValue: ... }] })` to actually exercise service methods. When a service needs an SDK function not yet on the relevant `*Ops` interface, extend both the interface and the default factory together — both must list every op the service uses.
+Both are defined in `projects/core/src/lib/shared/firebase.token.ts` with default factories that return the real implementations, so app code is unaffected. Tests override them via `TestBed.configureTestingModule({ providers: [{ provide: <TOKEN>, useValue: ... }] })` to actually exercise service methods. When a service needs an SDK function not yet on the relevant `*Ops` interface, extend both the interface and the default factory together — both must list every op the service uses.
 
 ### Shell Layout
 
@@ -69,9 +68,9 @@ Root shell (`layout/shell/`) wraps all routes:
 ## Testing
 
 - Do NOT use `vi.mock()` — this is an Angular toolchain constraint, not a project convention. `@angular/build`'s unit-test builder (used by `ng test`) injects a `vitest-mock-patch` to integrate Vitest with Angular's compilation pipeline; that patch and `vi.mock()`'s module-hoisting/interception mechanism step on each other and produce flaky failures (passes locally, fails in CI, or vice versa). Any Angular project using `@angular/build` + Vitest hits the same issue — it would only go away by switching to Jest or running Vitest outside the Angular builder. Applies equally to core, admin-app, and public-app specs. Mock via TestBed injection tokens instead.
-- Mock Firebase by providing fake values for `AUTH`, `FIRESTORE`, `STORAGE`, or `STORAGE_OPS` tokens (imported from `@aj/core`) in `TestBed.configureTestingModule`
+- Mock Firebase by providing fake values for `AUTH`, `FIRESTORE`, `FIRESTORE_OPS`, or `AUTH_OPS` tokens (imported from `@aj/core`) in `TestBed.configureTestingModule`
 - Use `vi.stubGlobal()` for browser APIs unavailable in jsdom (`OffscreenCanvas`, `createImageBitmap`)
-- Detailed lib testing patterns (domain service / storage service / junction service / store) live in `projects/core/README.md`
+- Detailed lib testing patterns (domain service / junction service / store) live in `projects/core/README.md`
 
 ## Angular Rules
 

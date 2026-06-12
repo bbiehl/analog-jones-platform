@@ -31,7 +31,6 @@ function makeEpisode(overrides: Partial<Episode> = {}): Episode {
     intelligence: null,
     isVisible: true,
     links: {},
-    posterUrl: null,
     ...overrides,
   };
 }
@@ -198,17 +197,10 @@ describe('Home', () => {
   });
 
   describe('posterBg / posterColor / monitorGlow', () => {
-    it('posterBg is always a gradient backdrop (no url()) — the <img> carries the poster', async () => {
+    it('posterBg is always a gradient backdrop (no url())', async () => {
       const { component } = await setup();
-      const ep = makeEpisode({ posterUrl: 'https://cdn/p.jpg' });
-      const bg = component['posterBg'](ep);
+      const bg = component['posterBg'](makeEpisode({}));
       expect(bg).not.toContain('url(');
-      expect(bg).toContain('linear-gradient');
-    });
-
-    it('posterBg falls back to gradient when posterUrl is null', async () => {
-      const { component } = await setup();
-      const bg = component['posterBg'](makeEpisode({ posterUrl: null }));
       expect(bg).toContain('linear-gradient');
       expect(bg).toContain('repeating-linear-gradient');
     });

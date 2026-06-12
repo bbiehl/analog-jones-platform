@@ -15,7 +15,6 @@ function makeEpisode(overrides: Partial<Episode> = {}): Episode {
     intelligence: null,
     isVisible: true,
     links: {},
-    posterUrl: null,
     ...overrides,
   };
 }
@@ -118,39 +117,22 @@ describe('EpisodeScroller', () => {
   });
 
   describe('posterBg', () => {
-    it('is a solid backdrop (no url()) when posterUrl is set — the <img> carries it', () => {
+    it('is always a gradient backdrop (no url())', () => {
       setInputs({ episodes: [] });
-      const ep = makeEpisode({ posterUrl: 'https://cdn.example/p.jpg' });
-      const bg = component['posterBg'](ep);
-      expect(bg).toContain('#050509');
-      expect(bg).not.toContain('url(');
-    });
-
-    it('falls back to gradient when posterUrl is null', () => {
-      setInputs({ episodes: [] });
-      const ep = makeEpisode({ posterUrl: null });
-      const bg = component['posterBg'](ep);
+      const bg = component['posterBg'](makeEpisode({}));
       expect(bg).toContain('linear-gradient');
       expect(bg).toContain('repeating-linear-gradient');
       expect(bg).toContain('radial-gradient');
+      expect(bg).not.toContain('url(');
     });
   });
 
-  describe('poster image', () => {
-    it('renders a lazy-loaded <img> with the posterUrl when set', () => {
-      setInputs({ episodes: [makeEpisode({ id: 'p', posterUrl: 'https://cdn.example/p.jpg' })] });
+  describe('poster frame', () => {
+    it('renders the gradient .poster frame without an <img>', () => {
+      setInputs({ episodes: [makeEpisode({ id: 'p' })] });
       fixture.detectChanges();
-      const img: HTMLImageElement | null =
-        fixture.nativeElement.querySelector('.poster .poster-img');
-      expect(img).not.toBeNull();
-      expect(img!.getAttribute('loading')).toBe('lazy');
-      expect(img!.getAttribute('src')).toBe('https://cdn.example/p.jpg');
-    });
-
-    it('renders no <img> when posterUrl is null (gradient fallback only)', () => {
-      setInputs({ episodes: [makeEpisode({ posterUrl: null })] });
-      fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.poster .poster-img')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.poster')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('.poster img')).toBeNull();
     });
 
     it('gives the poster link an accessible name from the episode title', () => {

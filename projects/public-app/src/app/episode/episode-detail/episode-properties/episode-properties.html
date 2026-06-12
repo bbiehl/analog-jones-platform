@@ -1,17 +1,6 @@
 <article class="tape-file">
   <aside class="sleeve" aria-hidden="true">
     <div class="sleeve-cover" [style.background]="sleeveBackground()">
-      @if (posterUrl(); as poster) {
-        <img
-          class="cover-img"
-          [src]="poster"
-          width="966"
-          height="1449"
-          fetchpriority="high"
-          decoding="async"
-          alt=""
-        />
-      }
       <div class="cover-noise"></div>
       <div class="cover-gleam"></div>
       <div class="cover-scan"></div>
