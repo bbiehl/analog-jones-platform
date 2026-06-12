@@ -116,45 +116,21 @@ describe('EpisodeScroller', () => {
     expect(anchor.getAttribute('href')).toBe('/archive/ep-7');
   });
 
-  describe('posterBg', () => {
-    it('is always a gradient backdrop (no url())', () => {
-      setInputs({ episodes: [] });
-      const bg = component['posterBg'](makeEpisode({}));
-      expect(bg).toContain('linear-gradient');
-      expect(bg).toContain('repeating-linear-gradient');
-      expect(bg).toContain('radial-gradient');
-      expect(bg).not.toContain('url(');
-    });
-  });
-
-  describe('poster frame', () => {
-    it('renders the gradient .poster frame without an <img>', () => {
-      setInputs({ episodes: [makeEpisode({ id: 'p' })] });
+  describe('shelf item', () => {
+    it('renders each episode as a text card with no poster frame', () => {
+      setInputs({ episodes: [makeEpisode({ id: 'p', title: 'Tape 99' })] });
       fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('.poster')).not.toBeNull();
-      expect(fixture.nativeElement.querySelector('.poster img')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.poster')).toBeNull();
+      expect(fixture.nativeElement.querySelector('.shelf-item .name').textContent).toContain(
+        'Tape 99',
+      );
     });
 
-    it('gives the poster link an accessible name from the episode title', () => {
+    it('gives the shelf-item link an accessible name from the episode title', () => {
       setInputs({ episodes: [makeEpisode({ title: 'Tape 99' })] });
       fixture.detectChanges();
       const anchor: HTMLAnchorElement = fixture.nativeElement.querySelector('.shelf-item a');
       expect(anchor.getAttribute('aria-label')).toBe('Tape 99');
-    });
-  });
-
-  describe('posterColor', () => {
-    it('is deterministic for the same id', () => {
-      setInputs({ episodes: [] });
-      const a = makeEpisode({ id: 'same' });
-      const b = makeEpisode({ id: 'same', title: 'different' });
-      expect(component['posterColor'](a)).toBe(component['posterColor'](b));
-    });
-
-    it('returns an hsl(...) string', () => {
-      setInputs({ episodes: [] });
-      const color = component['posterColor'](makeEpisode({ id: 'x' }));
-      expect(color).toMatch(/^hsl\(\d{1,3}, 55%, 42%\)$/);
     });
   });
 
