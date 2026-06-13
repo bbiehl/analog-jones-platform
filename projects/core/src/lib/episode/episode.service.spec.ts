@@ -227,6 +227,43 @@ describe('EpisodeService', () => {
     });
   });
 
+  describe('getVisibleEpisodeList', () => {
+    it('should query visible episodes ordered by episodeDate desc', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [{ id: 'ep1', data: () => ({ title: 'A', isVisible: true }) }],
+      });
+
+      const result = await service.getVisibleEpisodeList();
+
+      expect(ops.where).toHaveBeenCalledWith('isVisible', '==', true);
+      expect(ops.orderBy).toHaveBeenCalledWith('episodeDate', 'desc');
+      expect(result.map((e) => e.id)).toEqual(['ep1']);
+    });
+
+    it('should drop the intelligence field while keeping list fields', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          {
+            id: 'ep1',
+            data: () => ({
+              title: 'Heavy',
+              isVisible: true,
+              links: { spotify: 's' },
+              intelligence: 'a very long markdown summary that should not be inlined into SSR',
+            }),
+          },
+        ],
+      });
+
+      const [episode] = await service.getVisibleEpisodeList();
+
+      expect(episode.id).toBe('ep1');
+      expect(episode.title).toBe('Heavy');
+      expect(episode.links).toEqual({ spotify: 's' });
+      expect(episode.intelligence).toBeNull();
+    });
+  });
+
   describe('getEpisodeById', () => {
     it('should throw when the snapshot does not exist', async () => {
       ops.getDoc.mockResolvedValueOnce({ exists: () => false });

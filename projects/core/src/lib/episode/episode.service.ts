@@ -112,6 +112,28 @@ export class EpisodeService {
     return episodes;
   }
 
+  /**
+   * Visible episodes for the archive list view (`/episodes`), transfer-cached so
+   * the server-rendered route serializes the full list instead of a loading
+   * skeleton and the browser reuses it without a second Firestore read.
+   *
+   * The list only renders id/title/episodeDate, so the unbounded `intelligence`
+   * markdown is dropped before caching — otherwise the whole archive's
+   * intelligence text would be inlined into the SSR transfer-state payload and
+   * bloat the page. Callers needing the full document use `getVisibleEpisodes`.
+   */
+  async getVisibleEpisodeList(): Promise<Episode[]> {
+    return this.transferCache.cached('episodes.visibleList', async () => {
+      const q = this.ops.query(
+        this.ops.collection(this.firestore, 'episodes'),
+        this.ops.where('isVisible', '==', true),
+        this.ops.orderBy('episodeDate', 'desc'),
+      );
+      const snapshot = await this.ops.getDocs(q);
+      return snapshot.docs.map((d) => ({ ...d.data(), id: d.id, intelligence: null }) as Episode);
+    });
+  }
+
   async getEpisodeById(id: string): Promise<EpisodeWithRelations> {
     const snap = await this.ops.getDoc(this.ops.doc(this.firestore, 'episodes', id));
     if (!snap.exists()) {

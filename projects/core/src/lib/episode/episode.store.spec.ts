@@ -48,6 +48,7 @@ describe('EpisodeStore', () => {
     getCurrentEpisode: vi.fn().mockResolvedValue(mockEpisodes[0]),
     getRecentEpisodes: vi.fn().mockResolvedValue(mockEpisodes),
     getVisibleEpisodes: vi.fn().mockResolvedValue([mockEpisodes[0]]),
+    getVisibleEpisodeList: vi.fn().mockResolvedValue([mockEpisodes[0]]),
     getEpisodeById: vi.fn().mockResolvedValue(mockEpisodeWithRelations),
     toggleEpisodeVisibility: vi.fn().mockResolvedValue(undefined),
     createEpisode: vi.fn().mockResolvedValue('new-id'),
@@ -67,6 +68,7 @@ describe('EpisodeStore', () => {
     mockEpisodeService.getCurrentEpisode.mockResolvedValue(mockEpisodes[0]);
     mockEpisodeService.getRecentEpisodes.mockResolvedValue(mockEpisodes);
     mockEpisodeService.getVisibleEpisodes.mockResolvedValue([mockEpisodes[0]]);
+    mockEpisodeService.getVisibleEpisodeList.mockResolvedValue([mockEpisodes[0]]);
     mockEpisodeService.getEpisodeById.mockResolvedValue(mockEpisodeWithRelations);
     mockEpisodeService.toggleEpisodeVisibility.mockResolvedValue(undefined);
     mockEpisodeService.createEpisode.mockResolvedValue('new-id');
@@ -197,27 +199,43 @@ describe('EpisodeStore', () => {
   });
 
   describe('loadVisibleEpisodes', () => {
-    it('should load visible episodes without search term', async () => {
+    it('should load the visible episode list', async () => {
       await store.loadVisibleEpisodes();
 
-      expect(mockEpisodeService.getVisibleEpisodes).toHaveBeenCalledWith(undefined);
+      expect(mockEpisodeService.getVisibleEpisodeList).toHaveBeenCalled();
       expect(store.episodes()).toEqual([mockEpisodes[0]]);
       expect(store.loading()).toBe(false);
     });
 
-    it('should load visible episodes with search term', async () => {
-      await store.loadVisibleEpisodes('Episode');
+    it('should set error on failure', async () => {
+      mockEpisodeService.getVisibleEpisodeList.mockRejectedValueOnce(new Error('Search failed'));
 
-      expect(mockEpisodeService.getVisibleEpisodes).toHaveBeenCalledWith('Episode');
+      await store.loadVisibleEpisodes();
+
+      expect(store.error()).toBe('Search failed');
       expect(store.loading()).toBe(false);
     });
 
-    it('should set error on failure', async () => {
-      mockEpisodeService.getVisibleEpisodes.mockRejectedValueOnce(new Error('Search failed'));
+    it('should not let a slower loadHomeData overwrite a later archive load', async () => {
+      // Start home load, leave it pending; then start the archive load.
+      let resolveHome!: (v: typeof mockHomeBundle) => void;
+      mockEpisodeService.getHomeEpisodes.mockImplementationOnce(
+        () => new Promise((r) => (resolveHome = r)),
+      );
+      const archiveList = [mockEpisodes[0], mockEpisodes[1]];
+      mockEpisodeService.getVisibleEpisodeList.mockResolvedValueOnce(archiveList);
 
-      await store.loadVisibleEpisodes('test');
+      const homeCall = store.loadHomeData(); // started first
+      const archiveCall = store.loadVisibleEpisodes(); // started later — should win
+      await archiveCall;
 
-      expect(store.error()).toBe('Search failed');
+      expect(store.episodes()).toEqual(archiveList);
+
+      // Home resolves last but is superseded — must not clobber the archive.
+      resolveHome(mockHomeBundle);
+      await homeCall;
+
+      expect(store.episodes()).toEqual(archiveList);
       expect(store.loading()).toBe(false);
     });
   });
@@ -490,13 +508,6 @@ describe('EpisodeStore', () => {
 
       resolve(mockEpisodes);
       await pending;
-    });
-  });
-
-  describe('loadVisibleEpisodes edge cases', () => {
-    it('should pass empty string through to the service verbatim', async () => {
-      await store.loadVisibleEpisodes('');
-      expect(mockEpisodeService.getVisibleEpisodes).toHaveBeenCalledWith('');
     });
   });
 
