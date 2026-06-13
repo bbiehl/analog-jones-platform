@@ -1,42 +1,49 @@
-<section>
-  <header class="page-frame pt-6">
+<section class="page-frame pt-6">
+  <header>
     <h1 class="text-3xl font-bold mb-4">Episodes</h1>
-    <p class="mb-6">Browse all available episodes.</p>
+    <p class="mb-6">Browse all available episodes, newest first.</p>
   </header>
 
-  @if (isLoading()) {
-    @for (i of skeletonScrollers; track i) {
-      <app-episode-scroller-skeleton />
-    }
-  } @else if (error(); as err) {
-    <p class="page-frame mt-6" role="alert">{{ err }}</p>
-  } @else if (!hasEpisodes()) {
-    @if (categoryLoaded()) {
-      <p class="page-frame mt-6">No episodes found.</p>
-    } @else {
-      @for (i of skeletonScrollers; track i) {
-        <app-episode-scroller-skeleton />
+  <div class="search">
+    <label class="sr-only" for="episode-search">Search episodes by title</label>
+    <input
+      id="episode-search"
+      type="search"
+      class="search-input"
+      placeholder="Search by title"
+      autocomplete="off"
+      [formControl]="searchControl"
+    />
+  </div>
+
+  @if (loading()) {
+    <div class="episode-grid" aria-busy="true" aria-label="Loading episodes">
+      @for (slot of [0, 1, 2, 3, 4, 5]; track slot) {
+        <div class="card card--skeleton" aria-hidden="true"></div>
       }
-    }
+    </div>
+  } @else if (!hasResults() && error(); as message) {
+    <p role="alert" class="state-message">{{ message }}</p>
   } @else {
-    @for (entry of entries(); track entry.key; let idx = $index) {
-      @if (idx < 2) {
-        <app-episode-scroller
-          [episodes]="entry.episodes"
-          [heading]="entry.heading"
-          [ariaLabel]="entry.heading"
-        />
+    <div aria-live="polite">
+      @if (hasResults()) {
+        <div class="episode-grid" role="list">
+          @for (ep of filtered(); track ep.id) {
+            <article class="card" role="listitem">
+              <a [routerLink]="['/episodes', ep.id]" [attr.aria-label]="ep.title">
+                <div class="meta">
+                  <span>{{ toDate(ep) | date: 'MMM dd · yyyy' | uppercase }}</span>
+                </div>
+                <div class="name">{{ ep.title }}</div>
+              </a>
+            </article>
+          }
+        </div>
+      } @else if (hasSearch()) {
+        <p class="state-message">No episodes match your search.</p>
       } @else {
-        @defer (on viewport; prefetch on idle) {
-          <app-episode-scroller
-            [episodes]="entry.episodes"
-            [heading]="entry.heading"
-            [ariaLabel]="entry.heading"
-          />
-        } @placeholder (minimum 0ms) {
-          <div class="defer-shelf" aria-hidden="true"></div>
-        }
+        <p class="state-message">No episodes found.</p>
       }
-    }
+    </div>
   }
 </section>

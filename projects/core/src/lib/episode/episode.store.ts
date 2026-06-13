@@ -29,12 +29,20 @@ export const EpisodeStore = signalStore(
   withMethods((store) => {
     const episodeService = inject(EpisodeService);
     let loadEpisodeByIdToken = 0;
+    // Shared token for every loader that writes `episodes`. The store is a root
+    // singleton, so home/archive navigation can leave two list loads in flight
+    // at once; whichever STARTED last wins, regardless of which resolves first.
+    // Without this, a slow `loadHomeData` could land after `loadVisibleEpisodes`
+    // and overwrite the full archive with the home page's truncated set.
+    let episodesToken = 0;
 
     return {
       async loadHomeData() {
+        const token = ++episodesToken;
         patchState(store, { loading: true, error: null });
         try {
           const { episodes, total, featured } = await episodeService.getHomeEpisodes();
+          if (token !== episodesToken) return;
           patchState(store, {
             episodes,
             totalVisible: total,
@@ -42,16 +50,20 @@ export const EpisodeStore = signalStore(
             loading: false,
           });
         } catch (e) {
+          if (token !== episodesToken) return;
           patchState(store, { loading: false, error: (e as Error).message });
         }
       },
 
       async loadEpisodes() {
+        const token = ++episodesToken;
         patchState(store, { loading: true, error: null });
         try {
           const episodes = await episodeService.getAllEpisodes();
+          if (token !== episodesToken) return;
           patchState(store, { episodes, loading: false });
         } catch (e) {
+          if (token !== episodesToken) return;
           patchState(store, { loading: false, error: (e as Error).message });
         }
       },
@@ -76,12 +88,15 @@ export const EpisodeStore = signalStore(
         }
       },
 
-      async loadVisibleEpisodes(searchTerm?: string) {
+      async loadVisibleEpisodes() {
+        const token = ++episodesToken;
         patchState(store, { loading: true, error: null });
         try {
-          const episodes = await episodeService.getVisibleEpisodes(searchTerm);
+          const episodes = await episodeService.getVisibleEpisodeList();
+          if (token !== episodesToken) return;
           patchState(store, { episodes, loading: false });
         } catch (e) {
+          if (token !== episodesToken) return;
           patchState(store, { loading: false, error: (e as Error).message });
         }
       },

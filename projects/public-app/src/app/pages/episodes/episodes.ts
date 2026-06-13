@@ -1,41 +1,42 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
-import { Episode } from '@aj/core';
-import { EpisodeScroller } from '../../episode/episode-scroller/episode-scroller';
-import { EpisodeScrollerSkeleton } from '../../episode/episode-scroller-skeleton/episode-scroller-skeleton';
-import { EpisodeListStore } from '../../episode/episode-list.store';
-
-interface ShelfEntry {
-  key: string;
-  heading: string;
-  episodes: Episode[];
-}
+import { DatePipe, UpperCasePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { Episode, EpisodeStore } from '@aj/core';
 
 @Component({
   selector: 'app-episodes',
-  imports: [EpisodeScroller, EpisodeScrollerSkeleton],
+  imports: [DatePipe, UpperCasePipe, RouterLink, ReactiveFormsModule],
   templateUrl: './episodes.html',
   styleUrl: './episodes.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Episodes implements OnInit {
-  private store = inject(EpisodeListStore);
+  private store = inject(EpisodeStore);
 
-  protected readonly isLoading = this.store.isLoading;
-  protected readonly categoryLoaded = this.store.categoryLoaded;
+  protected readonly searchControl = new FormControl('', { nonNullable: true });
+  private readonly searchTerm = toSignal(this.searchControl.valueChanges, { initialValue: '' });
+
+  protected readonly loading = this.store.loading;
   protected readonly error = this.store.error;
-  protected readonly entries = computed<ShelfEntry[]>(() => {
-    const categoryEntries = Object.entries(this.store.episodesByCategory()).map(
-      ([heading, episodes]) => ({ key: `cat:${heading}`, heading, episodes }),
-    );
-    const genreEntries = Object.entries(this.store.episodesByGenre()).map(
-      ([heading, episodes]) => ({ key: `gen:${heading}`, heading, episodes }),
-    );
-    return [...categoryEntries, ...genreEntries];
+  protected readonly episodes = computed(() => this.store.episodes());
+
+  protected readonly filtered = computed<Episode[]>(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+    const episodes = this.episodes();
+    if (!term) return episodes;
+    return episodes.filter((e) => e.title.toLowerCase().includes(term));
   });
-  protected readonly hasEpisodes = computed(() => this.entries().length > 0);
-  protected readonly skeletonScrollers = [0, 1];
+
+  protected readonly hasResults = computed(() => this.filtered().length > 0);
+  protected readonly hasSearch = computed(() => this.searchTerm().trim().length > 0);
 
   ngOnInit(): void {
-    this.store.load();
+    this.store.loadVisibleEpisodes();
+  }
+
+  protected toDate(episode: Episode): Date {
+    return episode.episodeDate.toDate();
   }
 }
