@@ -82,15 +82,26 @@ describe('Episodes', () => {
   });
 
   describe('error state', () => {
-    it('renders the error message in a role="alert" element and no cards', () => {
+    it('renders the error in a role="alert" element when there are no episodes', () => {
       error.set('Something went wrong');
-      episodes.set([makeEpisode('e1', 'A')]);
+      episodes.set([]);
       fixture.detectChanges();
 
       const alert = fixture.nativeElement.querySelector('[role="alert"]');
       expect(alert).toBeTruthy();
       expect(alert.textContent).toContain('Something went wrong');
       expect(cards().length).toBe(0);
+    });
+
+    it('keeps showing episodes and suppresses a stale error when data is present', () => {
+      // A late error from another page's shared-store op must not blank a
+      // populated archive grid.
+      episodes.set([makeEpisode('e1', 'A')]);
+      error.set('Something went wrong');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+      expect(cards().length).toBe(1);
     });
   });
 

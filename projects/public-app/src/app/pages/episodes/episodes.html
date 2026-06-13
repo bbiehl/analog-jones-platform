@@ -22,7 +22,7 @@
         <div class="card card--skeleton" aria-hidden="true"></div>
       }
     </div>
-  } @else if (error(); as message) {
+  } @else if (!hasResults() && error(); as message) {
     <p role="alert" class="state-message">{{ message }}</p>
   } @else {
     <div aria-live="polite">
