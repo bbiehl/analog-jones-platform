@@ -259,7 +259,10 @@ describe('Explorer', () => {
       await fixture.whenStable();
 
       const host = fixture.nativeElement as HTMLElement;
-      expect(host.querySelector('app-episode-scroller-skeleton')).toBeTruthy();
+      const grid = host.querySelector('app-episode-grid');
+      expect(grid).toBeTruthy();
+      expect(grid?.querySelector('[aria-busy="true"]')).toBeTruthy();
+      expect(grid?.querySelectorAll('.card--skeleton').length).toBeGreaterThan(0);
     });
 
     it('should render a results error message', async () => {
@@ -283,16 +286,16 @@ describe('Explorer', () => {
       expect(host.textContent).toContain('No episodes found for "Jazz".');
     });
 
-    it('should render the episode scroller when results are present', async () => {
+    it('should render the episode grid when results are present', async () => {
       mockStore.selectedSearchOption.set({ type: 'genre', value: 'Jazz' });
       mockStore.results.set([makeEpisode('e1', 'First'), makeEpisode('e2', 'Second')]);
       fixture.detectChanges();
       await fixture.whenStable();
 
       const host = fixture.nativeElement as HTMLElement;
-      const scroller = host.querySelector('app-episode-scroller');
-      expect(scroller).toBeTruthy();
-      expect(scroller?.getAttribute('aria-label')).toBeNull();
+      const grid = host.querySelector('app-episode-grid');
+      expect(grid).toBeTruthy();
+      expect(grid?.querySelector('.episode-grid[role="list"]')).toBeTruthy();
       expect(host.querySelector('h2')?.textContent).toContain('Jazz');
       expect(host.textContent).toContain('First');
       expect(host.textContent).toContain('Second');
@@ -300,8 +303,7 @@ describe('Explorer', () => {
 
     it('should not render the results section when no search option is selected', () => {
       const host = fixture.nativeElement as HTMLElement;
-      expect(host.querySelector('app-episode-scroller')).toBeNull();
-      expect(host.querySelector('app-episode-scroller-skeleton')).toBeNull();
+      expect(host.querySelector('app-episode-grid')).toBeNull();
     });
   });
 });

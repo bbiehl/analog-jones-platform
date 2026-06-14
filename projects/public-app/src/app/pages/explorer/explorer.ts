@@ -17,8 +17,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { EpisodeScroller } from '../../episode/episode-scroller/episode-scroller';
-import { EpisodeScrollerSkeleton } from '../../episode/episode-scroller-skeleton/episode-scroller-skeleton';
+import { EpisodeGrid } from '../../episode/episode-grid/episode-grid';
 import { ExploreSearchStore } from '../../explore/explore-search.store';
 import { SearchAutoCompleteOption } from '../../explore/explore.model';
 
@@ -43,8 +42,7 @@ const GROUP_ORDER: { type: SearchAutoCompleteOption['type']; label: string }[] =
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    EpisodeScroller,
-    EpisodeScrollerSkeleton,
+    EpisodeGrid,
   ],
   templateUrl: './explorer.html',
   styleUrl: './explorer.scss',
