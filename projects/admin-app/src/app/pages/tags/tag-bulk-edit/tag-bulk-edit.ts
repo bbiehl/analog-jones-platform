@@ -7,10 +7,13 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { TagService, TagStore } from '@aj/core';
@@ -20,9 +23,12 @@ import { EpisodeStore } from '@aj/core';
   selector: 'app-tag-bulk-edit',
   imports: [
     DatePipe,
+    FormsModule,
     MatButtonModule,
     MatCheckboxModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatProgressSpinnerModule,
     MatTableModule,
   ],
@@ -45,6 +51,16 @@ export class TagBulkEdit implements OnInit {
   protected readonly saving = signal(false);
   protected readonly loadingJunctions = signal(true);
   protected readonly junctionError = signal<string | null>(null);
+  protected readonly filter = signal('');
+
+  // Episodes narrowed by the title filter; drives the table and select-all so
+  // both reflect only the rows the user can currently see.
+  protected readonly filteredEpisodes = computed(() => {
+    const term = this.filter().trim().toLowerCase();
+    const episodes = this.episodeStore.episodes();
+    if (!term) return episodes;
+    return episodes.filter((e) => e.title.toLowerCase().includes(term));
+  });
 
   protected readonly isDirty = computed(() => {
     const a = this.initialAssigned();
@@ -55,14 +71,15 @@ export class TagBulkEdit implements OnInit {
   });
 
   protected readonly allSelected = computed(() => {
-    const episodes = this.episodeStore.episodes();
+    const episodes = this.filteredEpisodes();
     const sel = this.selected();
     return episodes.length > 0 && episodes.every((e) => e.id && sel.has(e.id));
   });
 
   protected readonly someSelected = computed(() => {
+    const episodes = this.filteredEpisodes();
     const sel = this.selected();
-    return sel.size > 0 && !this.allSelected();
+    return episodes.some((e) => e.id && sel.has(e.id)) && !this.allSelected();
   });
 
   async ngOnInit(): Promise<void> {
@@ -102,13 +119,12 @@ export class TagBulkEdit implements OnInit {
   }
 
   protected toggleAll(): void {
+    const episodes = this.filteredEpisodes();
+    const next = new Set(this.selected());
     if (this.allSelected()) {
-      this.selected.set(new Set());
-      return;
-    }
-    const next = new Set<string>();
-    for (const e of this.episodeStore.episodes()) {
-      if (e.id) next.add(e.id);
+      for (const e of episodes) if (e.id) next.delete(e.id);
+    } else {
+      for (const e of episodes) if (e.id) next.add(e.id);
     }
     this.selected.set(next);
   }

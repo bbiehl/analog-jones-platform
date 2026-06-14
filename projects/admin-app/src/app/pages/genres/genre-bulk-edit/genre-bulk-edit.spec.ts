@@ -163,6 +163,39 @@ describe('GenreBulkEdit', () => {
     expect(mockRouter.navigate).not.toHaveBeenCalled();
   });
 
+  describe('title filter', () => {
+    it('filteredEpisodes returns all when empty and narrows by title', () => {
+      expect(component['filteredEpisodes']().map((e) => e.id)).toEqual(['e1', 'e2', 'e3']);
+      component['filter'].set('SEC');
+      expect(component['filteredEpisodes']().map((e) => e.id)).toEqual(['e2']);
+    });
+
+    it('toggleAll only affects the filtered subset', () => {
+      component['selected'].set(new Set());
+      component['filter'].set('third');
+      component['toggleAll']();
+      expect(component['selected']()).toEqual(new Set(['e3']));
+      expect(component['allSelected']()).toBe(true);
+    });
+
+    it('toggleAll clears only the filtered subset', () => {
+      component['selected'].set(new Set(['e1', 'e2', 'e3']));
+      component['filter'].set('third');
+      component['toggleAll']();
+      expect(component['selected']()).toEqual(new Set(['e1', 'e2']));
+    });
+
+    it('renders only matching rows and a no-data row when nothing matches', () => {
+      component['filter'].set('nomatch');
+      fixture.detectChanges();
+      const titleCells = fixture.nativeElement.querySelectorAll(
+        'tr.mat-mdc-row td.cdk-column-title',
+      );
+      expect(titleCells.length).toBe(0);
+      expect(fixture.nativeElement.textContent).toContain('No episodes match "nomatch"');
+    });
+  });
+
   describe('template', () => {
     it('renders genre name in heading', () => {
       const h1 = fixture.nativeElement.querySelector('h1');

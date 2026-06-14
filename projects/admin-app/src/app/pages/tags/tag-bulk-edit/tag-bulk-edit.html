@@ -39,7 +39,22 @@
   } @else if (episodeStore.episodes().length === 0) {
     <p class="text-gray-400 py-8 text-center">No episodes yet.</p>
   } @else {
-    <table mat-table [dataSource]="episodeStore.episodes()" class="w-full">
+    <mat-form-field class="w-full mb-4" appearance="outline">
+      <mat-label>Filter by title</mat-label>
+      <input
+        matInput
+        [ngModel]="filter()"
+        (ngModelChange)="filter.set($event)"
+        placeholder="Search episodes..."
+      />
+      @if (filter()) {
+        <button matSuffix mat-icon-button aria-label="Clear filter" (click)="filter.set('')">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </mat-form-field>
+
+    <table mat-table [dataSource]="filteredEpisodes()" class="w-full">
       <ng-container matColumnDef="select">
         <th mat-header-cell *matHeaderCellDef>
           <mat-checkbox
@@ -83,6 +98,15 @@
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+
+      <tr class="mat-mdc-row" *matNoDataRow>
+        <td
+          class="mat-mdc-cell text-center py-8 text-gray-400"
+          [attr.colspan]="displayedColumns.length"
+        >
+          No episodes match "{{ filter() }}"
+        </td>
+      </tr>
     </table>
   }
 </div>

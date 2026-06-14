@@ -226,6 +226,60 @@ describe('CategoryBulkEdit', () => {
     });
   });
 
+  describe('title filter', () => {
+    it('filteredEpisodes returns all episodes when the filter is empty', () => {
+      expect(component['filteredEpisodes']().map((e) => e.id)).toEqual(['e1', 'e2', 'e3']);
+    });
+
+    it('filteredEpisodes narrows by title, case-insensitively', () => {
+      component['filter'].set('sec');
+      expect(component['filteredEpisodes']().map((e) => e.id)).toEqual(['e2']);
+    });
+
+    it('toggleAll only affects the filtered subset', () => {
+      component['selected'].set(new Set());
+      component['filter'].set('third');
+
+      component['toggleAll']();
+
+      expect(component['selected']()).toEqual(new Set(['e3']));
+      expect(component['allSelected']()).toBe(true);
+    });
+
+    it('toggleAll clears only the filtered subset, leaving other selections intact', () => {
+      component['selected'].set(new Set(['e1', 'e2', 'e3']));
+      component['filter'].set('third');
+
+      component['toggleAll']();
+
+      expect(component['selected']()).toEqual(new Set(['e1', 'e2']));
+    });
+
+    it('someSelected is true when only some filtered rows are selected', () => {
+      component['selected'].set(new Set(['e1']));
+      component['filter'].set('');
+      expect(component['someSelected']()).toBe(true);
+
+      // Narrowing to an already-selected row makes the visible set fully selected.
+      component['filter'].set('first');
+      expect(component['allSelected']()).toBe(true);
+      expect(component['someSelected']()).toBe(false);
+    });
+
+    it('renders only matching rows and a no-data row when nothing matches', () => {
+      component['filter'].set('first');
+      fixture.detectChanges();
+      let titleCells = fixture.nativeElement.querySelectorAll('tr.mat-mdc-row td.cdk-column-title');
+      expect(Array.from(titleCells).map((c: any) => c.textContent.trim())).toEqual(['First']);
+
+      component['filter'].set('nomatch');
+      fixture.detectChanges();
+      titleCells = fixture.nativeElement.querySelectorAll('tr.mat-mdc-row td.cdk-column-title');
+      expect(titleCells.length).toBe(0);
+      expect(fixture.nativeElement.textContent).toContain('No episodes match "nomatch"');
+    });
+  });
+
   describe('template rendering', () => {
     it('renders the category name in the heading when selected', () => {
       const heading = fixture.nativeElement.querySelector('h1');
