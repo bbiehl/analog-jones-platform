@@ -5,7 +5,7 @@ import { provideRouter } from '@angular/router';
 import { Timestamp } from 'firebase/firestore';
 import { marked } from 'marked';
 
-import { Episode, EpisodeWithRelations } from '@aj/core';
+import { Episode } from '@aj/core';
 import { EpisodeStore } from '@aj/core';
 import { EpisodeScroller } from '../../episode/episode-scroller/episode-scroller';
 import { Home } from './home';
@@ -14,7 +14,7 @@ interface MockStore {
   episodes: WritableSignal<Episode[]>;
   currentEpisode: WritableSignal<Episode | null>;
   recentEpisodes: WritableSignal<Episode[]>;
-  selectedEpisode: WritableSignal<EpisodeWithRelations | null>;
+  selectedEpisode: WritableSignal<Episode | null>;
   totalVisible: WritableSignal<number>;
   loading: WritableSignal<boolean>;
   error: WritableSignal<string | null>;
@@ -31,14 +31,14 @@ function makeEpisode(overrides: Partial<Episode> = {}): Episode {
     intelligence: null,
     isVisible: true,
     links: {},
+    categories: [],
+    genres: [],
+    tags: [],
     ...overrides,
   };
 }
 
-function makeRelations(
-  ep: Episode,
-  overrides: Partial<EpisodeWithRelations> = {},
-): EpisodeWithRelations {
+function makeRelations(ep: Episode, overrides: Partial<Episode> = {}): Episode {
   return {
     ...ep,
     categories: [],
@@ -57,7 +57,7 @@ async function setup(initial: Partial<MockStore> = {}): Promise<{
     episodes: signal<Episode[]>([]),
     currentEpisode: signal<Episode | null>(null),
     recentEpisodes: signal<Episode[]>([]),
-    selectedEpisode: signal<EpisodeWithRelations | null>(null),
+    selectedEpisode: signal<Episode | null>(null),
     totalVisible: signal(0),
     loading: signal(false),
     error: signal<string | null>(null),
@@ -219,8 +219,8 @@ describe('Home', () => {
         categories: [
           { id: 'c1', name: 'Horror', slug: 'horror' },
           { id: 'c2', name: 'Sci-Fi', slug: 'sci-fi' },
-        ] as EpisodeWithRelations['categories'],
-        genres: [{ id: 'g1', name: 'Cult', slug: 'cult' }] as EpisodeWithRelations['genres'],
+        ] as Episode['categories'],
+        genres: [{ id: 'g1', name: 'Cult', slug: 'cult' }] as Episode['genres'],
       });
       const { fixture } = await setup({
         episodes: signal([ep]),

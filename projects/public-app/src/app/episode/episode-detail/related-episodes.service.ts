@@ -1,49 +1,22 @@
 import { inject, Injectable } from '@angular/core';
-import { FIRESTORE, FIRESTORE_OPS } from '@aj/core';
-import { Episode, EpisodeWithRelations } from '@aj/core';
+import { Episode, EpisodeService } from '@aj/core';
 
 @Injectable({ providedIn: 'root' })
 export class RelatedEpisodesService {
-  private firestore = inject(FIRESTORE);
-  private ops = inject(FIRESTORE_OPS);
+  private episodeService = inject(EpisodeService);
 
-  async getRelatedEpisodes(episode: EpisodeWithRelations, max = 12): Promise<Episode[]> {
+  async getRelatedEpisodes(episode: Episode, max = 12): Promise<Episode[]> {
     if (max <= 0) return [];
 
-    const byDateDesc = (a: Episode, b: Episode) =>
-      b.episodeDate.toMillis() - a.episodeDate.toMillis();
+    const tagIds = new Set(episode.tags.map((t) => t.id).filter((id): id is string => !!id));
+    if (tagIds.size === 0) return [];
 
-    const tagIds = episode.tags.map((t) => t.id).filter((id): id is string => !!id);
-    if (tagIds.length === 0) return [];
-
-    const tagResults = new Map<string, Episode>();
-    await this.collectFromJunction(episode, tagResults, 'episodeTags', 'tagId', tagIds);
-
-    return Array.from(tagResults.values()).sort(byDateDesc).slice(0, max);
-  }
-
-  private async collectFromJunction(
-    episode: EpisodeWithRelations,
-    results: Map<string, Episode>,
-    junctionCollection: string,
-    junctionField: string,
-    ids: string[],
-  ): Promise<void> {
-    const { collection, doc, getDoc, getDocs, query, where } = this.ops;
-    for (const id of ids) {
-      const junctionSnap = await getDocs(
-        query(collection(this.firestore, junctionCollection), where(junctionField, '==', id)),
-      );
-
-      for (const junction of junctionSnap.docs) {
-        const episodeId = junction.data()['episodeId'] as string;
-        if (episodeId === episode.id || results.has(episodeId)) continue;
-
-        const epSnap = await getDoc(doc(this.firestore, 'episodes', episodeId));
-        if (epSnap.exists() && epSnap.data()['isVisible']) {
-          results.set(episodeId, { id: epSnap.id, ...epSnap.data() } as Episode);
-        }
-      }
-    }
+    // Embedded tags live on each episode now, so a single (cached) visible-list
+    // read replaces the former per-tag episodeTags junction fan-out.
+    const episodes = await this.episodeService.getVisibleEpisodeList();
+    return episodes
+      .filter((e) => e.id !== episode.id && e.tags.some((t) => t.id && tagIds.has(t.id)))
+      .sort((a, b) => b.episodeDate.toMillis() - a.episodeDate.toMillis())
+      .slice(0, max);
   }
 }

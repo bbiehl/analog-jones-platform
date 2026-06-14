@@ -14,9 +14,8 @@ export interface Episode {
     youtube?: string;
   };
   title: string;
-}
-
-export interface EpisodeWithRelations extends Episode {
+  // Denormalized taxonomy embedded directly on the episode document. Replaces the
+  // former episodeCategories/episodeGenres/episodeTags junction collections.
   categories: Category[];
   genres: Genre[];
   tags: Tag[];

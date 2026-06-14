@@ -50,6 +50,9 @@ function makeEpisode(id: string, title: string): Episode {
     isVisible: true,
     links: {},
     title,
+    categories: [],
+    genres: [],
+    tags: [],
   };
 }
 

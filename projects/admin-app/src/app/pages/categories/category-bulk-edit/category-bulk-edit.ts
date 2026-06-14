@@ -13,9 +13,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
-import { CategoryStore } from '@aj/core';
+import { CategoryService, CategoryStore } from '@aj/core';
 import { EpisodeStore } from '@aj/core';
-import { EpisodeCategoryService } from '@aj/core';
 
 @Component({
   selector: 'app-category-bulk-edit',
@@ -34,7 +33,7 @@ import { EpisodeCategoryService } from '@aj/core';
 export class CategoryBulkEdit implements OnInit {
   protected readonly categoryStore = inject(CategoryStore);
   protected readonly episodeStore = inject(EpisodeStore);
-  private readonly episodeCategoryService = inject(EpisodeCategoryService);
+  private readonly categoryService = inject(CategoryService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -71,25 +70,23 @@ export class CategoryBulkEdit implements OnInit {
     await Promise.all([
       this.categoryStore.loadCategoryById(this.categoryId),
       this.episodeStore.loadEpisodes(),
-      this.loadAssigned(),
     ]);
+    this.loadAssigned();
   }
 
-  private async loadAssigned(): Promise<void> {
+  // Current membership is derived from the episodes' embedded categories, which
+  // loadEpisodes() has already fetched — no separate junction read.
+  private loadAssigned(): void {
     this.loadingJunctions.set(true);
     this.junctionError.set(null);
-    try {
-      const ids = await this.episodeCategoryService.getEpisodeIdsByCategoryId(
-        this.route.snapshot.params['id'],
-      );
-      const set = new Set(ids);
-      this.initialAssigned.set(set);
-      this.selected.set(new Set(set));
-    } catch (e) {
-      this.junctionError.set((e as Error).message);
-    } finally {
-      this.loadingJunctions.set(false);
-    }
+    const ids = this.episodeStore
+      .episodes()
+      .filter((e) => e.id && e.categories.some((c) => c.id === this.categoryId))
+      .map((e) => e.id!);
+    const set = new Set(ids);
+    this.initialAssigned.set(set);
+    this.selected.set(new Set(set));
+    this.loadingJunctions.set(false);
   }
 
   protected isChecked(episodeId: string | undefined): boolean {
@@ -121,12 +118,11 @@ export class CategoryBulkEdit implements OnInit {
 
   protected async onSave(): Promise<void> {
     if (!this.isDirty() || this.saving()) return;
-    if (!this.categoryStore.selectedCategory()) return;
+    const category = this.categoryStore.selectedCategory();
+    if (!category) return;
     this.saving.set(true);
     try {
-      await this.episodeCategoryService.setEpisodesForCategory(this.categoryId, [
-        ...this.selected(),
-      ]);
+      await this.categoryService.setEpisodesForCategory(category, [...this.selected()]);
       this.router.navigate(['/categories']);
     } finally {
       this.saving.set(false);

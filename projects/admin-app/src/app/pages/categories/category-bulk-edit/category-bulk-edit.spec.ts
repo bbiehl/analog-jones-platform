@@ -2,18 +2,14 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CategoryStore } from '@aj/core';
+import { CategoryService, CategoryStore } from '@aj/core';
 import { EpisodeStore } from '@aj/core';
-import { EpisodeCategoryService } from '@aj/core';
 import { CategoryBulkEdit } from './category-bulk-edit';
 
 describe('CategoryBulkEdit', () => {
   let component: CategoryBulkEdit;
   let fixture: ComponentFixture<CategoryBulkEdit>;
-  let mockEpisodeCategoryService: {
-    getEpisodeIdsByCategoryId: ReturnType<typeof vi.fn>;
-    setEpisodesForCategory: ReturnType<typeof vi.fn>;
-  };
+  let mockCategoryService: { setEpisodesForCategory: ReturnType<typeof vi.fn> };
   let mockCategoryStore: {
     selectedCategory: ReturnType<typeof signal>;
     loading: ReturnType<typeof signal>;
@@ -28,19 +24,18 @@ describe('CategoryBulkEdit', () => {
   };
   let mockRouter: { navigate: ReturnType<typeof vi.fn> };
 
+  const category = { id: 'cat1', name: 'Music', slug: 'music' };
+  // e1 and e2 embed cat1, so the initial selection should be {e1, e2}.
   const episodes = [
-    { id: 'e1', title: 'First', isVisible: true },
-    { id: 'e2', title: 'Second', isVisible: false },
-    { id: 'e3', title: 'Third', isVisible: true },
+    { id: 'e1', title: 'First', isVisible: true, categories: [category], genres: [], tags: [] },
+    { id: 'e2', title: 'Second', isVisible: false, categories: [category], genres: [], tags: [] },
+    { id: 'e3', title: 'Third', isVisible: true, categories: [], genres: [], tags: [] },
   ];
 
   beforeEach(async () => {
-    mockEpisodeCategoryService = {
-      getEpisodeIdsByCategoryId: vi.fn().mockResolvedValue(['e1', 'e2']),
-      setEpisodesForCategory: vi.fn().mockResolvedValue(undefined),
-    };
+    mockCategoryService = { setEpisodesForCategory: vi.fn().mockResolvedValue(undefined) };
     mockCategoryStore = {
-      selectedCategory: signal({ id: 'cat1', name: 'Music', slug: 'music', episodes: [] }),
+      selectedCategory: signal(category),
       loading: signal(false),
       error: signal(null),
       loadCategoryById: vi.fn().mockResolvedValue(undefined),
@@ -56,7 +51,7 @@ describe('CategoryBulkEdit', () => {
     await TestBed.configureTestingModule({
       imports: [CategoryBulkEdit],
       providers: [
-        { provide: EpisodeCategoryService, useValue: mockEpisodeCategoryService },
+        { provide: CategoryService, useValue: mockCategoryService },
         { provide: CategoryStore, useValue: mockCategoryStore },
         { provide: EpisodeStore, useValue: mockEpisodeStore },
         { provide: Router, useValue: mockRouter },
@@ -66,17 +61,16 @@ describe('CategoryBulkEdit', () => {
 
     fixture = TestBed.createComponent(CategoryBulkEdit);
     component = fixture.componentInstance;
+    await component.ngOnInit();
     fixture.detectChanges();
     await fixture.whenStable();
-    fixture.detectChanges();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should seed initial selection from getEpisodeIdsByCategoryId', () => {
-    expect(mockEpisodeCategoryService.getEpisodeIdsByCategoryId).toHaveBeenCalledWith('cat1');
+  it('should seed initial selection from episodes that embed the category', () => {
     expect(component['selected']()).toEqual(new Set(['e1', 'e2']));
     expect(component['isDirty']()).toBe(false);
   });
@@ -109,12 +103,12 @@ describe('CategoryBulkEdit', () => {
     expect(component['selected']().size).toBe(0);
   });
 
-  it('onSave should call setEpisodesForCategory with current selection and navigate', async () => {
+  it('onSave should call setEpisodesForCategory with the category and selection, then navigate', async () => {
     component['toggleEpisode']('e3');
     await component['onSave']();
 
-    expect(mockEpisodeCategoryService.setEpisodesForCategory).toHaveBeenCalledWith(
-      'cat1',
+    expect(mockCategoryService.setEpisodesForCategory).toHaveBeenCalledWith(
+      category,
       expect.arrayContaining(['e1', 'e2', 'e3']),
     );
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/categories']);
@@ -122,7 +116,7 @@ describe('CategoryBulkEdit', () => {
 
   it('onSave should noop when not dirty', async () => {
     await component['onSave']();
-    expect(mockEpisodeCategoryService.setEpisodesForCategory).not.toHaveBeenCalled();
+    expect(mockCategoryService.setEpisodesForCategory).not.toHaveBeenCalled();
   });
 
   it('onCancel should navigate back to categories', () => {
@@ -155,9 +149,9 @@ describe('CategoryBulkEdit', () => {
   describe('toggleAll edge cases', () => {
     it('skips episodes without an id when selecting all', () => {
       mockEpisodeStore.episodes.set([
-        { id: 'e1', title: 'First', isVisible: true },
-        { id: undefined, title: 'No id', isVisible: true },
-        { id: 'e3', title: 'Third', isVisible: true },
+        { id: 'e1', title: 'First', isVisible: true, categories: [], genres: [], tags: [] },
+        { id: undefined, title: 'No id', isVisible: true, categories: [], genres: [], tags: [] },
+        { id: 'e3', title: 'Third', isVisible: true, categories: [], genres: [], tags: [] },
       ]);
       component['selected'].set(new Set());
 
@@ -202,7 +196,7 @@ describe('CategoryBulkEdit', () => {
 
       await component['onSave']();
 
-      expect(mockEpisodeCategoryService.setEpisodesForCategory).not.toHaveBeenCalled();
+      expect(mockCategoryService.setEpisodesForCategory).not.toHaveBeenCalled();
       expect(mockRouter.navigate).not.toHaveBeenCalled();
     });
 
@@ -212,7 +206,7 @@ describe('CategoryBulkEdit', () => {
 
       await component['onSave']();
 
-      expect(mockEpisodeCategoryService.setEpisodesForCategory).not.toHaveBeenCalled();
+      expect(mockCategoryService.setEpisodesForCategory).not.toHaveBeenCalled();
     });
 
     it('resets saving back to false after a successful save', async () => {
@@ -224,26 +218,11 @@ describe('CategoryBulkEdit', () => {
     });
 
     it('resets saving back to false when setEpisodesForCategory rejects', async () => {
-      mockEpisodeCategoryService.setEpisodesForCategory.mockRejectedValueOnce(new Error('boom'));
+      mockCategoryService.setEpisodesForCategory.mockRejectedValueOnce(new Error('boom'));
       component['toggleEpisode']('e3');
 
       await expect(component['onSave']()).rejects.toThrow('boom');
       expect(component['saving']()).toBe(false);
-    });
-  });
-
-  describe('loadAssigned error path', () => {
-    it('sets junctionError when getEpisodeIdsByCategoryId rejects', async () => {
-      mockEpisodeCategoryService.getEpisodeIdsByCategoryId.mockRejectedValueOnce(
-        new Error('network down'),
-      );
-
-      const fresh = TestBed.createComponent(CategoryBulkEdit);
-      fresh.detectChanges();
-      await fresh.whenStable();
-
-      expect(fresh.componentInstance['junctionError']()).toBe('network down');
-      expect(fresh.componentInstance['loadingJunctions']()).toBe(false);
     });
   });
 
@@ -261,26 +240,11 @@ describe('CategoryBulkEdit', () => {
       expect(fixture.nativeElement.textContent).toContain('Category not found.');
     });
 
-    it('shows the junction error message when junctionError is set', () => {
-      component['junctionError'].set('Failed to load assignments');
-      fixture.detectChanges();
-
-      expect(fixture.nativeElement.textContent).toContain('Failed to load assignments');
-    });
-
     it('shows the empty-state message when there are no episodes', () => {
       mockEpisodeStore.episodes.set([]);
       fixture.detectChanges();
 
       expect(fixture.nativeElement.textContent).toContain('No episodes yet.');
-    });
-
-    it('shows a loading spinner when loadingJunctions is true', () => {
-      component['loadingJunctions'].set(true);
-      fixture.detectChanges();
-
-      const spinner = fixture.nativeElement.querySelector('mat-spinner');
-      expect(spinner).toBeTruthy();
     });
 
     it('shows the categoryStore error when set', () => {

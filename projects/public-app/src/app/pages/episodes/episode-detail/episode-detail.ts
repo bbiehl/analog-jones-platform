@@ -9,7 +9,7 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
-import { EpisodeStore, EpisodeWithRelations } from '@aj/core';
+import { Episode, EpisodeStore } from '@aj/core';
 import { EpisodeProperties } from '../../../episode/episode-detail/episode-properties/episode-properties';
 import { EpisodePropertiesSkeleton } from '../../../episode/episode-detail/episode-properties-skeleton/episode-properties-skeleton';
 import { RelatedEpisodeStore } from '../../../episode/episode-detail/related-episode.store';
@@ -42,7 +42,7 @@ export class EpisodeDetail implements OnDestroy {
   });
 
   private readonly resolved = toSignal(
-    this.route.data.pipe(map((d) => d['episode'] as EpisodeWithRelations | null | undefined)),
+    this.route.data.pipe(map((d) => d['episode'] as Episode | null | undefined)),
     { initialValue: undefined },
   );
   protected readonly notFound = computed(() => this.resolved() === null);

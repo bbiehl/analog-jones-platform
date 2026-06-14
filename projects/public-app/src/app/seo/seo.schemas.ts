@@ -1,4 +1,4 @@
-import { EpisodeWithRelations } from '@aj/core';
+import { Episode } from '@aj/core';
 import { SITE_NAME } from './origin.token';
 import { absoluteUrl, stripMarkdown } from './seo.text';
 
@@ -45,10 +45,7 @@ export function podcastSeries(origin: string): Record<string, unknown> {
   };
 }
 
-export function podcastEpisode(
-  episode: EpisodeWithRelations,
-  origin: string,
-): Record<string, unknown> {
+export function podcastEpisode(episode: Episode, origin: string): Record<string, unknown> {
   const path = `/episodes/${episode.id}`;
   const url = absoluteUrl(origin, path);
   const description = stripMarkdown(episode.intelligence, 300);

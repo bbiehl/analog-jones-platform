@@ -6,18 +6,14 @@ import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatCheckboxHarness } from '@angular/material/checkbox/testing';
 import { MatTableHarness } from '@angular/material/table/testing';
-import { GenreStore } from '@aj/core';
+import { GenreService, GenreStore } from '@aj/core';
 import { EpisodeStore } from '@aj/core';
-import { EpisodeGenreService } from '@aj/core';
 import { GenreBulkEdit } from './genre-bulk-edit';
 
 describe('GenreBulkEdit', () => {
   let component: GenreBulkEdit;
   let fixture: ComponentFixture<GenreBulkEdit>;
-  let mockEpisodeGenreService: {
-    getEpisodeIdsByGenreId: ReturnType<typeof vi.fn>;
-    setEpisodesForGenre: ReturnType<typeof vi.fn>;
-  };
+  let mockGenreService: { setEpisodesForGenre: ReturnType<typeof vi.fn> };
   let mockGenreStore: {
     selectedGenre: ReturnType<typeof signal>;
     loading: ReturnType<typeof signal>;
@@ -33,19 +29,18 @@ describe('GenreBulkEdit', () => {
   let mockRouter: { navigate: ReturnType<typeof vi.fn> };
   let loader: HarnessLoader;
 
+  const genre = { id: 'g1', name: 'Rock', slug: 'rock' };
+  // e1 and e2 embed g1, so the initial selection should be {e1, e2}.
   const episodes = [
-    { id: 'e1', title: 'First', isVisible: true },
-    { id: 'e2', title: 'Second', isVisible: false },
-    { id: 'e3', title: 'Third', isVisible: true },
+    { id: 'e1', title: 'First', isVisible: true, categories: [], genres: [genre], tags: [] },
+    { id: 'e2', title: 'Second', isVisible: false, categories: [], genres: [genre], tags: [] },
+    { id: 'e3', title: 'Third', isVisible: true, categories: [], genres: [], tags: [] },
   ];
 
   beforeEach(async () => {
-    mockEpisodeGenreService = {
-      getEpisodeIdsByGenreId: vi.fn().mockResolvedValue(['e1', 'e2']),
-      setEpisodesForGenre: vi.fn().mockResolvedValue(undefined),
-    };
+    mockGenreService = { setEpisodesForGenre: vi.fn().mockResolvedValue(undefined) };
     mockGenreStore = {
-      selectedGenre: signal({ id: 'g1', name: 'Rock', slug: 'rock', episodes: [] }),
+      selectedGenre: signal(genre),
       loading: signal(false),
       error: signal(null),
       loadGenreById: vi.fn().mockResolvedValue(undefined),
@@ -61,7 +56,7 @@ describe('GenreBulkEdit', () => {
     await TestBed.configureTestingModule({
       imports: [GenreBulkEdit],
       providers: [
-        { provide: EpisodeGenreService, useValue: mockEpisodeGenreService },
+        { provide: GenreService, useValue: mockGenreService },
         { provide: GenreStore, useValue: mockGenreStore },
         { provide: EpisodeStore, useValue: mockEpisodeStore },
         { provide: Router, useValue: mockRouter },
@@ -81,8 +76,7 @@ describe('GenreBulkEdit', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should seed initial selection from getEpisodeIdsByGenreId', () => {
-    expect(mockEpisodeGenreService.getEpisodeIdsByGenreId).toHaveBeenCalledWith('g1');
+  it('should seed initial selection from episodes that embed the genre', () => {
     expect(component['selected']()).toEqual(new Set(['e1', 'e2']));
     expect(component['isDirty']()).toBe(false);
   });
@@ -108,8 +102,8 @@ describe('GenreBulkEdit', () => {
     component['toggleEpisode']('e3');
     await component['onSave']();
 
-    expect(mockEpisodeGenreService.setEpisodesForGenre).toHaveBeenCalledWith(
-      'g1',
+    expect(mockGenreService.setEpisodesForGenre).toHaveBeenCalledWith(
+      genre,
       expect.arrayContaining(['e1', 'e2', 'e3']),
     );
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/genres']);
@@ -117,7 +111,7 @@ describe('GenreBulkEdit', () => {
 
   it('onSave should noop when not dirty', async () => {
     await component['onSave']();
-    expect(mockEpisodeGenreService.setEpisodesForGenre).not.toHaveBeenCalled();
+    expect(mockGenreService.setEpisodesForGenre).not.toHaveBeenCalled();
   });
 
   it('onCancel should navigate back', () => {
@@ -157,27 +151,16 @@ describe('GenreBulkEdit', () => {
     (mockGenreStore.selectedGenre as ReturnType<typeof signal<unknown>>).set(null);
     component['toggleEpisode']('e3');
     await component['onSave']();
-    expect(mockEpisodeGenreService.setEpisodesForGenre).not.toHaveBeenCalled();
+    expect(mockGenreService.setEpisodesForGenre).not.toHaveBeenCalled();
     expect(mockRouter.navigate).not.toHaveBeenCalled();
   });
 
   it('onSave resets saving flag if setEpisodesForGenre rejects', async () => {
-    mockEpisodeGenreService.setEpisodesForGenre.mockRejectedValueOnce(new Error('boom'));
+    mockGenreService.setEpisodesForGenre.mockRejectedValueOnce(new Error('boom'));
     component['toggleEpisode']('e3');
     await expect(component['onSave']()).rejects.toThrow('boom');
     expect(component['saving']()).toBe(false);
     expect(mockRouter.navigate).not.toHaveBeenCalled();
-  });
-
-  it('captures junctionError when getEpisodeIdsByGenreId rejects', async () => {
-    mockEpisodeGenreService.getEpisodeIdsByGenreId.mockReset();
-    mockEpisodeGenreService.getEpisodeIdsByGenreId.mockRejectedValue(new Error('nope'));
-    const fresh = TestBed.createComponent(GenreBulkEdit);
-    await fresh.componentInstance.ngOnInit();
-    await fresh.whenStable();
-    fresh.detectChanges();
-    expect(fresh.componentInstance['junctionError']()).toBe('nope');
-    expect(fresh.componentInstance['loadingJunctions']()).toBe(false);
   });
 
   describe('template', () => {
@@ -199,7 +182,7 @@ describe('GenreBulkEdit', () => {
       expect(await header.isChecked()).toBe(false);
     });
 
-    it('shows spinner while loading junctions', async () => {
+    it('shows spinner while loading episodes', async () => {
       mockEpisodeStore.loading.set(true);
       fixture.detectChanges();
       await fixture.whenStable();
@@ -219,13 +202,6 @@ describe('GenreBulkEdit', () => {
       fixture.detectChanges();
       await fixture.whenStable();
       expect(fixture.nativeElement.textContent).toContain('Genre not found.');
-    });
-
-    it('shows junctionError message', async () => {
-      component['junctionError'].set('junction boom');
-      fixture.detectChanges();
-      await fixture.whenStable();
-      expect(fixture.nativeElement.textContent).toContain('junction boom');
     });
 
     it('shows episode store error', async () => {

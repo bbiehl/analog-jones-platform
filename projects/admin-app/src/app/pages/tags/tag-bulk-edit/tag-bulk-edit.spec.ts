@@ -6,18 +6,14 @@ import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatCheckboxHarness } from '@angular/material/checkbox/testing';
 import { MatTableHarness } from '@angular/material/table/testing';
-import { TagStore } from '@aj/core';
+import { TagService, TagStore } from '@aj/core';
 import { EpisodeStore } from '@aj/core';
-import { EpisodeTagService } from '@aj/core';
 import { TagBulkEdit } from './tag-bulk-edit';
 
 describe('TagBulkEdit', () => {
   let component: TagBulkEdit;
   let fixture: ComponentFixture<TagBulkEdit>;
-  let mockEpisodeTagService: {
-    getEpisodeIdsByTagId: ReturnType<typeof vi.fn>;
-    setEpisodesForTag: ReturnType<typeof vi.fn>;
-  };
+  let mockTagService: { setEpisodesForTag: ReturnType<typeof vi.fn> };
   let mockTagStore: {
     selectedTag: ReturnType<typeof signal>;
     loading: ReturnType<typeof signal>;
@@ -33,19 +29,18 @@ describe('TagBulkEdit', () => {
   let mockRouter: { navigate: ReturnType<typeof vi.fn> };
   let loader: HarnessLoader;
 
+  const tag = { id: 't1', name: 'Vintage', slug: 'vintage' };
+  // e1 and e2 embed t1, so the initial selection should be {e1, e2}.
   const episodes = [
-    { id: 'e1', title: 'First', isVisible: true },
-    { id: 'e2', title: 'Second', isVisible: false },
-    { id: 'e3', title: 'Third', isVisible: true },
+    { id: 'e1', title: 'First', isVisible: true, categories: [], genres: [], tags: [tag] },
+    { id: 'e2', title: 'Second', isVisible: false, categories: [], genres: [], tags: [tag] },
+    { id: 'e3', title: 'Third', isVisible: true, categories: [], genres: [], tags: [] },
   ];
 
   beforeEach(async () => {
-    mockEpisodeTagService = {
-      getEpisodeIdsByTagId: vi.fn().mockResolvedValue(['e1', 'e2']),
-      setEpisodesForTag: vi.fn().mockResolvedValue(undefined),
-    };
+    mockTagService = { setEpisodesForTag: vi.fn().mockResolvedValue(undefined) };
     mockTagStore = {
-      selectedTag: signal({ id: 't1', name: 'Vintage', slug: 'vintage', episodes: [] }),
+      selectedTag: signal(tag),
       loading: signal(false),
       error: signal(null),
       loadTagById: vi.fn().mockResolvedValue(undefined),
@@ -61,7 +56,7 @@ describe('TagBulkEdit', () => {
     await TestBed.configureTestingModule({
       imports: [TagBulkEdit],
       providers: [
-        { provide: EpisodeTagService, useValue: mockEpisodeTagService },
+        { provide: TagService, useValue: mockTagService },
         { provide: TagStore, useValue: mockTagStore },
         { provide: EpisodeStore, useValue: mockEpisodeStore },
         { provide: Router, useValue: mockRouter },
@@ -81,8 +76,7 @@ describe('TagBulkEdit', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should seed initial selection from getEpisodeIdsByTagId', () => {
-    expect(mockEpisodeTagService.getEpisodeIdsByTagId).toHaveBeenCalledWith('t1');
+  it('should seed initial selection from episodes that embed the tag', () => {
     expect(component['selected']()).toEqual(new Set(['e1', 'e2']));
     expect(component['isDirty']()).toBe(false);
   });
@@ -108,8 +102,8 @@ describe('TagBulkEdit', () => {
     component['toggleEpisode']('e3');
     await component['onSave']();
 
-    expect(mockEpisodeTagService.setEpisodesForTag).toHaveBeenCalledWith(
-      't1',
+    expect(mockTagService.setEpisodesForTag).toHaveBeenCalledWith(
+      tag,
       expect.arrayContaining(['e1', 'e2', 'e3']),
     );
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/tags']);
@@ -117,7 +111,7 @@ describe('TagBulkEdit', () => {
 
   it('onSave should noop when not dirty', async () => {
     await component['onSave']();
-    expect(mockEpisodeTagService.setEpisodesForTag).not.toHaveBeenCalled();
+    expect(mockTagService.setEpisodesForTag).not.toHaveBeenCalled();
   });
 
   it('onCancel should navigate back', () => {
@@ -157,27 +151,16 @@ describe('TagBulkEdit', () => {
     (mockTagStore.selectedTag as ReturnType<typeof signal<unknown>>).set(null);
     component['toggleEpisode']('e3');
     await component['onSave']();
-    expect(mockEpisodeTagService.setEpisodesForTag).not.toHaveBeenCalled();
+    expect(mockTagService.setEpisodesForTag).not.toHaveBeenCalled();
     expect(mockRouter.navigate).not.toHaveBeenCalled();
   });
 
   it('onSave resets saving flag if setEpisodesForTag rejects', async () => {
-    mockEpisodeTagService.setEpisodesForTag.mockRejectedValueOnce(new Error('boom'));
+    mockTagService.setEpisodesForTag.mockRejectedValueOnce(new Error('boom'));
     component['toggleEpisode']('e3');
     await expect(component['onSave']()).rejects.toThrow('boom');
     expect(component['saving']()).toBe(false);
     expect(mockRouter.navigate).not.toHaveBeenCalled();
-  });
-
-  it('captures junctionError when getEpisodeIdsByTagId rejects', async () => {
-    mockEpisodeTagService.getEpisodeIdsByTagId.mockReset();
-    mockEpisodeTagService.getEpisodeIdsByTagId.mockRejectedValue(new Error('nope'));
-    const fresh = TestBed.createComponent(TagBulkEdit);
-    await fresh.componentInstance.ngOnInit();
-    await fresh.whenStable();
-    fresh.detectChanges();
-    expect(fresh.componentInstance['junctionError']()).toBe('nope');
-    expect(fresh.componentInstance['loadingJunctions']()).toBe(false);
   });
 
   describe('template', () => {
@@ -199,7 +182,7 @@ describe('TagBulkEdit', () => {
       expect(await header.isChecked()).toBe(false);
     });
 
-    it('shows spinner while loading junctions', async () => {
+    it('shows spinner while loading episodes', async () => {
       mockEpisodeStore.loading.set(true);
       fixture.detectChanges();
       await fixture.whenStable();
@@ -219,13 +202,6 @@ describe('TagBulkEdit', () => {
       fixture.detectChanges();
       await fixture.whenStable();
       expect(fixture.nativeElement.textContent).toContain('Tag not found.');
-    });
-
-    it('shows junctionError message', async () => {
-      component['junctionError'].set('junction boom');
-      fixture.detectChanges();
-      await fixture.whenStable();
-      expect(fixture.nativeElement.textContent).toContain('junction boom');
     });
 
     it('shows episode store error', async () => {

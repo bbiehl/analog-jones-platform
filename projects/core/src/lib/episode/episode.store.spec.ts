@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Timestamp } from 'firebase/firestore';
 import { EpisodeStore } from './episode.store';
 import { EpisodeService } from './episode.service';
-import { Episode, EpisodeWithRelations } from './episode.model';
+import { Episode } from './episode.model';
 
 describe('EpisodeStore', () => {
   let store: InstanceType<typeof EpisodeStore>;
@@ -17,6 +17,9 @@ describe('EpisodeStore', () => {
       isVisible: true,
       links: { spotify: 'https://spotify.com/ep1', youtube: 'https://youtube.com/ep1' },
       title: 'Episode One',
+      categories: [{ id: 'c1', name: 'History', slug: 'history' }],
+      genres: [{ id: 'g1', name: 'Documentary', slug: 'documentary' }],
+      tags: [{ id: 't1', name: 'WWII', slug: 'wwii' }],
     },
     {
       id: 'ep2',
@@ -26,20 +29,19 @@ describe('EpisodeStore', () => {
       isVisible: false,
       links: {},
       title: 'Episode Two',
+      categories: [],
+      genres: [],
+      tags: [],
     },
   ];
 
-  const mockEpisodeWithRelations: EpisodeWithRelations = {
-    ...mockEpisodes[0],
-    categories: [{ id: 'c1', name: 'History', slug: 'history' }],
-    genres: [{ id: 'g1', name: 'Documentary', slug: 'documentary' }],
-    tags: [{ id: 't1', name: 'WWII', slug: 'wwii' }],
-  };
+  // selectedEpisode is now a plain Episode (taxonomy is embedded).
+  const mockSelectedEpisode: Episode = mockEpisodes[0];
 
   const mockHomeBundle = {
     episodes: mockEpisodes,
     total: mockEpisodes.length,
-    featured: mockEpisodeWithRelations,
+    featured: mockSelectedEpisode,
   };
 
   const mockEpisodeService = {
@@ -49,7 +51,7 @@ describe('EpisodeStore', () => {
     getRecentEpisodes: vi.fn().mockResolvedValue(mockEpisodes),
     getVisibleEpisodes: vi.fn().mockResolvedValue([mockEpisodes[0]]),
     getVisibleEpisodeList: vi.fn().mockResolvedValue([mockEpisodes[0]]),
-    getEpisodeById: vi.fn().mockResolvedValue(mockEpisodeWithRelations),
+    getEpisodeById: vi.fn().mockResolvedValue(mockSelectedEpisode),
     toggleEpisodeVisibility: vi.fn().mockResolvedValue(undefined),
     createEpisode: vi.fn().mockResolvedValue('new-id'),
     updateEpisode: vi.fn().mockResolvedValue(undefined),
@@ -69,7 +71,7 @@ describe('EpisodeStore', () => {
     mockEpisodeService.getRecentEpisodes.mockResolvedValue(mockEpisodes);
     mockEpisodeService.getVisibleEpisodes.mockResolvedValue([mockEpisodes[0]]);
     mockEpisodeService.getVisibleEpisodeList.mockResolvedValue([mockEpisodes[0]]);
-    mockEpisodeService.getEpisodeById.mockResolvedValue(mockEpisodeWithRelations);
+    mockEpisodeService.getEpisodeById.mockResolvedValue(mockSelectedEpisode);
     mockEpisodeService.toggleEpisodeVisibility.mockResolvedValue(undefined);
     mockEpisodeService.createEpisode.mockResolvedValue('new-id');
     mockEpisodeService.updateEpisode.mockResolvedValue(undefined);
@@ -130,7 +132,7 @@ describe('EpisodeStore', () => {
       expect(mockEpisodeService.getHomeEpisodes).toHaveBeenCalledTimes(1);
       expect(store.episodes()).toEqual(mockEpisodes);
       expect(store.totalVisible()).toBe(mockEpisodes.length);
-      expect(store.selectedEpisode()).toEqual(mockEpisodeWithRelations);
+      expect(store.selectedEpisode()).toEqual(mockSelectedEpisode);
       expect(store.loading()).toBe(false);
     });
 
@@ -245,7 +247,7 @@ describe('EpisodeStore', () => {
       await store.loadEpisodeById('ep1');
 
       expect(mockEpisodeService.getEpisodeById).toHaveBeenCalledWith('ep1');
-      expect(store.selectedEpisode()).toEqual(mockEpisodeWithRelations);
+      expect(store.selectedEpisode()).toEqual(mockSelectedEpisode);
       expect(store.loading()).toBe(false);
     });
 
@@ -262,10 +264,10 @@ describe('EpisodeStore', () => {
     });
 
     it('should ignore results from superseded calls when a newer call resolves first', async () => {
-      const episodeB: EpisodeWithRelations = { ...mockEpisodeWithRelations, id: 'ep-B' };
+      const episodeB: Episode = { ...mockSelectedEpisode, id: 'ep-B' };
 
-      let resolveA!: (v: EpisodeWithRelations) => void;
-      const pendingA = new Promise<EpisodeWithRelations>((r) => (resolveA = r));
+      let resolveA!: (v: Episode) => void;
+      const pendingA = new Promise<Episode>((r) => (resolveA = r));
 
       mockEpisodeService.getEpisodeById.mockImplementationOnce(() => pendingA);
       mockEpisodeService.getEpisodeById.mockResolvedValueOnce(episodeB);
@@ -277,7 +279,7 @@ describe('EpisodeStore', () => {
       expect(store.selectedEpisode()).toEqual(episodeB);
       expect(store.loading()).toBe(false);
 
-      resolveA(mockEpisodeWithRelations);
+      resolveA(mockSelectedEpisode);
       await callA;
 
       expect(store.selectedEpisode()).toEqual(episodeB);
@@ -286,10 +288,10 @@ describe('EpisodeStore', () => {
 
     it('should not surface errors from superseded calls', async () => {
       let rejectA!: (e: Error) => void;
-      const pendingA = new Promise<EpisodeWithRelations>((_, r) => (rejectA = r));
+      const pendingA = new Promise<Episode>((_, r) => (rejectA = r));
 
       mockEpisodeService.getEpisodeById.mockImplementationOnce(() => pendingA);
-      mockEpisodeService.getEpisodeById.mockResolvedValueOnce(mockEpisodeWithRelations);
+      mockEpisodeService.getEpisodeById.mockResolvedValueOnce(mockSelectedEpisode);
 
       const callA = store.loadEpisodeById('ep-A');
       const callB = store.loadEpisodeById('ep-B');
@@ -301,7 +303,7 @@ describe('EpisodeStore', () => {
       await callA;
 
       expect(store.error()).toBeNull();
-      expect(store.selectedEpisode()).toEqual(mockEpisodeWithRelations);
+      expect(store.selectedEpisode()).toEqual(mockSelectedEpisode);
     });
   });
 
@@ -327,7 +329,7 @@ describe('EpisodeStore', () => {
 
   describe('createEpisode', () => {
     it('should create episode and reload all episodes', async () => {
-      const newEpisode: Omit<Episode, 'id'> = {
+      const newEpisode: Omit<Episode, 'id' | 'categories' | 'genres' | 'tags'> = {
         createdAt: Timestamp.fromDate(new Date('2026-03-01')),
         episodeDate: Timestamp.fromDate(new Date('2026-03-01')),
         intelligence: null,
@@ -355,7 +357,7 @@ describe('EpisodeStore', () => {
     it('should set error on failure', async () => {
       mockEpisodeService.createEpisode.mockRejectedValueOnce(new Error('Create failed'));
 
-      const newEpisode: Omit<Episode, 'id'> = {
+      const newEpisode: Omit<Episode, 'id' | 'categories' | 'genres' | 'tags'> = {
         createdAt: Timestamp.fromDate(new Date('2026-03-01')),
         episodeDate: Timestamp.fromDate(new Date('2026-03-01')),
         intelligence: null,
@@ -423,28 +425,28 @@ describe('EpisodeStore', () => {
       await store.loadEpisodes();
       expect(store.error()).toBe('boom');
 
-      store.setSelectedEpisode(mockEpisodeWithRelations);
+      store.setSelectedEpisode(mockSelectedEpisode);
 
-      expect(store.selectedEpisode()).toEqual(mockEpisodeWithRelations);
+      expect(store.selectedEpisode()).toEqual(mockSelectedEpisode);
       expect(store.loading()).toBe(false);
       expect(store.error()).toBeNull();
     });
 
     it('should supersede an in-flight loadEpisodeById so its result is discarded', async () => {
-      let resolve!: (v: EpisodeWithRelations) => void;
-      const pending = new Promise<EpisodeWithRelations>((r) => (resolve = r));
+      let resolve!: (v: Episode) => void;
+      const pending = new Promise<Episode>((r) => (resolve = r));
       mockEpisodeService.getEpisodeById.mockImplementationOnce(() => pending);
 
       const inFlight = store.loadEpisodeById('ep1');
-      const other: EpisodeWithRelations = {
-        ...mockEpisodeWithRelations,
+      const other: Episode = {
+        ...mockSelectedEpisode,
         id: 'ep-other',
         title: 'Other',
       };
       store.setSelectedEpisode(other);
       expect(store.selectedEpisode()).toEqual(other);
 
-      resolve(mockEpisodeWithRelations);
+      resolve(mockSelectedEpisode);
       await inFlight;
 
       expect(store.selectedEpisode()).toEqual(other);
@@ -463,15 +465,15 @@ describe('EpisodeStore', () => {
     });
 
     it('should cancel an in-flight loadEpisodeById so its result is discarded', async () => {
-      let resolve!: (v: EpisodeWithRelations) => void;
-      const pending = new Promise<EpisodeWithRelations>((r) => (resolve = r));
+      let resolve!: (v: Episode) => void;
+      const pending = new Promise<Episode>((r) => (resolve = r));
       mockEpisodeService.getEpisodeById.mockImplementationOnce(() => pending);
 
       const inFlight = store.loadEpisodeById('ep1');
       store.clearSelectedEpisode();
       expect(store.selectedEpisode()).toBeNull();
 
-      resolve(mockEpisodeWithRelations);
+      resolve(mockSelectedEpisode);
       await inFlight;
 
       expect(store.selectedEpisode()).toBeNull();

@@ -23,6 +23,9 @@ describe('ExploreSearchStore', () => {
       isVisible: true,
       links: {},
       title: 'Hello World',
+      categories: [],
+      genres: [],
+      tags: [],
     },
   ];
 
@@ -168,6 +171,9 @@ describe('ExploreSearchStore', () => {
         isVisible: true,
         links: {},
         title: 'Refreshed',
+        categories: [],
+        genres: [],
+        tags: [],
       },
     ];
     mockExploreSearchService.searchEpisodes.mockResolvedValueOnce(updated);
@@ -188,6 +194,9 @@ describe('ExploreSearchStore', () => {
         isVisible: true,
         links: {},
         title: 'Stale',
+        categories: [],
+        genres: [],
+        tags: [],
       },
     ];
     let resolveFirst!: (eps: Episode[]) => void;

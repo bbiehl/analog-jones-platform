@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { DatePipe, UpperCasePipe } from '@angular/common';
 import { marked } from 'marked';
-import { EpisodeWithRelations } from '@aj/core';
+import { Episode } from '@aj/core';
 
 @Component({
   selector: 'app-episode-properties',
@@ -11,7 +11,7 @@ import { EpisodeWithRelations } from '@aj/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EpisodeProperties {
-  readonly episode = input.required<EpisodeWithRelations>();
+  readonly episode = input.required<Episode>();
 
   protected readonly intelligenceHtml = computed<string | null>(() => {
     const raw = this.episode().intelligence;

@@ -110,12 +110,45 @@ describe('TagService', () => {
   });
 
   describe('updateTag', () => {
-    it('should strip the id field before updating', async () => {
+    it('should strip id, then propagate the new name/slug into episodes that embed it', async () => {
+      ops.getDoc.mockResolvedValueOnce({
+        exists: () => true,
+        id: 't1',
+        data: () => ({ name: 'Updated', slug: 'updated' }),
+      });
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          {
+            id: 'ep1',
+            ref: { __ref: 'ep1' },
+            data: () => ({
+              tags: [
+                { id: 't1', name: 'Old', slug: 'old' },
+                { id: 't2', name: 'Cult', slug: 'cult' },
+              ],
+            }),
+          },
+          { id: 'ep2', ref: { __ref: 'ep2' }, data: () => ({ tags: [] }) },
+        ],
+      });
+      const batch = { update: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      ops.writeBatch.mockReturnValue(batch);
+
       await service.updateTag('t1', { id: 't1', name: 'Updated', slug: 'updated' });
 
       expect(ops.updateDoc).toHaveBeenCalledWith(
         { __doc: 'tags/t1' },
         { name: 'Updated', slug: 'updated' },
+      );
+      expect(batch.update).toHaveBeenCalledTimes(1);
+      expect(batch.update).toHaveBeenCalledWith(
+        { __ref: 'ep1' },
+        {
+          tags: [
+            { id: 't1', name: 'Updated', slug: 'updated' },
+            { id: 't2', name: 'Cult', slug: 'cult' },
+          ],
+        },
       );
     });
 
@@ -126,31 +159,79 @@ describe('TagService', () => {
   });
 
   describe('deleteTag', () => {
-    it('should batch-delete every junction doc plus the tag doc, then commit', async () => {
-      const junctionRefs = [{ ref: { __ref: 'et1' } }, { ref: { __ref: 'et2' } }];
-      ops.getDocs.mockResolvedValueOnce({ docs: junctionRefs });
-
-      const batch = { delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
-      ops.writeBatch.mockReturnValueOnce(batch);
+    it('should remove the embedded tag from episodes then delete the tag doc', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          {
+            id: 'ep1',
+            ref: { __ref: 'ep1' },
+            data: () => ({
+              tags: [
+                { id: 't1', name: 'Retro', slug: 'retro' },
+                { id: 't2', name: 'Cult', slug: 'cult' },
+              ],
+            }),
+          },
+          { id: 'ep2', ref: { __ref: 'ep2' }, data: () => ({ tags: [] }) },
+        ],
+      });
+      const batch = {
+        update: vi.fn(),
+        delete: vi.fn(),
+        commit: vi.fn().mockResolvedValue(undefined),
+      };
+      ops.writeBatch.mockReturnValue(batch);
 
       await service.deleteTag('t1');
 
-      expect(ops.collection).toHaveBeenCalledWith(firestore, 'episodeTags');
-      expect(ops.where).toHaveBeenCalledWith('tagId', '==', 't1');
-      expect(batch.delete).toHaveBeenCalledTimes(junctionRefs.length + 1);
-      expect(batch.delete).toHaveBeenLastCalledWith({ __doc: 'tags/t1' });
-      expect(batch.commit).toHaveBeenCalledTimes(1);
+      expect(batch.update).toHaveBeenCalledTimes(1);
+      expect(batch.update).toHaveBeenCalledWith(
+        { __ref: 'ep1' },
+        { tags: [{ id: 't2', name: 'Cult', slug: 'cult' }] },
+      );
+      expect(batch.delete).toHaveBeenCalledWith({ __doc: 'tags/t1' });
     });
 
-    it('should still delete the tag when no junction docs exist', async () => {
+    it('should still delete the tag when no episode embeds it', async () => {
       ops.getDocs.mockResolvedValueOnce({ docs: [] });
-      const batch = { delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
-      ops.writeBatch.mockReturnValueOnce(batch);
+      const batch = {
+        update: vi.fn(),
+        delete: vi.fn(),
+        commit: vi.fn().mockResolvedValue(undefined),
+      };
+      ops.writeBatch.mockReturnValue(batch);
 
       await service.deleteTag('t1');
 
-      expect(batch.delete).toHaveBeenCalledTimes(1);
+      expect(batch.update).not.toHaveBeenCalled();
       expect(batch.delete).toHaveBeenCalledWith({ __doc: 'tags/t1' });
+    });
+  });
+
+  describe('setEpisodesForTag', () => {
+    it('should add the tag to newly-selected episodes and remove it from deselected ones', async () => {
+      const tag = { id: 't1', name: 'Retro', slug: 'retro' };
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          { id: 'ep1', ref: { __ref: 'ep1' }, data: () => ({ tags: [tag] }) },
+          { id: 'ep2', ref: { __ref: 'ep2' }, data: () => ({ tags: [] }) },
+          { id: 'ep3', ref: { __ref: 'ep3' }, data: () => ({ tags: [tag] }) }, // already correct
+          { id: 'ep4', ref: { __ref: 'ep4' }, data: () => ({}) }, // missing field
+        ],
+      });
+      const batch = { update: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      ops.writeBatch.mockReturnValue(batch);
+
+      await service.setEpisodesForTag(tag, ['ep2', 'ep3']);
+
+      expect(batch.update).toHaveBeenCalledTimes(2);
+      expect(batch.update).toHaveBeenCalledWith({ __ref: 'ep1' }, { tags: [] });
+      expect(batch.update).toHaveBeenCalledWith({ __ref: 'ep2' }, { tags: [tag] });
+    });
+
+    it('should do nothing when the tag has no id', async () => {
+      await service.setEpisodesForTag({ name: 'X', slug: 'x' }, ['ep1']);
+      expect(ops.getDocs).not.toHaveBeenCalled();
     });
   });
 });

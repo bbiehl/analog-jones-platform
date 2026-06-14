@@ -13,9 +13,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
-import { TagStore } from '@aj/core';
+import { TagService, TagStore } from '@aj/core';
 import { EpisodeStore } from '@aj/core';
-import { EpisodeTagService } from '@aj/core';
 
 @Component({
   selector: 'app-tag-bulk-edit',
@@ -34,7 +33,7 @@ import { EpisodeTagService } from '@aj/core';
 export class TagBulkEdit implements OnInit {
   protected readonly tagStore = inject(TagStore);
   protected readonly episodeStore = inject(EpisodeStore);
-  private readonly episodeTagService = inject(EpisodeTagService);
+  private readonly tagService = inject(TagService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -68,28 +67,23 @@ export class TagBulkEdit implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.tagId = this.route.snapshot.params['id'];
-    await Promise.all([
-      this.tagStore.loadTagById(this.tagId),
-      this.episodeStore.loadEpisodes(),
-      this.loadAssigned(),
-    ]);
+    await Promise.all([this.tagStore.loadTagById(this.tagId), this.episodeStore.loadEpisodes()]);
+    this.loadAssigned();
   }
 
-  private async loadAssigned(): Promise<void> {
+  // Current membership is derived from the episodes' embedded tags, which
+  // loadEpisodes() has already fetched — no separate junction read.
+  private loadAssigned(): void {
     this.loadingJunctions.set(true);
     this.junctionError.set(null);
-    try {
-      const ids = await this.episodeTagService.getEpisodeIdsByTagId(
-        this.route.snapshot.params['id'],
-      );
-      const set = new Set(ids);
-      this.initialAssigned.set(set);
-      this.selected.set(new Set(set));
-    } catch (e) {
-      this.junctionError.set((e as Error).message);
-    } finally {
-      this.loadingJunctions.set(false);
-    }
+    const ids = this.episodeStore
+      .episodes()
+      .filter((e) => e.id && e.tags.some((t) => t.id === this.tagId))
+      .map((e) => e.id!);
+    const set = new Set(ids);
+    this.initialAssigned.set(set);
+    this.selected.set(new Set(set));
+    this.loadingJunctions.set(false);
   }
 
   protected isChecked(episodeId: string | undefined): boolean {
@@ -121,10 +115,11 @@ export class TagBulkEdit implements OnInit {
 
   protected async onSave(): Promise<void> {
     if (!this.isDirty() || this.saving()) return;
-    if (!this.tagStore.selectedTag()) return;
+    const tag = this.tagStore.selectedTag();
+    if (!tag) return;
     this.saving.set(true);
     try {
-      await this.episodeTagService.setEpisodesForTag(this.tagId, [...this.selected()]);
+      await this.tagService.setEpisodesForTag(tag, [...this.selected()]);
       this.router.navigate(['/tags']);
     } finally {
       this.saving.set(false);

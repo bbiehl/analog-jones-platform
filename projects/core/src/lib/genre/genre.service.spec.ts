@@ -120,12 +120,45 @@ describe('GenreService', () => {
   });
 
   describe('updateGenre', () => {
-    it('should strip the id field before updating', async () => {
+    it('should strip id, then propagate the new name/slug into episodes that embed it', async () => {
+      ops.getDoc.mockResolvedValueOnce({
+        exists: () => true,
+        id: 'g1',
+        data: () => ({ name: 'Updated', slug: 'updated' }),
+      });
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          {
+            id: 'ep1',
+            ref: { __ref: 'ep1' },
+            data: () => ({
+              genres: [
+                { id: 'g1', name: 'Old', slug: 'old' },
+                { id: 'g2', name: 'Drama', slug: 'drama' },
+              ],
+            }),
+          },
+          { id: 'ep2', ref: { __ref: 'ep2' }, data: () => ({ genres: [] }) },
+        ],
+      });
+      const batch = { update: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      ops.writeBatch.mockReturnValue(batch);
+
       await service.updateGenre('g1', { id: 'g1', name: 'Updated', slug: 'updated' });
 
       expect(ops.updateDoc).toHaveBeenCalledWith(
         { __doc: 'genres/g1' },
         { name: 'Updated', slug: 'updated' },
+      );
+      expect(batch.update).toHaveBeenCalledTimes(1);
+      expect(batch.update).toHaveBeenCalledWith(
+        { __ref: 'ep1' },
+        {
+          genres: [
+            { id: 'g1', name: 'Updated', slug: 'updated' },
+            { id: 'g2', name: 'Drama', slug: 'drama' },
+          ],
+        },
       );
     });
 
@@ -136,42 +169,79 @@ describe('GenreService', () => {
   });
 
   describe('deleteGenre', () => {
-    it('should batch-delete every junction doc plus the genre doc, then commit', async () => {
-      const junctionRefs = [{ ref: { __ref: 'eg1' } }, { ref: { __ref: 'eg2' } }];
-      ops.getDocs.mockResolvedValueOnce({ docs: junctionRefs });
-
-      const batch = { delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
-      ops.writeBatch.mockReturnValueOnce(batch);
+    it('should remove the embedded genre from episodes then delete the genre doc', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          {
+            id: 'ep1',
+            ref: { __ref: 'ep1' },
+            data: () => ({
+              genres: [
+                { id: 'g1', name: 'Action', slug: 'action' },
+                { id: 'g2', name: 'Drama', slug: 'drama' },
+              ],
+            }),
+          },
+          { id: 'ep2', ref: { __ref: 'ep2' }, data: () => ({ genres: [] }) },
+        ],
+      });
+      const batch = {
+        update: vi.fn(),
+        delete: vi.fn(),
+        commit: vi.fn().mockResolvedValue(undefined),
+      };
+      ops.writeBatch.mockReturnValue(batch);
 
       await service.deleteGenre('g1');
 
-      expect(ops.collection).toHaveBeenCalledWith(firestore, 'episodeGenres');
-      expect(ops.where).toHaveBeenCalledWith('genreId', '==', 'g1');
-      expect(batch.delete).toHaveBeenCalledTimes(junctionRefs.length + 1);
-      expect(batch.delete).toHaveBeenLastCalledWith({ __doc: 'genres/g1' });
-      expect(batch.commit).toHaveBeenCalledTimes(1);
-    });
-
-    it('should still delete the genre when no junction docs exist', async () => {
-      ops.getDocs.mockResolvedValueOnce({ docs: [] });
-      const batch = { delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
-      ops.writeBatch.mockReturnValueOnce(batch);
-
-      await service.deleteGenre('g1');
-
-      expect(batch.delete).toHaveBeenCalledTimes(1);
+      expect(batch.update).toHaveBeenCalledTimes(1);
+      expect(batch.update).toHaveBeenCalledWith(
+        { __ref: 'ep1' },
+        { genres: [{ id: 'g2', name: 'Drama', slug: 'drama' }] },
+      );
       expect(batch.delete).toHaveBeenCalledWith({ __doc: 'genres/g1' });
     });
 
-    it('should propagate batch.commit errors', async () => {
+    it('should still delete the genre when no episode embeds it', async () => {
       ops.getDocs.mockResolvedValueOnce({ docs: [] });
       const batch = {
+        update: vi.fn(),
         delete: vi.fn(),
-        commit: vi.fn().mockRejectedValueOnce(new Error('aborted')),
+        commit: vi.fn().mockResolvedValue(undefined),
       };
-      ops.writeBatch.mockReturnValueOnce(batch);
+      ops.writeBatch.mockReturnValue(batch);
 
-      await expect(service.deleteGenre('g1')).rejects.toThrow('aborted');
+      await service.deleteGenre('g1');
+
+      expect(batch.update).not.toHaveBeenCalled();
+      expect(batch.delete).toHaveBeenCalledWith({ __doc: 'genres/g1' });
+    });
+  });
+
+  describe('setEpisodesForGenre', () => {
+    it('should add the genre to newly-selected episodes and remove it from deselected ones', async () => {
+      const genre = { id: 'g1', name: 'Action', slug: 'action' };
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          { id: 'ep1', ref: { __ref: 'ep1' }, data: () => ({ genres: [genre] }) },
+          { id: 'ep2', ref: { __ref: 'ep2' }, data: () => ({ genres: [] }) },
+          { id: 'ep3', ref: { __ref: 'ep3' }, data: () => ({ genres: [genre] }) }, // already correct
+          { id: 'ep4', ref: { __ref: 'ep4' }, data: () => ({}) }, // missing field
+        ],
+      });
+      const batch = { update: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      ops.writeBatch.mockReturnValue(batch);
+
+      await service.setEpisodesForGenre(genre, ['ep2', 'ep3']);
+
+      expect(batch.update).toHaveBeenCalledTimes(2);
+      expect(batch.update).toHaveBeenCalledWith({ __ref: 'ep1' }, { genres: [] });
+      expect(batch.update).toHaveBeenCalledWith({ __ref: 'ep2' }, { genres: [genre] });
+    });
+
+    it('should do nothing when the genre has no id', async () => {
+      await service.setEpisodesForGenre({ name: 'X', slug: 'x' }, ['ep1']);
+      expect(ops.getDocs).not.toHaveBeenCalled();
     });
   });
 });

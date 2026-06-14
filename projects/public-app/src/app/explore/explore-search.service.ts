@@ -1,8 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { EpisodeService } from '@aj/core';
 import { Episode } from '@aj/core';
-import { EpisodeGenreService } from '@aj/core';
-import { EpisodeTagService } from '@aj/core';
 import { GenreService } from '@aj/core';
 import { TagService } from '@aj/core';
 import { TransferCacheService } from '@aj/core';
@@ -13,8 +11,6 @@ export class ExploreSearchService {
   private episodeService = inject(EpisodeService);
   private genreService = inject(GenreService);
   private tagService = inject(TagService);
-  private episodeGenreService = inject(EpisodeGenreService);
-  private episodeTagService = inject(EpisodeTagService);
   private transferCache = inject(TransferCacheService);
 
   async getAutoCompleteOptions(): Promise<SearchAutoCompleteOption[]> {
@@ -47,14 +43,20 @@ export class ExploreSearchService {
       }
     } else if (option.type === 'genre') {
       if (option.id) {
-        results = await this.episodeGenreService.getEpisodesByGenreId(option.id);
+        results = await this.episodesWithTaxonomy('genres', option.id);
       }
     } else {
       if (option.id) {
-        results = await this.episodeTagService.getEpisodesByTagId(option.id);
+        results = await this.episodesWithTaxonomy('tags', option.id);
       }
     }
     const deduped = Array.from(new Map(results.map((e) => [e.id, e])).values());
     return deduped.sort((a, b) => b.episodeDate.toMillis() - a.episodeDate.toMillis());
+  }
+
+  /** Visible episodes whose embedded `genres`/`tags` array contains `id`. */
+  private async episodesWithTaxonomy(field: 'genres' | 'tags', id: string): Promise<Episode[]> {
+    const episodes = await this.episodeService.getVisibleEpisodes();
+    return episodes.filter((e) => e[field].some((item) => item.id === id));
   }
 }

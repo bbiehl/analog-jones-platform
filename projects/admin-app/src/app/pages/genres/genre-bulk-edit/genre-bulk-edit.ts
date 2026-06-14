@@ -13,9 +13,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
-import { GenreStore } from '@aj/core';
+import { GenreService, GenreStore } from '@aj/core';
 import { EpisodeStore } from '@aj/core';
-import { EpisodeGenreService } from '@aj/core';
 
 @Component({
   selector: 'app-genre-bulk-edit',
@@ -34,7 +33,7 @@ import { EpisodeGenreService } from '@aj/core';
 export class GenreBulkEdit implements OnInit {
   protected readonly genreStore = inject(GenreStore);
   protected readonly episodeStore = inject(EpisodeStore);
-  private readonly episodeGenreService = inject(EpisodeGenreService);
+  private readonly genreService = inject(GenreService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -71,25 +70,23 @@ export class GenreBulkEdit implements OnInit {
     await Promise.all([
       this.genreStore.loadGenreById(this.genreId),
       this.episodeStore.loadEpisodes(),
-      this.loadAssigned(),
     ]);
+    this.loadAssigned();
   }
 
-  private async loadAssigned(): Promise<void> {
+  // Current membership is derived from the episodes' embedded genres, which
+  // loadEpisodes() has already fetched — no separate junction read.
+  private loadAssigned(): void {
     this.loadingJunctions.set(true);
     this.junctionError.set(null);
-    try {
-      const ids = await this.episodeGenreService.getEpisodeIdsByGenreId(
-        this.route.snapshot.params['id'],
-      );
-      const set = new Set(ids);
-      this.initialAssigned.set(set);
-      this.selected.set(new Set(set));
-    } catch (e) {
-      this.junctionError.set((e as Error).message);
-    } finally {
-      this.loadingJunctions.set(false);
-    }
+    const ids = this.episodeStore
+      .episodes()
+      .filter((e) => e.id && e.genres.some((g) => g.id === this.genreId))
+      .map((e) => e.id!);
+    const set = new Set(ids);
+    this.initialAssigned.set(set);
+    this.selected.set(new Set(set));
+    this.loadingJunctions.set(false);
   }
 
   protected isChecked(episodeId: string | undefined): boolean {
@@ -121,10 +118,11 @@ export class GenreBulkEdit implements OnInit {
 
   protected async onSave(): Promise<void> {
     if (!this.isDirty() || this.saving()) return;
-    if (!this.genreStore.selectedGenre()) return;
+    const genre = this.genreStore.selectedGenre();
+    if (!genre) return;
     this.saving.set(true);
     try {
-      await this.episodeGenreService.setEpisodesForGenre(this.genreId, [...this.selected()]);
+      await this.genreService.setEpisodesForGenre(genre, [...this.selected()]);
       this.router.navigate(['/genres']);
     } finally {
       this.saving.set(false);

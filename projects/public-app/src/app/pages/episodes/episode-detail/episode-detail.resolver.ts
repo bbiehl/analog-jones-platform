@@ -2,17 +2,17 @@ import { inject, PLATFORM_ID, RESPONSE_INIT } from '@angular/core';
 import { isPlatformServer } from '@angular/common';
 import { ResolveFn } from '@angular/router';
 import {
+  Episode,
   EpisodeNotFoundError,
   EpisodeService,
   EpisodeStore,
-  EpisodeWithRelations,
   TransferCacheService,
 } from '@aj/core';
 import { ORIGIN } from '../../../seo/origin.token';
 import { SeoService } from '../../../seo/seo.service';
 import { buildEpisodeSeoInput } from './episode-detail.seo';
 
-export const episodeDetailResolver: ResolveFn<EpisodeWithRelations | null> = async (route) => {
+export const episodeDetailResolver: ResolveFn<Episode | null> = async (route) => {
   const isServer = isPlatformServer(inject(PLATFORM_ID));
   const responseInit = isServer ? inject(RESPONSE_INIT, { optional: true }) : null;
   const episodeStore = inject(EpisodeStore);
@@ -41,7 +41,7 @@ export const episodeDetailResolver: ResolveFn<EpisodeWithRelations | null> = asy
   const episodeService = inject(EpisodeService);
   const transferCache = inject(TransferCacheService);
 
-  let episode: EpisodeWithRelations;
+  let episode: Episode;
   try {
     episode = await transferCache.cached(
       `episode.byId.${id}`,

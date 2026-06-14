@@ -1,4 +1,4 @@
-import { EpisodeWithRelations } from '@aj/core';
+import { Episode } from '@aj/core';
 import { SITE_NAME } from './origin.token';
 import {
   breadcrumbList,
@@ -75,7 +75,7 @@ describe('breadcrumbList', () => {
 });
 
 describe('podcastEpisode', () => {
-  function makeEpisode(overrides: Partial<EpisodeWithRelations> = {}): EpisodeWithRelations {
+  function makeEpisode(overrides: Partial<Episode> = {}): Episode {
     return {
       id: 'abc123',
       title: 'A Great Episode',
@@ -88,7 +88,7 @@ describe('podcastEpisode', () => {
         toDate: () => new Date('2024-01-15T00:00:00Z'),
       },
       ...overrides,
-    } as unknown as EpisodeWithRelations;
+    } as unknown as Episode;
   }
 
   it('produces a PodcastEpisode schema with core fields', () => {

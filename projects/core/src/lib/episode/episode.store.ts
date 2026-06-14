@@ -1,13 +1,13 @@
 import { inject } from '@angular/core';
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
-import { Episode, EpisodeWithRelations } from './episode.model';
+import { Episode } from './episode.model';
 import { EpisodeService } from './episode.service';
 
 interface EpisodeState {
   episodes: Episode[];
   currentEpisode: Episode | null;
   recentEpisodes: Episode[];
-  selectedEpisode: EpisodeWithRelations | null;
+  selectedEpisode: Episode | null;
   totalVisible: number;
   loading: boolean;
   error: string | null;
@@ -126,7 +126,7 @@ export const EpisodeStore = signalStore(
       },
 
       async createEpisode(
-        episode: Omit<Episode, 'id'>,
+        episode: Omit<Episode, 'id' | 'categories' | 'genres' | 'tags'>,
         categoryIds: string[],
         genreIds: string[],
         tagIds: string[],
@@ -169,7 +169,7 @@ export const EpisodeStore = signalStore(
         }
       },
 
-      setSelectedEpisode(episode: EpisodeWithRelations) {
+      setSelectedEpisode(episode: Episode) {
         loadEpisodeByIdToken++;
         patchState(store, { selectedEpisode: episode, loading: false, error: null });
       },
