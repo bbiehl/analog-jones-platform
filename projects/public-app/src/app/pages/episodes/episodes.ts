@@ -1,13 +1,12 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
-import { DatePipe, UpperCasePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Episode, EpisodeStore } from '@aj/core';
+import { EpisodeGrid } from '../../episode/episode-grid/episode-grid';
 
 @Component({
   selector: 'app-episodes',
-  imports: [DatePipe, UpperCasePipe, RouterLink, ReactiveFormsModule],
+  imports: [ReactiveFormsModule, EpisodeGrid],
   templateUrl: './episodes.html',
   styleUrl: './episodes.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,9 +33,5 @@ export class Episodes implements OnInit {
 
   ngOnInit(): void {
     this.store.loadVisibleEpisodes();
-  }
-
-  protected toDate(episode: Episode): Date {
-    return episode.episodeDate.toDate();
   }
 }

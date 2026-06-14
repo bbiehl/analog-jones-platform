@@ -49,68 +49,6 @@
   }
 }
 
-.episode-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 18px;
-}
-
-.card {
-  display: flex;
-
-  a {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    width: 100%;
-    padding: 22px 20px;
-    border: 1px solid var(--es-line);
-    background: var(--es-bg-2);
-    color: inherit;
-    text-decoration: none;
-    transition:
-      border-color 0.18s,
-      transform 0.18s;
-
-    &:hover {
-      border-color: var(--es-accent);
-      transform: translateY(-2px);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--cyan, #67e8f9);
-      outline-offset: 3px;
-    }
-  }
-
-  .meta {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    color: var(--es-ink-dim);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-  }
-
-  .name {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 800;
-    font-size: 1.5rem;
-    line-height: 1.02;
-    text-transform: uppercase;
-    color: #fff;
-  }
-}
-
-.card--skeleton {
-  min-height: 110px;
-  border: 1px solid var(--es-line);
-  background: var(--es-bg-2);
-  opacity: 0.5;
-}
-
 .state-message {
   color: var(--es-ink-dim);
   font-family: 'JetBrains Mono', monospace;

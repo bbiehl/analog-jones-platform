@@ -59,11 +59,11 @@ describe('EpisodeGrid', () => {
     expect(cards.length).toBe(3);
   });
 
-  it('binds ariaLabel to the section', () => {
+  it('binds ariaLabel to the grid', () => {
     setInputs({ episodes: [makeEpisode()], ariaLabel: 'Custom grid' });
     fixture.detectChanges();
-    const section: HTMLElement = fixture.nativeElement.querySelector('section');
-    expect(section.getAttribute('aria-label')).toBe('Custom grid');
+    const grid: HTMLElement = fixture.nativeElement.querySelector('.episode-grid');
+    expect(grid.getAttribute('aria-label')).toBe('Custom grid');
   });
 
   it('omits the heading when none is provided', () => {
@@ -100,11 +100,11 @@ describe('EpisodeGrid', () => {
   });
 
   describe('loading', () => {
-    it('renders skeleton cards and marks the section aria-busy', () => {
+    it('renders skeleton cards and marks the grid aria-busy', () => {
       setInputs({ loading: true });
       fixture.detectChanges();
-      const section: HTMLElement = fixture.nativeElement.querySelector('section');
-      expect(section.getAttribute('aria-busy')).toBe('true');
+      const grid: HTMLElement = fixture.nativeElement.querySelector('.episode-grid');
+      expect(grid.getAttribute('aria-busy')).toBe('true');
       expect(fixture.nativeElement.querySelectorAll('.card--skeleton').length).toBeGreaterThan(0);
     });
 
@@ -117,8 +117,8 @@ describe('EpisodeGrid', () => {
     it('omits aria-busy when not loading', () => {
       setInputs({ episodes: [makeEpisode()] });
       fixture.detectChanges();
-      const section: HTMLElement = fixture.nativeElement.querySelector('section');
-      expect(section.getAttribute('aria-busy')).toBeNull();
+      const grid: HTMLElement = fixture.nativeElement.querySelector('.episode-grid');
+      expect(grid.getAttribute('aria-busy')).toBeNull();
     });
   });
 

@@ -7,18 +7,6 @@
   display: block;
 }
 
-.page {
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 0 40px 64px;
-}
-
-@media (max-width: 720px) {
-  .page {
-    padding: 0 20px 48px;
-  }
-}
-
 .grid-heading {
   margin: 0 0 28px;
   font-family: 'Barlow Condensed', sans-serif;

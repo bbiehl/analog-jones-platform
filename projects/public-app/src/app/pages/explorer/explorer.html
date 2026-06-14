@@ -45,14 +45,14 @@
   </mat-autocomplete>
 </section>
 
-<section class="mt-6">
+<section class="mt-6 pb-16 page-frame">
   @if (resultsLoading()) {
     <app-episode-grid [loading]="true" ariaLabel="Loading episodes" />
   } @else if (resultsError(); as err) {
-    <p class="page-frame" role="alert">{{ err }}</p>
+    <p role="alert">{{ err }}</p>
   } @else if (selectedSearchOption(); as sel) {
     @if (results().length === 0) {
-      <p class="page-frame">No episodes found for "{{ sel.value }}".</p>
+      <p>No episodes found for "{{ sel.value }}".</p>
     } @else {
       <app-episode-grid
         [episodes]="results()"
