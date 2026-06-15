@@ -28,6 +28,7 @@ interface OptionGroup {
 
 const GROUP_ORDER: { type: SearchAutoCompleteOption['type']; label: string }[] = [
   { type: 'episode', label: 'Episodes' },
+  { type: 'category', label: 'Categories' },
   { type: 'genre', label: 'Genres' },
   { type: 'tag', label: 'Tags' },
 ];

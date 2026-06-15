@@ -311,6 +311,7 @@ describe('Explorer', () => {
     beforeEach(async () => {
       mockStore.autoCompleteOptions.set([
         { type: 'episode', value: 'Episode One' },
+        { type: 'category', value: 'Nerd News', id: 'c1' },
         { type: 'genre', value: 'Jazz' },
         { type: 'tag', value: 'synth' },
       ]);
@@ -318,12 +319,12 @@ describe('Explorer', () => {
       await fixture.whenStable();
     });
 
-    it('should render genre and tag chips but not episode chips when idle', () => {
+    it('should render category, genre, and tag chips but not episode chips when idle', () => {
       const host = fixture.nativeElement as HTMLElement;
       const chipLabels = Array.from(host.querySelectorAll('.chip')).map((c) =>
         c.textContent?.trim(),
       );
-      expect(chipLabels).toEqual(expect.arrayContaining(['Jazz', 'synth']));
+      expect(chipLabels).toEqual(expect.arrayContaining(['Nerd News', 'Jazz', 'synth']));
       expect(chipLabels).not.toContain('Episode One');
     });
 
