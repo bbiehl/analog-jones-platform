@@ -23,6 +23,16 @@
   }
 }
 
+.page-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: clamp(34px, 4.4vw, 64px);
+  line-height: 0.95;
+  letter-spacing: 0.005em;
+  color: #fff;
+}
+
 .state-message {
   color: var(--es-ink-dim);
   font-family: 'JetBrains Mono', monospace;
