@@ -79,6 +79,7 @@ section.block {
   grid-auto-columns: minmax(220px, 240px);
   gap: 18px;
   overflow-x: auto;
+  padding-top: 4px;
   padding-bottom: 14px;
   scroll-snap-type: x mandatory;
 
