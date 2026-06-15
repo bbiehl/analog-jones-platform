@@ -4,13 +4,7 @@
 
   <mat-form-field class="w-full max-w-xl" appearance="outline">
     <mat-label>Search genres and tags</mat-label>
-    <input
-      matInput
-      type="text"
-      [formControl]="searchControl"
-      [matAutocomplete]="auto"
-      aria-label="Search genres and tags"
-    />
+    <input matInput type="text" [formControl]="searchControl" [matAutocomplete]="auto" />
     @if (optionsLoading() || resultsLoading()) {
       <mat-spinner matSuffix diameter="20" />
     } @else if (searchControl.value) {
