@@ -94,9 +94,9 @@ TestBed.configureTestingModule({
 
 ### Token quick-reference
 
-| Token          | Type        | When to provide                                                                 |
-| -------------- | ----------- | ------------------------------------------------------------------------------- |
-| `FIRESTORE`    | `Firestore` | All services (always required)                                                  |
+| Token          | Type        | When to provide                                                                  |
+| -------------- | ----------- | -------------------------------------------------------------------------------- |
+| `FIRESTORE`    | `Firestore` | All services (always required)                                                   |
 | `AUTH`         | `Auth`      | Services using Firebase Auth                                                     |
 | Other services | class ref   | Services that `inject()` another service (e.g., `EpisodeService` → taxonomy svc) |
 
