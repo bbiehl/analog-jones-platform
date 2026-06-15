@@ -55,12 +55,17 @@ export class ExploreSearchService {
     return deduped.sort((a, b) => b.episodeDate.toMillis() - a.episodeDate.toMillis());
   }
 
-  /** Visible episodes whose embedded `categories`/`genres`/`tags` array contains `id`. */
+  /**
+   * Visible episodes whose embedded `categories`/`genres`/`tags` array contains `id`.
+   * Uses the transfer-cached `getVisibleEpisodeList` (which drops the unbounded
+   * `intelligence` markdown) so a public search click costs one shared read of
+   * the lightweight list, not a full-document fetch of the whole archive.
+   */
   private async episodesWithTaxonomy(
     field: 'categories' | 'genres' | 'tags',
     id: string,
   ): Promise<Episode[]> {
-    const episodes = await this.episodeService.getVisibleEpisodes();
+    const episodes = await this.episodeService.getVisibleEpisodeList();
     return episodes.filter((e) => e[field].some((item) => item.id === id));
   }
 }
