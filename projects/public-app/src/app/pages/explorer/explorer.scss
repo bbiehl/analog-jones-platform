@@ -5,6 +5,29 @@
   padding-right: 40px;
 }
 
+// Theme the Material search field to match the hand-styled /episodes input:
+// square corners, themed outline, mono text. MDC component tokens inherit into
+// Material's internals from :host, so no ::ng-deep needed for shape/color.
+:host {
+  --mdc-outlined-text-field-container-shape: 0;
+  --mdc-outlined-text-field-outline-color: #2a2a3d;
+  --mdc-outlined-text-field-hover-outline-color: #d5baff;
+  --mdc-outlined-text-field-focus-outline-color: #67e8f9;
+  --mdc-outlined-text-field-label-text-color: #a7a3bf;
+  --mdc-outlined-text-field-input-text-color: #ffffff;
+  --mdc-outlined-text-field-caret-color: #67e8f9;
+}
+
+// The input value font isn't exposed as an MDC token, so scope a tight pierce.
+:host ::ng-deep .mat-mdc-text-field-wrapper {
+  background: #11111a;
+}
+
+:host ::ng-deep input.mat-mdc-input-element {
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.04em;
+}
+
 @media (max-width: 720px) {
   .page-frame {
     padding-left: 20px;
