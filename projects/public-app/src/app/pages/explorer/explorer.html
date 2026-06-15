@@ -60,5 +60,23 @@
         [ariaLabel]="'Episodes matching ' + sel.value"
       />
     }
+  } @else if (showDiscover()) {
+    <div class="discover">
+      <p class="discover-hint">Pick a genre or tag to start, or search above.</p>
+      @for (group of discoverGroups(); track group.label) {
+        <div class="discover-group">
+          <h2 class="discover-label">{{ group.label }}</h2>
+          <ul class="chips">
+            @for (option of group.options; track option.type + ':' + option.value) {
+              <li>
+                <button type="button" class="chip" (click)="selectOption(option)">
+                  {{ option.value }}
+                </button>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
   }
 </section>

@@ -79,6 +79,22 @@ export class Explorer implements OnInit {
     this.selectedSearchOption() ? this.error() : null,
   );
 
+  // Discovery chips for the idle empty state: browseable genres and tags
+  // (episodes are excluded — too many to chip out).
+  protected readonly discoverGroups = computed<OptionGroup[]>(() => {
+    const all = this.autoCompleteOptions();
+    return GROUP_ORDER.filter(({ type }) => type !== 'episode')
+      .map(({ type, label }) => ({
+        label,
+        options: all.filter((o) => o.type === type),
+      }))
+      .filter((g) => g.options.length > 0);
+  });
+
+  protected readonly showDiscover = computed(
+    () => this.optionsLoaded() && !this.selectedSearchOption() && !this.resultsLoading(),
+  );
+
   protected readonly groupedOptions = computed<OptionGroup[]>(() => {
     const raw = this.searchText();
     const term = (typeof raw === 'string' ? raw : (raw?.value ?? '')).trim().toLowerCase();
@@ -119,6 +135,11 @@ export class Explorer implements OnInit {
 
   protected onOptionSelected(event: MatAutocompleteSelectedEvent): void {
     const option = event.option.value as SearchAutoCompleteOption;
+    this.store.selectSearchOption(option);
+  }
+
+  protected selectOption(option: SearchAutoCompleteOption): void {
+    this.searchControl.setValue(option);
     this.store.selectSearchOption(option);
   }
 

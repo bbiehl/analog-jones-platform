@@ -306,4 +306,44 @@ describe('Explorer', () => {
       expect(host.querySelector('app-episode-grid')).toBeNull();
     });
   });
+
+  describe('discovery empty state', () => {
+    beforeEach(async () => {
+      mockStore.autoCompleteOptions.set([
+        { type: 'episode', value: 'Episode One' },
+        { type: 'genre', value: 'Jazz' },
+        { type: 'tag', value: 'synth' },
+      ]);
+      fixture.detectChanges();
+      await fixture.whenStable();
+    });
+
+    it('should render genre and tag chips but not episode chips when idle', () => {
+      const host = fixture.nativeElement as HTMLElement;
+      const chipLabels = Array.from(host.querySelectorAll('.chip')).map((c) =>
+        c.textContent?.trim(),
+      );
+      expect(chipLabels).toEqual(expect.arrayContaining(['Jazz', 'synth']));
+      expect(chipLabels).not.toContain('Episode One');
+    });
+
+    it('should call store.selectSearchOption when a chip is clicked', () => {
+      const host = fixture.nativeElement as HTMLElement;
+      const chip = Array.from(host.querySelectorAll<HTMLButtonElement>('.chip')).find(
+        (c) => c.textContent?.trim() === 'Jazz',
+      );
+      chip?.click();
+
+      expect(mockStore.selectSearchOption).toHaveBeenCalledWith({ type: 'genre', value: 'Jazz' });
+    });
+
+    it('should hide the discovery chips once a search option is selected', async () => {
+      mockStore.selectedSearchOption.set({ type: 'genre', value: 'Jazz' });
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const host = fixture.nativeElement as HTMLElement;
+      expect(host.querySelector('.chip')).toBeNull();
+    });
+  });
 });
