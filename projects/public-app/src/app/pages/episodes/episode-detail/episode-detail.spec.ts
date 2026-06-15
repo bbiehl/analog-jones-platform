@@ -5,11 +5,11 @@ import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/route
 import { of } from 'rxjs';
 import { Timestamp } from 'firebase/firestore';
 import { EpisodeStore } from '@aj/core';
-import type { EpisodeWithRelations } from '@aj/core';
+import type { Episode } from '@aj/core';
 import { RelatedEpisodeStore } from '../../../episode/episode-detail/related-episode.store';
 import { EpisodeDetail } from './episode-detail';
 
-function makeEpisode(overrides: Partial<EpisodeWithRelations> = {}): EpisodeWithRelations {
+function makeEpisode(overrides: Partial<Episode> = {}): Episode {
   return {
     id: 'ep1',
     title: 'Test Episode',
@@ -28,14 +28,14 @@ function makeEpisode(overrides: Partial<EpisodeWithRelations> = {}): EpisodeWith
 describe('EpisodeDetail', () => {
   let fixture: ComponentFixture<EpisodeDetail>;
 
-  let selectedEpisode: ReturnType<typeof signal<EpisodeWithRelations | null>>;
+  let selectedEpisode: ReturnType<typeof signal<Episode | null>>;
   let loading: ReturnType<typeof signal<boolean>>;
   let error: ReturnType<typeof signal<string | null>>;
-  let relatedEpisodes: ReturnType<typeof signal<EpisodeWithRelations[]>>;
+  let relatedEpisodes: ReturnType<typeof signal<Episode[]>>;
   let relatedLoading: ReturnType<typeof signal<boolean>>;
 
   let mockEpisodeStore: {
-    selectedEpisode: () => EpisodeWithRelations | null;
+    selectedEpisode: () => Episode | null;
     loading: () => boolean;
     error: () => string | null;
     loadEpisodeById: ReturnType<typeof vi.fn>;
@@ -43,7 +43,7 @@ describe('EpisodeDetail', () => {
   };
 
   let mockRelatedEpisodeStore: {
-    relatedEpisodes: () => EpisodeWithRelations[];
+    relatedEpisodes: () => Episode[];
     loading: () => boolean;
     error: () => string | null;
     loadRelatedEpisodes: ReturnType<typeof vi.fn>;
@@ -71,10 +71,10 @@ describe('EpisodeDetail', () => {
   }
 
   beforeEach(() => {
-    selectedEpisode = signal<EpisodeWithRelations | null>(null);
+    selectedEpisode = signal<Episode | null>(null);
     loading = signal<boolean>(false);
     error = signal<string | null>(null);
-    relatedEpisodes = signal<EpisodeWithRelations[]>([]);
+    relatedEpisodes = signal<Episode[]>([]);
     relatedLoading = signal<boolean>(false);
 
     mockEpisodeStore = {
@@ -235,7 +235,7 @@ describe('EpisodeDetail', () => {
 
   describe('not-found rendering', () => {
     async function createWithResolved(
-      resolved: EpisodeWithRelations | null,
+      resolved: Episode | null,
       routeId: string | null = 'ep123456ABC',
     ) {
       const paramMap$ = of(convertToParamMap(routeId ? { id: routeId } : {}));

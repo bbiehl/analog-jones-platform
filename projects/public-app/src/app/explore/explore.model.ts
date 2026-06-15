@@ -1,5 +1,5 @@
 export interface SearchAutoCompleteOption {
-  type: 'episode' | 'tag' | 'genre';
+  type: 'tag' | 'genre' | 'category';
   value: string;
   id?: string;
 }

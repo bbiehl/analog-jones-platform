@@ -1,6 +1,6 @@
 # @aj/core
 
-Shared Angular library for the analog-jones platform. Exposes domain models, services, stores, junction services, and Firebase injection tokens to both `admin-app` and `public-app` via the `@aj/core` path alias.
+Shared Angular library for the analog-jones platform. Exposes domain models, services, stores, and Firebase injection tokens to both `admin-app` and `public-app` via the `@aj/core` path alias.
 
 ## Layout
 
@@ -8,7 +8,6 @@ Shared Angular library for the analog-jones platform. Exposes domain models, ser
 projects/core/src/
   lib/
     category/  episode/  genre/  tag/  user/   # domain folders
-    junction/                                  # episode-<x> many-to-many services
     shared/                                    # firebase.token, transfer-state.helpers
     styles/                                    # theme.scss / theme-public.scss
   public-api.ts
@@ -40,61 +39,66 @@ Services use the Firebase modular SDK via injection tokens. Tests mock those tok
 1. **Injection** — service creates successfully with mocked providers.
 2. **Data mapping** — snapshot doc → model object transformations are correct.
 3. **Error paths** — not-found throws, empty snapshots handled, etc.
-4. **Side effects on injected services** — verify calls to other injected services (e.g., junction service cleanup on delete).
+4. **Side effects on injected services** — verify calls to other injected services (e.g., `EpisodeService` resolving taxonomy via `CategoryService`/`GenreService`/`TagService`, or cascade rewrites of embedded taxonomy across episodes on category/genre/tag delete/update).
 
 ### Domain service (primary pattern)
 
 ```typescript
 /// <reference types="vitest/globals" />
 import { TestBed } from '@angular/core/testing';
-import { FIRESTORE } from '../shared/firebase.token';
-import { EpisodeCategoryService } from '../junction/episode-category.service';
-import { CategoryService } from './category.service';
+import { FIRESTORE, FIRESTORE_OPS } from '../shared/firebase.token';
+import { CategoryService } from '../category/category.service';
+import { EpisodeService } from './episode.service';
 import type { Firestore } from 'firebase/firestore';
 
-describe('CategoryService', () => {
-  let service: CategoryService;
-  let mockEpisodeCategoryService: any;
+describe('EpisodeService', () => {
+  let service: EpisodeService;
+  let mockCategoryService: any;
 
   beforeEach(() => {
-    mockEpisodeCategoryService = {
-      getEpisodeIdsByCategoryId: vi.fn(),
-      deleteEpisodeCategoriesByCategoryId: vi.fn(),
-    };
+    // EpisodeService resolves the selected taxonomy IDs into the full objects
+    // it embeds on the episode doc, via CategoryService/GenreService/TagService.
+    mockCategoryService = { getAllCategories: vi.fn().mockResolvedValue([]) };
 
     TestBed.configureTestingModule({
       providers: [
-        CategoryService,
+        EpisodeService,
         { provide: FIRESTORE, useValue: {} as Firestore },
-        { provide: EpisodeCategoryService, useValue: mockEpisodeCategoryService },
+        { provide: FIRESTORE_OPS, useValue: /* fake ops */ {} },
+        { provide: CategoryService, useValue: mockCategoryService },
+        // ...GenreService, TagService likewise
       ],
     });
 
-    service = TestBed.inject(CategoryService);
+    service = TestBed.inject(EpisodeService);
   });
 
   // 1. Verify injection
-  // 2. Test data mapping logic (snapshot → model)
+  // 2. Test data mapping logic (snapshot → model, taxonomy arrays default to [])
   // 3. Test error paths (not-found throws, etc.)
   // 4. Test side effects on injected services
 });
 ```
 
-### Junction service (Firestore-only)
+### Firestore-only service (no other injected services)
 
 ```typescript
 TestBed.configureTestingModule({
-  providers: [EpisodeTagService, { provide: FIRESTORE, useValue: {} as Firestore }],
+  providers: [
+    TagService,
+    { provide: FIRESTORE, useValue: {} as Firestore },
+    { provide: FIRESTORE_OPS, useValue: /* fake ops */ {} },
+  ],
 });
 ```
 
 ### Token quick-reference
 
-| Token          | Type        | When to provide                                                    |
-| -------------- | ----------- | ------------------------------------------------------------------ |
-| `FIRESTORE`    | `Firestore` | All services (always required)                                     |
-| `AUTH`         | `Auth`      | Services using Firebase Auth                                       |
-| Other services | class ref   | Services that `inject()` another service (e.g., junction services) |
+| Token          | Type        | When to provide                                                                  |
+| -------------- | ----------- | -------------------------------------------------------------------------------- |
+| `FIRESTORE`    | `Firestore` | All services (always required)                                                   |
+| `AUTH`         | `Auth`      | Services using Firebase Auth                                                     |
+| Other services | class ref   | Services that `inject()` another service (e.g., `EpisodeService` → taxonomy svc) |
 
 ## Unit Test Pattern (lib stores)
 

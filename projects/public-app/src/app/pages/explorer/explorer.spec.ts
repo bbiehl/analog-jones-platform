@@ -50,6 +50,9 @@ function makeEpisode(id: string, title: string): Episode {
     isVisible: true,
     links: {},
     title,
+    categories: [],
+    genres: [],
+    tags: [],
   };
 }
 
@@ -89,9 +92,7 @@ describe('Explorer', () => {
   it('should render the heading and description', () => {
     const host = fixture.nativeElement as HTMLElement;
     expect(host.querySelector('h1')?.textContent).toContain('Explorer');
-    expect(host.querySelector('p')?.textContent).toContain(
-      'Search for episodes, genres, and tags.',
-    );
+    expect(host.querySelector('p')?.textContent).toContain('Search genres and tags.');
   });
 
   describe('search input', () => {
@@ -187,8 +188,7 @@ describe('Explorer', () => {
   describe('autocomplete panel', () => {
     beforeEach(async () => {
       mockStore.autoCompleteOptions.set([
-        { type: 'episode', value: 'Episode One' },
-        { type: 'episode', value: 'Episode Two' },
+        { type: 'category', value: 'Nerd News', id: 'c1' },
         { type: 'genre', value: 'Jazz' },
         { type: 'tag', value: 'synth' },
       ]);
@@ -203,9 +203,7 @@ describe('Explorer', () => {
       expect(await autocomplete.isOpen()).toBe(true);
       const options = await autocomplete.getOptions();
       const optionTexts = await Promise.all(options.map((o) => o.getText()));
-      expect(optionTexts).toEqual(
-        expect.arrayContaining(['Episode One', 'Episode Two', 'Jazz', 'synth']),
-      );
+      expect(optionTexts).toEqual(expect.arrayContaining(['Nerd News', 'Jazz', 'synth']));
 
       const host = fixture.nativeElement as HTMLElement;
       const groupLabels = Array.from(
@@ -218,7 +216,8 @@ describe('Explorer', () => {
         document.querySelectorAll('.cdk-overlay-container mat-optgroup'),
       ).map((el) => (el as HTMLElement).getAttribute('label'));
       const visible = new Set([...groupLabels, ...overlayGroupLabels]);
-      expect(visible.has('Episodes')).toBe(true);
+      expect(visible.has('Episodes')).toBe(false);
+      expect(visible.has('Categories')).toBe(true);
       expect(visible.has('Genres')).toBe(true);
       expect(visible.has('Tags')).toBe(true);
       // Reference host to quiet unused-var lint.
@@ -256,7 +255,10 @@ describe('Explorer', () => {
       await fixture.whenStable();
 
       const host = fixture.nativeElement as HTMLElement;
-      expect(host.querySelector('app-episode-scroller-skeleton')).toBeTruthy();
+      const grid = host.querySelector('app-episode-grid');
+      expect(grid).toBeTruthy();
+      expect(grid?.querySelector('[aria-busy="true"]')).toBeTruthy();
+      expect(grid?.querySelectorAll('.card--skeleton').length).toBeGreaterThan(0);
     });
 
     it('should render a results error message', async () => {
@@ -280,16 +282,16 @@ describe('Explorer', () => {
       expect(host.textContent).toContain('No episodes found for "Jazz".');
     });
 
-    it('should render the episode scroller when results are present', async () => {
+    it('should render the episode grid when results are present', async () => {
       mockStore.selectedSearchOption.set({ type: 'genre', value: 'Jazz' });
       mockStore.results.set([makeEpisode('e1', 'First'), makeEpisode('e2', 'Second')]);
       fixture.detectChanges();
       await fixture.whenStable();
 
       const host = fixture.nativeElement as HTMLElement;
-      const scroller = host.querySelector('app-episode-scroller');
-      expect(scroller).toBeTruthy();
-      expect(scroller?.getAttribute('aria-label')).toBeNull();
+      const grid = host.querySelector('app-episode-grid');
+      expect(grid).toBeTruthy();
+      expect(grid?.querySelector('.episode-grid[role="list"]')).toBeTruthy();
       expect(host.querySelector('h2')?.textContent).toContain('Jazz');
       expect(host.textContent).toContain('First');
       expect(host.textContent).toContain('Second');
@@ -297,8 +299,46 @@ describe('Explorer', () => {
 
     it('should not render the results section when no search option is selected', () => {
       const host = fixture.nativeElement as HTMLElement;
-      expect(host.querySelector('app-episode-scroller')).toBeNull();
-      expect(host.querySelector('app-episode-scroller-skeleton')).toBeNull();
+      expect(host.querySelector('app-episode-grid')).toBeNull();
+    });
+  });
+
+  describe('discovery empty state', () => {
+    beforeEach(async () => {
+      mockStore.autoCompleteOptions.set([
+        { type: 'category', value: 'Nerd News', id: 'c1' },
+        { type: 'genre', value: 'Jazz' },
+        { type: 'tag', value: 'synth' },
+      ]);
+      fixture.detectChanges();
+      await fixture.whenStable();
+    });
+
+    it('should render category, genre, and tag chips when idle', () => {
+      const host = fixture.nativeElement as HTMLElement;
+      const chipLabels = Array.from(host.querySelectorAll('.chip')).map((c) =>
+        c.textContent?.trim(),
+      );
+      expect(chipLabels).toEqual(expect.arrayContaining(['Nerd News', 'Jazz', 'synth']));
+    });
+
+    it('should call store.selectSearchOption when a chip is clicked', () => {
+      const host = fixture.nativeElement as HTMLElement;
+      const chip = Array.from(host.querySelectorAll<HTMLButtonElement>('.chip')).find(
+        (c) => c.textContent?.trim() === 'Jazz',
+      );
+      chip?.click();
+
+      expect(mockStore.selectSearchOption).toHaveBeenCalledWith({ type: 'genre', value: 'Jazz' });
+    });
+
+    it('should hide the discovery chips once a search option is selected', async () => {
+      mockStore.selectedSearchOption.set({ type: 'genre', value: 'Jazz' });
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const host = fixture.nativeElement as HTMLElement;
+      expect(host.querySelector('.chip')).toBeNull();
     });
   });
 });

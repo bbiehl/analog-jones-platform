@@ -1,0 +1,23 @@
+@if (heading(); as h) {
+  <h2 class="grid-heading">{{ h }}</h2>
+}
+@if (loading()) {
+  <div class="episode-grid" aria-busy="true" [attr.aria-label]="ariaLabel()">
+    @for (slot of skeletonSlots; track slot) {
+      <div class="card card--skeleton" aria-hidden="true"></div>
+    }
+  </div>
+} @else {
+  <div class="episode-grid" role="list" [attr.aria-label]="ariaLabel()">
+    @for (ep of episodes(); track ep.id) {
+      <article class="card" role="listitem">
+        <a [routerLink]="[routerPrefix(), ep.id]" [attr.aria-label]="ep.title">
+          <div class="meta">
+            <span>{{ toDate(ep) | date: 'MMM dd · yyyy' | uppercase }}</span>
+          </div>
+          <div class="name">{{ ep.title }}</div>
+        </a>
+      </article>
+    }
+  </div>
+}

@@ -27,11 +27,6 @@ export * from './lib/user/user.model';
 export * from './lib/user/user.service';
 export * from './lib/user/user.store';
 
-// Junction (many-to-many services)
-export * from './lib/junction/episode-category.service';
-export * from './lib/junction/episode-genre.service';
-export * from './lib/junction/episode-tag.service';
-
 // Shared infra
 export * from './lib/shared/firebase.token';
 export * from './lib/shared/transfer-state.helpers';

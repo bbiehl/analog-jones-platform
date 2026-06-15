@@ -1,10 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { Timestamp } from 'firebase/firestore';
+import { CategoryService } from '@aj/core';
 import { EpisodeService } from '@aj/core';
 import { GenreService } from '@aj/core';
 import { TagService } from '@aj/core';
-import { EpisodeGenreService } from '@aj/core';
-import { EpisodeTagService } from '@aj/core';
+import { Category } from '@aj/core';
 import { Episode } from '@aj/core';
 import { Genre } from '@aj/core';
 import { Tag } from '@aj/core';
@@ -14,17 +14,30 @@ import { ExploreSearchService } from './explore-search.service';
 describe('ExploreSearchService', () => {
   let service: ExploreSearchService;
 
-  const makeEpisode = (id: string, title: string): Episode => ({
+  const makeEpisode = (
+    id: string,
+    title: string,
+    opts: { categories?: Category[]; genres?: Genre[]; tags?: Tag[]; ms?: number } = {},
+  ): Episode => ({
     id,
     createdAt: Timestamp.fromMillis(0),
-    episodeDate: Timestamp.fromMillis(0),
+    episodeDate: Timestamp.fromMillis(opts.ms ?? 0),
     intelligence: null,
     isVisible: true,
     links: {},
     title,
+    categories: opts.categories ?? [],
+    genres: opts.genres ?? [],
+    tags: opts.tags ?? [],
   });
 
   const episodes: Episode[] = [makeEpisode('e1', 'Hello World'), makeEpisode('e2', 'Second')];
+  // Two allowlisted categories plus one ("Misc") that must be filtered out.
+  const categories: Category[] = [
+    { id: 'c1', name: 'Nerd News', slug: 'nerd-news' },
+    { id: 'c2', name: 'Interviews', slug: 'interviews' },
+    { id: 'c3', name: 'Misc', slug: 'misc' },
+  ];
   const genres: Genre[] = [
     { id: 'g1', name: 'Rock', slug: 'rock' },
     { id: 'g2', name: 'Jazz', slug: 'jazz' },
@@ -35,23 +48,19 @@ describe('ExploreSearchService', () => {
   ];
 
   let mockEpisodeService: {
-    getVisibleEpisodes: ReturnType<typeof vi.fn>;
-    getEpisodeById: ReturnType<typeof vi.fn>;
+    getVisibleEpisodeList: ReturnType<typeof vi.fn>;
   };
+  let mockCategoryService: { getAllCategories: ReturnType<typeof vi.fn> };
   let mockGenreService: { getAllGenres: ReturnType<typeof vi.fn> };
   let mockTagService: { getAllTags: ReturnType<typeof vi.fn> };
-  let mockEpisodeGenreService: { getEpisodesByGenreId: ReturnType<typeof vi.fn> };
-  let mockEpisodeTagService: { getEpisodesByTagId: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     mockEpisodeService = {
-      getVisibleEpisodes: vi.fn().mockResolvedValue(episodes),
-      getEpisodeById: vi.fn(),
+      getVisibleEpisodeList: vi.fn().mockResolvedValue(episodes),
     };
+    mockCategoryService = { getAllCategories: vi.fn().mockResolvedValue(categories) };
     mockGenreService = { getAllGenres: vi.fn().mockResolvedValue(genres) };
     mockTagService = { getAllTags: vi.fn().mockResolvedValue(tags) };
-    mockEpisodeGenreService = { getEpisodesByGenreId: vi.fn().mockResolvedValue([]) };
-    mockEpisodeTagService = { getEpisodesByTagId: vi.fn().mockResolvedValue([]) };
 
     const passThroughCache: Pick<TransferCacheService, 'cached'> = {
       cached: <T>(_key: string, fetcher: () => Promise<T>) => fetcher(),
@@ -61,10 +70,9 @@ describe('ExploreSearchService', () => {
       providers: [
         ExploreSearchService,
         { provide: EpisodeService, useValue: mockEpisodeService },
+        { provide: CategoryService, useValue: mockCategoryService },
         { provide: GenreService, useValue: mockGenreService },
         { provide: TagService, useValue: mockTagService },
-        { provide: EpisodeGenreService, useValue: mockEpisodeGenreService },
-        { provide: EpisodeTagService, useValue: mockEpisodeTagService },
         { provide: TransferCacheService, useValue: passThroughCache },
       ],
     });
@@ -76,12 +84,12 @@ describe('ExploreSearchService', () => {
   });
 
   describe('getAutoCompleteOptions', () => {
-    it('should combine episodes, genres, and tags into typed options', async () => {
+    it('should combine allowed categories, genres, and tags into typed options', async () => {
       const options = await service.getAutoCompleteOptions();
 
       expect(options).toEqual([
-        { type: 'episode', value: 'Hello World', id: 'e1' },
-        { type: 'episode', value: 'Second', id: 'e2' },
+        { type: 'category', value: 'Nerd News', id: 'c1' },
+        { type: 'category', value: 'Interviews', id: 'c2' },
         { type: 'genre', value: 'Rock', id: 'g1' },
         { type: 'genre', value: 'Jazz', id: 'g2' },
         { type: 'tag', value: 'Live', id: 't1' },
@@ -89,16 +97,25 @@ describe('ExploreSearchService', () => {
       ]);
     });
 
-    it('should call all three sources in parallel', async () => {
+    it('should expose only allowlisted categories and exclude others', async () => {
+      const options = await service.getAutoCompleteOptions();
+
+      const categoryOptions = options.filter((o) => o.type === 'category');
+      expect(categoryOptions.map((o) => o.value)).toEqual(['Nerd News', 'Interviews']);
+      expect(categoryOptions.some((o) => o.value === 'Misc')).toBe(false);
+    });
+
+    it('should call the three option sources in parallel without fetching episodes', async () => {
       await service.getAutoCompleteOptions();
 
-      expect(mockEpisodeService.getVisibleEpisodes).toHaveBeenCalledTimes(1);
+      expect(mockEpisodeService.getVisibleEpisodeList).not.toHaveBeenCalled();
+      expect(mockCategoryService.getAllCategories).toHaveBeenCalledTimes(1);
       expect(mockGenreService.getAllGenres).toHaveBeenCalledTimes(1);
       expect(mockTagService.getAllTags).toHaveBeenCalledTimes(1);
     });
 
     it('should return empty array when all sources are empty', async () => {
-      mockEpisodeService.getVisibleEpisodes.mockResolvedValueOnce([]);
+      mockCategoryService.getAllCategories.mockResolvedValueOnce([]);
       mockGenreService.getAllGenres.mockResolvedValueOnce([]);
       mockTagService.getAllTags.mockResolvedValueOnce([]);
 
@@ -109,95 +126,79 @@ describe('ExploreSearchService', () => {
   });
 
   describe('searchEpisodes', () => {
-    it('should look up episode by id when type is episode', async () => {
-      mockEpisodeService.getEpisodeById.mockResolvedValueOnce(episodes[0]);
+    it('should filter visible episodes by embedded category id', async () => {
+      const match = makeEpisode('e1', 'Hello World', { categories: [categories[0]] });
+      mockEpisodeService.getVisibleEpisodeList.mockResolvedValueOnce([
+        match,
+        makeEpisode('e2', 'Second', { categories: [categories[1]] }),
+      ]);
 
       const result = await service.searchEpisodes({
-        type: 'episode',
-        value: 'Hello World',
-        id: 'e1',
+        type: 'category',
+        value: 'Nerd News',
+        id: 'c1',
       });
 
-      expect(mockEpisodeService.getEpisodeById).toHaveBeenCalledWith('e1');
-      expect(result).toEqual([episodes[0]]);
+      expect(mockEpisodeService.getVisibleEpisodeList).toHaveBeenCalled();
+      expect(result.map((e) => e.id)).toEqual(['e1']);
     });
 
-    it('should return empty array when episode option has no id', async () => {
-      const result = await service.searchEpisodes({ type: 'episode', value: 'Hello World' });
+    it('should return empty array when category option has no id', async () => {
+      const result = await service.searchEpisodes({ type: 'category', value: 'Nerd News' });
 
-      expect(mockEpisodeService.getEpisodeById).not.toHaveBeenCalled();
+      expect(mockEpisodeService.getVisibleEpisodeList).not.toHaveBeenCalled();
       expect(result).toEqual([]);
     });
 
-    it('should return empty array when episode lookup throws (not found)', async () => {
-      mockEpisodeService.getEpisodeById.mockRejectedValueOnce(new Error('not found'));
-
-      const result = await service.searchEpisodes({
-        type: 'episode',
-        value: 'Hello World',
-        id: 'missing',
-      });
-
-      expect(result).toEqual([]);
-    });
-
-    it('should fetch episodes by genre id directly from the option', async () => {
-      mockEpisodeGenreService.getEpisodesByGenreId.mockResolvedValueOnce([episodes[0]]);
+    it('should filter visible episodes by embedded genre id', async () => {
+      const match = makeEpisode('e1', 'Hello World', { genres: [genres[0]] });
+      mockEpisodeService.getVisibleEpisodeList.mockResolvedValueOnce([
+        match,
+        makeEpisode('e2', 'Second', { genres: [genres[1]] }),
+      ]);
 
       const result = await service.searchEpisodes({ type: 'genre', value: 'Rock', id: 'g1' });
 
-      expect(mockGenreService.getAllGenres).not.toHaveBeenCalled();
-      expect(mockEpisodeGenreService.getEpisodesByGenreId).toHaveBeenCalledWith('g1');
-      expect(result).toEqual([episodes[0]]);
+      expect(mockEpisodeService.getVisibleEpisodeList).toHaveBeenCalled();
+      expect(result.map((e) => e.id)).toEqual(['e1']);
     });
 
     it('should return empty array when genre option has no id', async () => {
       const result = await service.searchEpisodes({ type: 'genre', value: 'Rock' });
 
-      expect(mockEpisodeGenreService.getEpisodesByGenreId).not.toHaveBeenCalled();
+      expect(mockEpisodeService.getVisibleEpisodeList).not.toHaveBeenCalled();
       expect(result).toEqual([]);
     });
 
-    it('should fetch episodes by tag id directly from the option', async () => {
-      mockEpisodeTagService.getEpisodesByTagId.mockResolvedValueOnce([episodes[1]]);
+    it('should filter visible episodes by embedded tag id', async () => {
+      const match = makeEpisode('e2', 'Second', { tags: [tags[0]] });
+      mockEpisodeService.getVisibleEpisodeList.mockResolvedValueOnce([
+        makeEpisode('e1', 'Hello World', { tags: [tags[1]] }),
+        match,
+      ]);
 
       const result = await service.searchEpisodes({ type: 'tag', value: 'Live', id: 't1' });
 
-      expect(mockTagService.getAllTags).not.toHaveBeenCalled();
-      expect(mockEpisodeTagService.getEpisodesByTagId).toHaveBeenCalledWith('t1');
-      expect(result).toEqual([episodes[1]]);
+      expect(result.map((e) => e.id)).toEqual(['e2']);
     });
 
     it('should return empty array when tag option has no id', async () => {
       const result = await service.searchEpisodes({ type: 'tag', value: 'Live' });
 
-      expect(mockEpisodeTagService.getEpisodesByTagId).not.toHaveBeenCalled();
+      expect(mockEpisodeService.getVisibleEpisodeList).not.toHaveBeenCalled();
       expect(result).toEqual([]);
     });
 
     it('should sort results by episodeDate descending (newest first)', async () => {
-      const older = { ...makeEpisode('e1', 'Older'), episodeDate: Timestamp.fromMillis(1_000) };
-      const newer = { ...makeEpisode('e2', 'Newer'), episodeDate: Timestamp.fromMillis(5_000) };
-      const middle = { ...makeEpisode('e3', 'Middle'), episodeDate: Timestamp.fromMillis(3_000) };
-      mockEpisodeGenreService.getEpisodesByGenreId.mockResolvedValueOnce([older, newer, middle]);
-
-      const result = await service.searchEpisodes({ type: 'genre', value: 'Rock', id: 'g1' });
-
-      expect(result.map((e) => e.id)).toEqual(['e2', 'e3', 'e1']);
-    });
-
-    it('should dedupe episodes by id', async () => {
-      const dup = makeEpisode('e1', 'Hello World');
-      mockEpisodeGenreService.getEpisodesByGenreId.mockResolvedValueOnce([
-        episodes[0],
-        dup,
-        episodes[1],
+      mockEpisodeService.getVisibleEpisodeList.mockResolvedValueOnce([
+        makeEpisode('e1', 'Older', { genres: [genres[0]], ms: 1_000 }),
+        makeEpisode('e2', 'Newer', { genres: [genres[0]], ms: 5_000 }),
+        makeEpisode('e3', 'Middle', { genres: [genres[0]], ms: 3_000 }),
       ]);
 
       const result = await service.searchEpisodes({ type: 'genre', value: 'Rock', id: 'g1' });
 
-      expect(result).toHaveLength(2);
-      expect(result.map((e) => e.id)).toEqual(['e1', 'e2']);
+      expect(result.map((e) => e.id)).toEqual(['e2', 'e3', 'e1']);
     });
   });
 });

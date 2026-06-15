@@ -1,16 +1,10 @@
 <section class="page-frame pt-6">
-  <h1 class="text-3xl font-bold mb-4">Explorer</h1>
-  <p class="mb-6">Search for episodes, genres, and tags.</p>
+  <h1 class="page-title mb-4">Explorer</h1>
+  <p class="mb-6">Search genres and tags.</p>
 
   <mat-form-field class="w-full max-w-xl" appearance="outline">
-    <mat-label>Search</mat-label>
-    <input
-      matInput
-      type="text"
-      [formControl]="searchControl"
-      [matAutocomplete]="auto"
-      aria-label="Search for episodes, genres, and tags"
-    />
+    <mat-label>Search genres and tags</mat-label>
+    <input matInput type="text" [formControl]="searchControl" [matAutocomplete]="auto" />
     @if (optionsLoading() || resultsLoading()) {
       <mat-spinner matSuffix diameter="20" />
     } @else if (searchControl.value) {
@@ -45,20 +39,38 @@
   </mat-autocomplete>
 </section>
 
-<section class="mt-6">
+<section class="mt-6 pb-16 page-frame">
   @if (resultsLoading()) {
-    <app-episode-scroller-skeleton />
+    <app-episode-grid [loading]="true" ariaLabel="Loading episodes" />
   } @else if (resultsError(); as err) {
-    <p class="page-frame" role="alert">{{ err }}</p>
+    <p role="alert">{{ err }}</p>
   } @else if (selectedSearchOption(); as sel) {
     @if (results().length === 0) {
-      <p class="page-frame">No episodes found for "{{ sel.value }}".</p>
+      <p>No episodes found for "{{ sel.value }}".</p>
     } @else {
-      <app-episode-scroller
+      <app-episode-grid
         [episodes]="results()"
         [heading]="sel.value"
         [ariaLabel]="'Episodes matching ' + sel.value"
       />
     }
+  } @else if (showDiscover()) {
+    <div class="discover">
+      <p class="discover-hint">Pick a genre or tag to start, or search above.</p>
+      @for (group of discoverGroups(); track group.label) {
+        <div class="discover-group">
+          <h2 class="discover-label">{{ group.label }}</h2>
+          <ul class="chips">
+            @for (option of group.options; track option.type + ':' + option.value) {
+              <li>
+                <button type="button" class="chip" (click)="selectOption(option)">
+                  {{ option.value }}
+                </button>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
   }
 </section>

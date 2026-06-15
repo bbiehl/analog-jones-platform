@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
-import { Episode, EpisodeWithRelations } from '@aj/core';
+import { Episode } from '@aj/core';
 import { RelatedEpisodesService } from './related-episodes.service';
 
 interface RelatedEpisodeState {
@@ -23,7 +23,7 @@ export const RelatedEpisodeStore = signalStore(
     let loadRelatedEpisodesToken = 0;
 
     return {
-      async loadRelatedEpisodes(episode: EpisodeWithRelations) {
+      async loadRelatedEpisodes(episode: Episode) {
         const token = ++loadRelatedEpisodesToken;
         patchState(store, { loading: true, error: null });
         try {

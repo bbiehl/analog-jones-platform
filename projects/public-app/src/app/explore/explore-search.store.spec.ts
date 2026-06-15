@@ -9,9 +9,10 @@ describe('ExploreSearchStore', () => {
   let store: InstanceType<typeof ExploreSearchStore>;
 
   const mockOptions: SearchAutoCompleteOption[] = [
-    { type: 'episode', value: 'Hello World' },
+    { type: 'category', value: 'Hello World', id: 'c0' },
     { type: 'genre', value: 'Rock' },
     { type: 'tag', value: 'Live' },
+    { type: 'category', value: 'Nerd News', id: 'c1' },
   ];
 
   const mockEpisodes: Episode[] = [
@@ -23,6 +24,9 @@ describe('ExploreSearchStore', () => {
       isVisible: true,
       links: {},
       title: 'Hello World',
+      categories: [],
+      genres: [],
+      tags: [],
     },
   ];
 
@@ -60,6 +64,15 @@ describe('ExploreSearchStore', () => {
     expect(store.results()).toEqual(mockEpisodes);
     expect(store.isLoading()).toBe(false);
     expect(store.error()).toBeNull();
+  });
+
+  it('should route a category selection through ExploreSearchService', async () => {
+    const categoryOption = mockOptions[3];
+    await store.selectSearchOption(categoryOption);
+
+    expect(mockExploreSearchService.searchEpisodes).toHaveBeenCalledWith(categoryOption);
+    expect(store.selectedSearchOption()).toEqual(categoryOption);
+    expect(store.results()).toEqual(mockEpisodes);
   });
 
   it('should toggle isLoading around the search call', async () => {
@@ -168,6 +181,9 @@ describe('ExploreSearchStore', () => {
         isVisible: true,
         links: {},
         title: 'Refreshed',
+        categories: [],
+        genres: [],
+        tags: [],
       },
     ];
     mockExploreSearchService.searchEpisodes.mockResolvedValueOnce(updated);
@@ -188,6 +204,9 @@ describe('ExploreSearchStore', () => {
         isVisible: true,
         links: {},
         title: 'Stale',
+        categories: [],
+        genres: [],
+        tags: [],
       },
     ];
     let resolveFirst!: (eps: Episode[]) => void;

@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { Timestamp } from 'firebase/firestore';
-import { Episode, EpisodeWithRelations } from '@aj/core';
+import { Episode } from '@aj/core';
 import { RelatedEpisodeStore } from './related-episode.store';
 import { RelatedEpisodesService } from './related-episodes.service';
 
 describe('RelatedEpisodeStore', () => {
   let store: InstanceType<typeof RelatedEpisodeStore>;
 
-  const episode: EpisodeWithRelations = {
+  const episode: Episode = {
     id: 'ep-source',
     createdAt: Timestamp.fromMillis(0),
     episodeDate: Timestamp.fromMillis(0),
@@ -29,6 +29,9 @@ describe('RelatedEpisodeStore', () => {
       isVisible: true,
       links: {},
       title: 'Related 1',
+      categories: [],
+      genres: [],
+      tags: [],
     },
   ];
 
@@ -88,8 +91,8 @@ describe('RelatedEpisodeStore', () => {
     });
 
     it('should ignore results from superseded calls when a newer call resolves first', async () => {
-      const episodeA: EpisodeWithRelations = { ...episode, id: 'ep-A' };
-      const episodeB: EpisodeWithRelations = { ...episode, id: 'ep-B' };
+      const episodeA: Episode = { ...episode, id: 'ep-A' };
+      const episodeB: Episode = { ...episode, id: 'ep-B' };
       const resultA: Episode[] = [{ ...mockRelated[0], id: 'for-A' }];
       const resultB: Episode[] = [{ ...mockRelated[0], id: 'for-B' }];
 

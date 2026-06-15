@@ -1,9 +1,9 @@
 /// <reference types="vitest/globals" />
 import { TestBed } from '@angular/core/testing';
 import { FIRESTORE, FIRESTORE_OPS, FirestoreOps } from '../shared/firebase.token';
-import { EpisodeCategoryService } from '../junction/episode-category.service';
-import { EpisodeGenreService } from '../junction/episode-genre.service';
-import { EpisodeTagService } from '../junction/episode-tag.service';
+import { CategoryService } from '../category/category.service';
+import { GenreService } from '../genre/genre.service';
+import { TagService } from '../tag/tag.service';
 import { EpisodeService } from './episode.service';
 import type { Firestore } from 'firebase/firestore';
 
@@ -13,20 +13,18 @@ describe('EpisodeService', () => {
   const firestore = { __brand: 'fake-firestore' } as unknown as Firestore;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockEpisodeCategoryService: any;
+  let mockCategoryService: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockEpisodeGenreService: any;
+  let mockGenreService: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let mockEpisodeTagService: any;
+  let mockTagService: any;
 
   beforeEach(() => {
     let autoIdCounter = 0;
     ops = {
       collection: vi.fn((_db, path) => ({ __collection: path })),
-      // doc(firestore, path, id) -> path/id ; doc(collectionRef) -> auto-id ref
       doc: vi.fn((arg1, arg2, arg3) => {
         if (arg2 === undefined) {
-          // Called with just a collection ref — auto-generates an id
           autoIdCounter += 1;
           return {
             id: `auto-${autoIdCounter}`,
@@ -48,20 +46,17 @@ describe('EpisodeService', () => {
       writeBatch: vi.fn(),
     };
 
-    mockEpisodeCategoryService = {
-      getEpisodeCategoriesByEpisodeId: vi.fn().mockResolvedValue([]),
-      createEpisodeCategory: vi.fn(),
-      deleteEpisodeCategoriesByEpisodeId: vi.fn(),
+    mockCategoryService = {
+      getAllCategories: vi.fn().mockResolvedValue([
+        { id: 'c1', name: 'History', slug: 'history' },
+        { id: 'c2', name: 'Science', slug: 'science' },
+      ]),
     };
-    mockEpisodeGenreService = {
-      getEpisodeGenresByEpisodeId: vi.fn().mockResolvedValue([]),
-      createEpisodeGenre: vi.fn(),
-      deleteEpisodeGenresByEpisodeId: vi.fn(),
+    mockGenreService = {
+      getAllGenres: vi.fn().mockResolvedValue([{ id: 'g1', name: 'Action', slug: 'action' }]),
     };
-    mockEpisodeTagService = {
-      getEpisodeTagsByEpisodeId: vi.fn().mockResolvedValue([]),
-      createEpisodeTag: vi.fn(),
-      deleteEpisodeTagsByEpisodeId: vi.fn(),
+    mockTagService = {
+      getAllTags: vi.fn().mockResolvedValue([{ id: 't1', name: 'Featured', slug: 'featured' }]),
     };
 
     TestBed.configureTestingModule({
@@ -69,9 +64,9 @@ describe('EpisodeService', () => {
         EpisodeService,
         { provide: FIRESTORE, useValue: firestore },
         { provide: FIRESTORE_OPS, useValue: ops as unknown as FirestoreOps },
-        { provide: EpisodeCategoryService, useValue: mockEpisodeCategoryService },
-        { provide: EpisodeGenreService, useValue: mockEpisodeGenreService },
-        { provide: EpisodeTagService, useValue: mockEpisodeTagService },
+        { provide: CategoryService, useValue: mockCategoryService },
+        { provide: GenreService, useValue: mockGenreService },
+        { provide: TagService, useValue: mockTagService },
       ],
     });
 
@@ -79,32 +74,26 @@ describe('EpisodeService', () => {
   });
 
   describe('getHomeEpisodes', () => {
-    it('should bundle episodes, total, and featured-with-relations under one cache call', async () => {
+    it('should bundle episodes, total, and the first episode as featured', async () => {
       ops.getDocs.mockResolvedValueOnce({
         docs: [
-          { id: 'ep1', data: () => ({ title: 'Featured' }) },
+          {
+            id: 'ep1',
+            data: () => ({
+              title: 'Featured',
+              categories: [{ id: 'c1', name: 'History', slug: 'history' }],
+              genres: [{ id: 'g1', name: 'Action', slug: 'action' }],
+              tags: [{ id: 't1', name: 'Featured', slug: 'featured' }],
+            }),
+          },
           { id: 'ep2', data: () => ({ title: 'Second' }) },
         ],
       });
       ops.getCountFromServer.mockResolvedValueOnce({ data: () => ({ count: 12 }) });
-      mockEpisodeCategoryService.getEpisodeCategoriesByEpisodeId.mockResolvedValueOnce([
-        { id: 'c1', name: 'History', slug: 'history' },
-      ]);
-      mockEpisodeGenreService.getEpisodeGenresByEpisodeId.mockResolvedValueOnce([
-        { id: 'g1', name: 'Action', slug: 'action' },
-      ]);
-      mockEpisodeTagService.getEpisodeTagsByEpisodeId.mockResolvedValueOnce([
-        { id: 't1', name: 'Featured', slug: 'featured' },
-      ]);
 
       const result = await service.getHomeEpisodes();
 
       expect(ops.limit).toHaveBeenCalledWith(9);
-      expect(mockEpisodeCategoryService.getEpisodeCategoriesByEpisodeId).toHaveBeenCalledWith(
-        'ep1',
-      );
-      expect(mockEpisodeGenreService.getEpisodeGenresByEpisodeId).toHaveBeenCalledWith('ep1');
-      expect(mockEpisodeTagService.getEpisodeTagsByEpisodeId).toHaveBeenCalledWith('ep1');
       expect(result.total).toBe(12);
       expect(result.episodes.map((e) => e.id)).toEqual(['ep1', 'ep2']);
       expect(result.featured).toEqual({
@@ -113,6 +102,14 @@ describe('EpisodeService', () => {
         categories: [{ id: 'c1', name: 'History', slug: 'history' }],
         genres: [{ id: 'g1', name: 'Action', slug: 'action' }],
         tags: [{ id: 't1', name: 'Featured', slug: 'featured' }],
+      });
+      // A doc without embedded arrays still normalizes to empty arrays.
+      expect(result.episodes[1]).toEqual({
+        id: 'ep2',
+        title: 'Second',
+        categories: [],
+        genres: [],
+        tags: [],
       });
     });
 
@@ -125,12 +122,11 @@ describe('EpisodeService', () => {
       expect(result.featured).toBeNull();
       expect(result.episodes).toEqual([]);
       expect(result.total).toBe(0);
-      expect(mockEpisodeCategoryService.getEpisodeCategoriesByEpisodeId).not.toHaveBeenCalled();
     });
   });
 
   describe('getAllEpisodes', () => {
-    it('should query episodes ordered by episodeDate desc and map docs', async () => {
+    it('should query episodes ordered by episodeDate desc and map docs with embedded taxonomy', async () => {
       ops.getDocs.mockResolvedValueOnce({
         docs: [
           { id: 'ep1', data: () => ({ title: 'One', isVisible: true }) },
@@ -143,8 +139,8 @@ describe('EpisodeService', () => {
       expect(ops.collection).toHaveBeenCalledWith(firestore, 'episodes');
       expect(ops.orderBy).toHaveBeenCalledWith('episodeDate', 'desc');
       expect(result).toEqual([
-        { id: 'ep1', title: 'One', isVisible: true },
-        { id: 'ep2', title: 'Two', isVisible: false },
+        { id: 'ep1', title: 'One', isVisible: true, categories: [], genres: [], tags: [] },
+        { id: 'ep2', title: 'Two', isVisible: false, categories: [], genres: [], tags: [] },
       ]);
     });
   });
@@ -174,7 +170,14 @@ describe('EpisodeService', () => {
       expect(ops.where).toHaveBeenCalledWith('isVisible', '==', true);
       expect(ops.orderBy).toHaveBeenCalledWith('episodeDate', 'desc');
       expect(ops.limit).toHaveBeenCalledWith(1);
-      expect(result).toEqual({ id: 'ep1', title: 'Latest', isVisible: true });
+      expect(result).toEqual({
+        id: 'ep1',
+        title: 'Latest',
+        isVisible: true,
+        categories: [],
+        genres: [],
+        tags: [],
+      });
     });
   });
 
@@ -187,7 +190,7 @@ describe('EpisodeService', () => {
       const result = await service.getRecentEpisodes();
 
       expect(ops.limit).toHaveBeenCalledWith(5);
-      expect(result).toEqual([{ id: 'ep1', title: 'A' }]);
+      expect(result).toEqual([{ id: 'ep1', title: 'A', categories: [], genres: [], tags: [] }]);
     });
   });
 
@@ -240,7 +243,7 @@ describe('EpisodeService', () => {
       expect(result.map((e) => e.id)).toEqual(['ep1']);
     });
 
-    it('should drop the intelligence field while keeping list fields', async () => {
+    it('should drop the intelligence field while keeping list fields and taxonomy', async () => {
       ops.getDocs.mockResolvedValueOnce({
         docs: [
           {
@@ -249,6 +252,7 @@ describe('EpisodeService', () => {
               title: 'Heavy',
               isVisible: true,
               links: { spotify: 's' },
+              tags: [{ id: 't1', name: 'Featured', slug: 'featured' }],
               intelligence: 'a very long markdown summary that should not be inlined into SSR',
             }),
           },
@@ -260,6 +264,7 @@ describe('EpisodeService', () => {
       expect(episode.id).toBe('ep1');
       expect(episode.title).toBe('Heavy');
       expect(episode.links).toEqual({ spotify: 's' });
+      expect(episode.tags).toEqual([{ id: 't1', name: 'Featured', slug: 'featured' }]);
       expect(episode.intelligence).toBeNull();
     });
   });
@@ -272,21 +277,17 @@ describe('EpisodeService', () => {
       );
     });
 
-    it('should combine the episode with hydrated relations', async () => {
+    it('should return the episode with its embedded taxonomy', async () => {
       ops.getDoc.mockResolvedValueOnce({
         exists: () => true,
         id: 'ep1',
-        data: () => ({ title: 'Test' }),
+        data: () => ({
+          title: 'Test',
+          categories: [{ id: 'c1', name: 'History', slug: 'history' }],
+          genres: [{ id: 'g1', name: 'Action', slug: 'action' }],
+          tags: [{ id: 't1', name: 'Featured', slug: 'featured' }],
+        }),
       });
-      mockEpisodeCategoryService.getEpisodeCategoriesByEpisodeId.mockResolvedValueOnce([
-        { id: 'c1', name: 'History', slug: 'history' },
-      ]);
-      mockEpisodeGenreService.getEpisodeGenresByEpisodeId.mockResolvedValueOnce([
-        { id: 'g1', name: 'Action', slug: 'action' },
-      ]);
-      mockEpisodeTagService.getEpisodeTagsByEpisodeId.mockResolvedValueOnce([
-        { id: 't1', name: 'Featured', slug: 'featured' },
-      ]);
 
       const result = await service.getEpisodeById('ep1');
 
@@ -297,6 +298,18 @@ describe('EpisodeService', () => {
         genres: [{ id: 'g1', name: 'Action', slug: 'action' }],
         tags: [{ id: 't1', name: 'Featured', slug: 'featured' }],
       });
+    });
+
+    it('should default missing taxonomy arrays to empty', async () => {
+      ops.getDoc.mockResolvedValueOnce({
+        exists: () => true,
+        id: 'ep1',
+        data: () => ({ title: 'Legacy' }),
+      });
+
+      const result = await service.getEpisodeById('ep1');
+
+      expect(result).toEqual({ id: 'ep1', title: 'Legacy', categories: [], genres: [], tags: [] });
     });
   });
 
@@ -310,17 +323,22 @@ describe('EpisodeService', () => {
       title: 'New Episode',
     } as never;
 
-    it('should batch-write the episode plus all junctions and return the new id', async () => {
+    it('should embed the resolved taxonomy on a single episode doc and return the new id', async () => {
       const batch = { set: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
       ops.writeBatch.mockReturnValueOnce(batch);
 
       const result = await service.createEpisode(baseEpisode, ['c1', 'c2'], ['g1'], ['t1']);
 
-      // 1 episode + 2 categories + 1 genre + 1 tag = 5 set calls
-      expect(batch.set).toHaveBeenCalledTimes(5);
-      // First set is the episode itself with no id field
-      expect(batch.set.mock.calls[0][1]).not.toHaveProperty('id');
-      expect(batch.set.mock.calls[0][1].title).toBe('New Episode');
+      expect(batch.set).toHaveBeenCalledTimes(1);
+      const written = batch.set.mock.calls[0][1];
+      expect(written).not.toHaveProperty('id');
+      expect(written.title).toBe('New Episode');
+      expect(written.categories).toEqual([
+        { id: 'c1', name: 'History', slug: 'history' },
+        { id: 'c2', name: 'Science', slug: 'science' },
+      ]);
+      expect(written.genres).toEqual([{ id: 'g1', name: 'Action', slug: 'action' }]);
+      expect(written.tags).toEqual([{ id: 't1', name: 'Featured', slug: 'featured' }]);
       expect(batch.commit).toHaveBeenCalledTimes(1);
       expect(typeof result).toBe('string');
       expect(result.startsWith('auto-')).toBe(true);
@@ -339,62 +357,45 @@ describe('EpisodeService', () => {
 
   describe('updateEpisode', () => {
     it('should update the episode doc with the supplied fields stripped of id', async () => {
-      const batch = {
-        update: vi.fn(),
-        set: vi.fn(),
-        delete: vi.fn(),
-        commit: vi.fn().mockResolvedValue(undefined),
-      };
-      ops.writeBatch.mockReturnValueOnce(batch);
-
       await service.updateEpisode('ep1', { id: 'ep1', title: 'Updated' });
 
-      expect(batch.update).toHaveBeenCalledWith({ __doc: 'episodes/ep1' }, { title: 'Updated' });
-      expect(batch.commit).toHaveBeenCalledTimes(1);
+      expect(ops.updateDoc).toHaveBeenCalledWith({ __doc: 'episodes/ep1' }, { title: 'Updated' });
     });
 
-    it('should delete existing junctions and recreate them when relation arrays are provided', async () => {
-      const batch = {
-        update: vi.fn(),
-        set: vi.fn(),
-        delete: vi.fn(),
-        commit: vi.fn().mockResolvedValue(undefined),
-      };
-      ops.writeBatch.mockReturnValueOnce(batch);
-      ops.getDocs
-        .mockResolvedValueOnce({ docs: [{ ref: 'old-cat' }] }) // categories
-        .mockResolvedValueOnce({ docs: [{ ref: 'old-genre' }] }) // genres
-        .mockResolvedValueOnce({ docs: [] }); // tags
-
+    it('should embed re-resolved taxonomy when selections are provided', async () => {
       await service.updateEpisode('ep1', { title: 'X' }, ['c1'], ['g1'], []);
 
-      expect(batch.delete).toHaveBeenCalledWith('old-cat');
-      expect(batch.delete).toHaveBeenCalledWith('old-genre');
-      expect(batch.set).toHaveBeenCalledWith(expect.anything(), {
-        episodeId: 'ep1',
-        categoryId: 'c1',
-      });
-      expect(batch.set).toHaveBeenCalledWith(expect.anything(), {
-        episodeId: 'ep1',
-        genreId: 'g1',
-      });
+      expect(ops.updateDoc).toHaveBeenCalledWith(
+        { __doc: 'episodes/ep1' },
+        {
+          title: 'X',
+          categories: [{ id: 'c1', name: 'History', slug: 'history' }],
+          genres: [{ id: 'g1', name: 'Action', slug: 'action' }],
+          tags: [],
+        },
+      );
+    });
+
+    it('should re-embed only the taxonomy arrays whose ids were supplied', async () => {
+      // Only genres provided — categories/tags must be left untouched on the doc.
+      await service.updateEpisode('ep1', { title: 'X' }, undefined, ['g1'], undefined);
+
+      expect(ops.updateDoc).toHaveBeenCalledWith(
+        { __doc: 'episodes/ep1' },
+        { title: 'X', genres: [{ id: 'g1', name: 'Action', slug: 'action' }] },
+      );
     });
   });
 
   describe('deleteEpisode', () => {
-    it('should batch-delete all junctions and the episode doc', async () => {
-      ops.getDocs
-        .mockResolvedValueOnce({ docs: [{ ref: 'cat1' }, { ref: 'cat2' }] })
-        .mockResolvedValueOnce({ docs: [{ ref: 'gen1' }] })
-        .mockResolvedValueOnce({ docs: [{ ref: 'tag1' }] });
+    it('should delete only the episode doc', async () => {
       const batch = { delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
       ops.writeBatch.mockReturnValueOnce(batch);
 
       await service.deleteEpisode('ep1');
 
-      // 2 categories + 1 genre + 1 tag + 1 episode = 5 deletes
-      expect(batch.delete).toHaveBeenCalledTimes(5);
-      expect(batch.delete).toHaveBeenLastCalledWith({ __doc: 'episodes/ep1' });
+      expect(batch.delete).toHaveBeenCalledTimes(1);
+      expect(batch.delete).toHaveBeenCalledWith({ __doc: 'episodes/ep1' });
       expect(batch.commit).toHaveBeenCalledTimes(1);
     });
   });

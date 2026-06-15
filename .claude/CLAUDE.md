@@ -25,7 +25,7 @@ Single Angular library at `projects/core/` (package name `@aj/core`, generated v
 Subfolders under `projects/core/src/lib/`:
 
 - `category/`, `episode/`, `genre/`, `tag/`, `user/` — each with `<domain>.model.ts`, `<domain>.service.ts`, `<domain>.store.ts` (+ specs)
-- `junction/` — many-to-many services: `episode-category.service.ts`, `episode-genre.service.ts`, `episode-tag.service.ts`
+- Taxonomy is **embedded denormalized** on the `Episode` document (`categories`/`genres`/`tags` arrays), not stored in junction collections. The `category`/`genre`/`tag` services own propagating name/slug edits and add/remove across episodes; there is no `junction/` folder.
 - `shared/` — cross-cutting infra only: `firebase.token.ts` (injection tokens `AUTH`, `FIRESTORE`, and the `*_OPS` SDK-wrapper tokens) and `transfer-state.helpers.ts`
 - `styles/` — `theme.scss`, `theme-public.scss` (consumed via Sass `@use`, not exported from `public-api.ts`)
 
@@ -70,7 +70,7 @@ Root shell (`layout/shell/`) wraps all routes:
 - Do NOT use `vi.mock()` — this is an Angular toolchain constraint, not a project convention. `@angular/build`'s unit-test builder (used by `ng test`) injects a `vitest-mock-patch` to integrate Vitest with Angular's compilation pipeline; that patch and `vi.mock()`'s module-hoisting/interception mechanism step on each other and produce flaky failures (passes locally, fails in CI, or vice versa). Any Angular project using `@angular/build` + Vitest hits the same issue — it would only go away by switching to Jest or running Vitest outside the Angular builder. Applies equally to core, admin-app, and public-app specs. Mock via TestBed injection tokens instead.
 - Mock Firebase by providing fake values for `AUTH`, `FIRESTORE`, `FIRESTORE_OPS`, or `AUTH_OPS` tokens (imported from `@aj/core`) in `TestBed.configureTestingModule`
 - Use `vi.stubGlobal()` for browser APIs unavailable in jsdom (`OffscreenCanvas`, `createImageBitmap`)
-- Detailed lib testing patterns (domain service / junction service / store) live in `projects/core/README.md`
+- Detailed lib testing patterns (domain service / store) live in `projects/core/README.md`
 
 ## Angular Rules
 
@@ -108,3 +108,23 @@ Must pass all AXE checks and meet WCAG AA minimums (focus management, color cont
 ## Formatting
 
 Prettier: single quotes, 100 char width.
+
+## Skill routing
+
+When the user's request matches an available skill, invoke it via the Skill tool. When in doubt, invoke the skill.
+
+Key routing rules:
+
+- Product ideas/brainstorming → invoke /office-hours
+- Strategy/scope → invoke /plan-ceo-review
+- Architecture → invoke /plan-eng-review
+- Design system/plan review → invoke /design-consultation or /plan-design-review
+- Full review pipeline → invoke /autoplan
+- Bugs/errors → invoke /investigate
+- QA/testing site behavior → invoke /qa or /qa-only
+- Code review/diff check → invoke /review
+- Visual polish → invoke /design-review
+- Ship/deploy/PR → invoke /ship or /land-and-deploy
+- Save progress → invoke /context-save
+- Resume context → invoke /context-restore
+- Author a backlog-ready spec/issue → invoke /spec

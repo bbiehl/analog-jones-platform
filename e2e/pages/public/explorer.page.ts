@@ -1,6 +1,6 @@
 import { Locator, Page } from '@playwright/test';
 
-/** Public explorer page (`/explorer`): autocomplete search over episodes/genres/tags. */
+/** Public explorer page (`/explorer`): autocomplete search over genres and tags. */
 export class ExplorerPage {
   readonly heading: Locator;
   readonly searchInput: Locator;
@@ -10,7 +10,10 @@ export class ExplorerPage {
 
   constructor(private readonly page: Page) {
     this.heading = page.getByRole('heading', { level: 1, name: 'Explorer' });
-    this.searchInput = page.getByLabel('Search for episodes, genres, and tags');
+    // Target the input by its combobox role: the mat-autocomplete panel shares
+    // the same accessible name (its aria-labelledby points at the form-field
+    // label), so a plain getByLabel matches both and trips strict mode.
+    this.searchInput = page.getByRole('combobox', { name: 'Search genres and tags' });
     this.clearButton = page.getByRole('button', { name: 'Clear search' });
     // mat-autocomplete renders its panel as role="listbox" in a CDK overlay.
     this.autocompletePanel = page.getByRole('listbox');

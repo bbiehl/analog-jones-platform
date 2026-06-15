@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Timestamp } from 'firebase/firestore';
-import { EpisodeWithRelations } from '@aj/core';
+import { Episode } from '@aj/core';
 import { EpisodeProperties } from './episode-properties';
 
-function makeEpisode(overrides: Partial<EpisodeWithRelations> = {}): EpisodeWithRelations {
+function makeEpisode(overrides: Partial<Episode> = {}): Episode {
   return {
     id: 'ep1',
     title: 'Test Episode',

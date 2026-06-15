@@ -15,6 +15,9 @@ function makeEpisode(overrides: Partial<Episode> = {}): Episode {
     intelligence: null,
     isVisible: true,
     links: {},
+    categories: [],
+    genres: [],
+    tags: [],
     ...overrides,
   };
 }

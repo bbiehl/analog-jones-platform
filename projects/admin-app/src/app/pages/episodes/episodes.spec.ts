@@ -21,6 +21,9 @@ function makeEpisode(overrides: Partial<Episode> = {}): Episode {
     isVisible: true,
     links: {},
     title: 'Episode One',
+    categories: [],
+    genres: [],
+    tags: [],
     ...overrides,
   };
 }

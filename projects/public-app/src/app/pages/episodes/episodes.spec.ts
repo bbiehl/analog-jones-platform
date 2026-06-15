@@ -15,6 +15,9 @@ function makeEpisode(id: string, title: string, dateMs = 1_700_000_000_000): Epi
     isVisible: true,
     links: {},
     title,
+    categories: [],
+    genres: [],
+    tags: [],
   };
 }
 

@@ -7,23 +7,28 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
-import { TagStore } from '@aj/core';
+import { TagService, TagStore } from '@aj/core';
 import { EpisodeStore } from '@aj/core';
-import { EpisodeTagService } from '@aj/core';
 
 @Component({
   selector: 'app-tag-bulk-edit',
   imports: [
     DatePipe,
+    FormsModule,
     MatButtonModule,
     MatCheckboxModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatProgressSpinnerModule,
     MatTableModule,
   ],
@@ -34,7 +39,7 @@ import { EpisodeTagService } from '@aj/core';
 export class TagBulkEdit implements OnInit {
   protected readonly tagStore = inject(TagStore);
   protected readonly episodeStore = inject(EpisodeStore);
-  private readonly episodeTagService = inject(EpisodeTagService);
+  private readonly tagService = inject(TagService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -46,6 +51,16 @@ export class TagBulkEdit implements OnInit {
   protected readonly saving = signal(false);
   protected readonly loadingJunctions = signal(true);
   protected readonly junctionError = signal<string | null>(null);
+  protected readonly filter = signal('');
+
+  // Episodes narrowed by the title filter; drives the table and select-all so
+  // both reflect only the rows the user can currently see.
+  protected readonly filteredEpisodes = computed(() => {
+    const term = this.filter().trim().toLowerCase();
+    const episodes = this.episodeStore.episodes();
+    if (!term) return episodes;
+    return episodes.filter((e) => e.title.toLowerCase().includes(term));
+  });
 
   protected readonly isDirty = computed(() => {
     const a = this.initialAssigned();
@@ -56,40 +71,36 @@ export class TagBulkEdit implements OnInit {
   });
 
   protected readonly allSelected = computed(() => {
-    const episodes = this.episodeStore.episodes();
+    const episodes = this.filteredEpisodes();
     const sel = this.selected();
     return episodes.length > 0 && episodes.every((e) => e.id && sel.has(e.id));
   });
 
   protected readonly someSelected = computed(() => {
+    const episodes = this.filteredEpisodes();
     const sel = this.selected();
-    return sel.size > 0 && !this.allSelected();
+    return episodes.some((e) => e.id && sel.has(e.id)) && !this.allSelected();
   });
 
   async ngOnInit(): Promise<void> {
     this.tagId = this.route.snapshot.params['id'];
-    await Promise.all([
-      this.tagStore.loadTagById(this.tagId),
-      this.episodeStore.loadEpisodes(),
-      this.loadAssigned(),
-    ]);
+    await Promise.all([this.tagStore.loadTagById(this.tagId), this.episodeStore.loadEpisodes()]);
+    this.loadAssigned();
   }
 
-  private async loadAssigned(): Promise<void> {
+  // Current membership is derived from the episodes' embedded tags, which
+  // loadEpisodes() has already fetched — no separate junction read.
+  private loadAssigned(): void {
     this.loadingJunctions.set(true);
     this.junctionError.set(null);
-    try {
-      const ids = await this.episodeTagService.getEpisodeIdsByTagId(
-        this.route.snapshot.params['id'],
-      );
-      const set = new Set(ids);
-      this.initialAssigned.set(set);
-      this.selected.set(new Set(set));
-    } catch (e) {
-      this.junctionError.set((e as Error).message);
-    } finally {
-      this.loadingJunctions.set(false);
-    }
+    const ids = this.episodeStore
+      .episodes()
+      .filter((e) => e.id && e.tags.some((t) => t.id === this.tagId))
+      .map((e) => e.id!);
+    const set = new Set(ids);
+    this.initialAssigned.set(set);
+    this.selected.set(new Set(set));
+    this.loadingJunctions.set(false);
   }
 
   protected isChecked(episodeId: string | undefined): boolean {
@@ -108,23 +119,23 @@ export class TagBulkEdit implements OnInit {
   }
 
   protected toggleAll(): void {
+    const episodes = this.filteredEpisodes();
+    const next = new Set(this.selected());
     if (this.allSelected()) {
-      this.selected.set(new Set());
-      return;
-    }
-    const next = new Set<string>();
-    for (const e of this.episodeStore.episodes()) {
-      if (e.id) next.add(e.id);
+      for (const e of episodes) if (e.id) next.delete(e.id);
+    } else {
+      for (const e of episodes) if (e.id) next.add(e.id);
     }
     this.selected.set(next);
   }
 
   protected async onSave(): Promise<void> {
     if (!this.isDirty() || this.saving()) return;
-    if (!this.tagStore.selectedTag()) return;
+    const tag = this.tagStore.selectedTag();
+    if (!tag) return;
     this.saving.set(true);
     try {
-      await this.episodeTagService.setEpisodesForTag(this.tagId, [...this.selected()]);
+      await this.tagService.setEpisodesForTag(tag, [...this.selected()]);
       this.router.navigate(['/tags']);
     } finally {
       this.saving.set(false);

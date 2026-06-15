@@ -17,8 +17,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { EpisodeScroller } from '../../episode/episode-scroller/episode-scroller';
-import { EpisodeScrollerSkeleton } from '../../episode/episode-scroller-skeleton/episode-scroller-skeleton';
+import { EpisodeGrid } from '../../episode/episode-grid/episode-grid';
 import { ExploreSearchStore } from '../../explore/explore-search.store';
 import { SearchAutoCompleteOption } from '../../explore/explore.model';
 
@@ -28,7 +27,7 @@ interface OptionGroup {
 }
 
 const GROUP_ORDER: { type: SearchAutoCompleteOption['type']; label: string }[] = [
-  { type: 'episode', label: 'Episodes' },
+  { type: 'category', label: 'Categories' },
   { type: 'genre', label: 'Genres' },
   { type: 'tag', label: 'Tags' },
 ];
@@ -43,8 +42,7 @@ const GROUP_ORDER: { type: SearchAutoCompleteOption['type']; label: string }[] =
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    EpisodeScroller,
-    EpisodeScrollerSkeleton,
+    EpisodeGrid,
   ],
   templateUrl: './explorer.html',
   styleUrl: './explorer.scss',
@@ -79,6 +77,19 @@ export class Explorer implements OnInit {
   );
   protected readonly resultsError = computed(() =>
     this.selectedSearchOption() ? this.error() : null,
+  );
+
+  // Discovery chips for the idle empty state: browseable categories, genres, and tags.
+  protected readonly discoverGroups = computed<OptionGroup[]>(() => {
+    const all = this.autoCompleteOptions();
+    return GROUP_ORDER.map(({ type, label }) => ({
+      label,
+      options: all.filter((o) => o.type === type),
+    })).filter((g) => g.options.length > 0);
+  });
+
+  protected readonly showDiscover = computed(
+    () => this.optionsLoaded() && !this.selectedSearchOption() && !this.resultsLoading(),
   );
 
   protected readonly groupedOptions = computed<OptionGroup[]>(() => {
@@ -121,6 +132,11 @@ export class Explorer implements OnInit {
 
   protected onOptionSelected(event: MatAutocompleteSelectedEvent): void {
     const option = event.option.value as SearchAutoCompleteOption;
+    this.store.selectSearchOption(option);
+  }
+
+  protected selectOption(option: SearchAutoCompleteOption): void {
+    this.searchControl.setValue(option);
     this.store.selectSearchOption(option);
   }
 

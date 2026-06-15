@@ -148,17 +148,58 @@ describe('CategoryService', () => {
   });
 
   describe('updateCategory', () => {
-    it('should strip the id field before updating', async () => {
+    it('should strip id, then propagate the new name/slug into episodes that embed it', async () => {
+      // getCategoryById re-read after the doc update.
+      ops.getDoc.mockResolvedValueOnce({
+        exists: () => true,
+        id: 'c1',
+        data: () => ({ name: 'Updated', slug: 'updated' }),
+      });
+      // Episode scan: ep1 embeds c1 alongside c2 (untouched); ep2 does not embed c1.
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          {
+            id: 'ep1',
+            ref: { __ref: 'ep1' },
+            data: () => ({
+              categories: [
+                { id: 'c1', name: 'Old', slug: 'old' },
+                { id: 'c2', name: 'Science', slug: 'science' },
+              ],
+            }),
+          },
+          { id: 'ep2', ref: { __ref: 'ep2' }, data: () => ({ categories: [] }) },
+        ],
+      });
+      const batch = { update: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      ops.writeBatch.mockReturnValue(batch);
+
       await service.updateCategory('c1', { id: 'c1', name: 'Updated', slug: 'updated' });
 
-      expect(ops.doc).toHaveBeenCalledWith(firestore, 'categories', 'c1');
       expect(ops.updateDoc).toHaveBeenCalledWith(
         { __doc: 'categories/c1' },
         { name: 'Updated', slug: 'updated' },
       );
+      expect(batch.update).toHaveBeenCalledTimes(1);
+      expect(batch.update).toHaveBeenCalledWith(
+        { __ref: 'ep1' },
+        {
+          categories: [
+            { id: 'c1', name: 'Updated', slug: 'updated' },
+            { id: 'c2', name: 'Science', slug: 'science' },
+          ],
+        },
+      );
     });
 
     it('should pass an empty payload through when only the id is supplied', async () => {
+      ops.getDoc.mockResolvedValueOnce({
+        exists: () => true,
+        id: 'c1',
+        data: () => ({ name: 'History', slug: 'history' }),
+      });
+      ops.getDocs.mockResolvedValueOnce({ docs: [] });
+
       await service.updateCategory('c1', { id: 'c1' });
 
       expect(ops.updateDoc).toHaveBeenCalledWith({ __doc: 'categories/c1' }, {});
@@ -172,53 +213,84 @@ describe('CategoryService', () => {
   });
 
   describe('deleteCategory', () => {
-    it('should batch-delete every junction doc plus the category doc, then commit', async () => {
-      const junctionRefs = [
-        { ref: { __ref: 'ec1' } },
-        { ref: { __ref: 'ec2' } },
-        { ref: { __ref: 'ec3' } },
-      ];
-      ops.getDocs.mockResolvedValueOnce({ docs: junctionRefs });
-
-      const batch = { delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
-      ops.writeBatch.mockReturnValueOnce(batch);
+    it('should remove the embedded category from episodes then delete the category doc', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          {
+            id: 'ep1',
+            ref: { __ref: 'ep1' },
+            data: () => ({
+              categories: [
+                { id: 'c1', name: 'History', slug: 'history' },
+                { id: 'c2', name: 'Science', slug: 'science' },
+              ],
+            }),
+          },
+          { id: 'ep2', ref: { __ref: 'ep2' }, data: () => ({ categories: [] }) },
+        ],
+      });
+      const batch = {
+        update: vi.fn(),
+        delete: vi.fn(),
+        commit: vi.fn().mockResolvedValue(undefined),
+      };
+      ops.writeBatch.mockReturnValue(batch);
 
       await service.deleteCategory('c1');
 
-      expect(ops.collection).toHaveBeenCalledWith(firestore, 'episodeCategories');
-      expect(ops.where).toHaveBeenCalledWith('categoryId', '==', 'c1');
-      expect(ops.writeBatch).toHaveBeenCalledWith(firestore);
-      expect(batch.delete).toHaveBeenCalledTimes(junctionRefs.length + 1);
-      expect(batch.delete).toHaveBeenNthCalledWith(1, junctionRefs[0].ref);
-      expect(batch.delete).toHaveBeenNthCalledWith(2, junctionRefs[1].ref);
-      expect(batch.delete).toHaveBeenNthCalledWith(3, junctionRefs[2].ref);
-      expect(batch.delete).toHaveBeenLastCalledWith({ __doc: 'categories/c1' });
-      expect(batch.commit).toHaveBeenCalledTimes(1);
+      // ep1 rewritten without c1; ep2 untouched.
+      expect(batch.update).toHaveBeenCalledTimes(1);
+      expect(batch.update).toHaveBeenCalledWith(
+        { __ref: 'ep1' },
+        { categories: [{ id: 'c2', name: 'Science', slug: 'science' }] },
+      );
+      expect(batch.delete).toHaveBeenCalledWith({ __doc: 'categories/c1' });
     });
 
-    it('should still delete the category doc when no junction docs exist', async () => {
+    it('should still delete the category doc when no episode embeds it', async () => {
       ops.getDocs.mockResolvedValueOnce({ docs: [] });
-
-      const batch = { delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
-      ops.writeBatch.mockReturnValueOnce(batch);
+      const batch = {
+        update: vi.fn(),
+        delete: vi.fn(),
+        commit: vi.fn().mockResolvedValue(undefined),
+      };
+      ops.writeBatch.mockReturnValue(batch);
 
       await service.deleteCategory('c1');
 
-      expect(batch.delete).toHaveBeenCalledTimes(1);
+      expect(batch.update).not.toHaveBeenCalled();
       expect(batch.delete).toHaveBeenCalledWith({ __doc: 'categories/c1' });
       expect(batch.commit).toHaveBeenCalledTimes(1);
     });
+  });
 
-    it('should propagate errors from batch.commit', async () => {
-      ops.getDocs.mockResolvedValueOnce({ docs: [] });
+  describe('setEpisodesForCategory', () => {
+    it('should add the category to newly-selected episodes and remove it from deselected ones', async () => {
+      const category = { id: 'c1', name: 'History', slug: 'history' };
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          { id: 'ep1', ref: { __ref: 'ep1' }, data: () => ({ categories: [category] }) },
+          { id: 'ep2', ref: { __ref: 'ep2' }, data: () => ({ categories: [] }) },
+          { id: 'ep3', ref: { __ref: 'ep3' }, data: () => ({ categories: [category] }) },
+          // No `categories` field at all — exercises the default-to-empty path.
+          { id: 'ep4', ref: { __ref: 'ep4' }, data: () => ({}) },
+        ],
+      });
+      const batch = { update: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+      ops.writeBatch.mockReturnValue(batch);
 
-      const batch = {
-        delete: vi.fn(),
-        commit: vi.fn().mockRejectedValueOnce(new Error('aborted')),
-      };
-      ops.writeBatch.mockReturnValueOnce(batch);
+      // Target: ep2 and ep3 should carry the category.
+      await service.setEpisodesForCategory(category, ['ep2', 'ep3']);
 
-      await expect(service.deleteCategory('c1')).rejects.toThrow('aborted');
+      // ep1 removed, ep2 added, ep3 unchanged, ep4 untouched.
+      expect(batch.update).toHaveBeenCalledTimes(2);
+      expect(batch.update).toHaveBeenCalledWith({ __ref: 'ep1' }, { categories: [] });
+      expect(batch.update).toHaveBeenCalledWith({ __ref: 'ep2' }, { categories: [category] });
+    });
+
+    it('should do nothing when the category has no id', async () => {
+      await service.setEpisodesForCategory({ name: 'X', slug: 'x' }, ['ep1']);
+      expect(ops.getDocs).not.toHaveBeenCalled();
     });
   });
 });
