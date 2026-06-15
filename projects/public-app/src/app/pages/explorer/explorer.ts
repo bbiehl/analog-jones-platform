@@ -27,7 +27,6 @@ interface OptionGroup {
 }
 
 const GROUP_ORDER: { type: SearchAutoCompleteOption['type']; label: string }[] = [
-  { type: 'episode', label: 'Episodes' },
   { type: 'category', label: 'Categories' },
   { type: 'genre', label: 'Genres' },
   { type: 'tag', label: 'Tags' },
@@ -80,16 +79,13 @@ export class Explorer implements OnInit {
     this.selectedSearchOption() ? this.error() : null,
   );
 
-  // Discovery chips for the idle empty state: browseable genres and tags
-  // (episodes are excluded — too many to chip out).
+  // Discovery chips for the idle empty state: browseable categories, genres, and tags.
   protected readonly discoverGroups = computed<OptionGroup[]>(() => {
     const all = this.autoCompleteOptions();
-    return GROUP_ORDER.filter(({ type }) => type !== 'episode')
-      .map(({ type, label }) => ({
-        label,
-        options: all.filter((o) => o.type === type),
-      }))
-      .filter((g) => g.options.length > 0);
+    return GROUP_ORDER.map(({ type, label }) => ({
+      label,
+      options: all.filter((o) => o.type === type),
+    })).filter((g) => g.options.length > 0);
   });
 
   protected readonly showDiscover = computed(

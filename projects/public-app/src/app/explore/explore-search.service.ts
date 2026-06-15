@@ -20,8 +20,7 @@ export class ExploreSearchService {
 
   async getAutoCompleteOptions(): Promise<SearchAutoCompleteOption[]> {
     return this.transferCache.cached('explorer.autoComplete', async () => {
-      const [episodes, categories, genres, tags] = await Promise.all([
-        this.episodeService.getVisibleEpisodes(),
+      const [categories, genres, tags] = await Promise.all([
         this.categoryService.getAllCategories(),
         this.genreService.getAllGenres(),
         this.tagService.getAllTags(),
@@ -30,7 +29,6 @@ export class ExploreSearchService {
         EXPLORER_CATEGORY_NAMES.some((n) => n.toLowerCase() === c.name.toLowerCase()),
       );
       return [
-        ...episodes.map((e) => ({ type: 'episode' as const, value: e.title, id: e.id })),
         ...allowedCategories.map((c) => ({ type: 'category' as const, value: c.name, id: c.id })),
         ...genres.map((g) => ({ type: 'genre' as const, value: g.name, id: g.id })),
         ...tags.map((t) => ({ type: 'tag' as const, value: t.name, id: t.id })),
@@ -40,18 +38,7 @@ export class ExploreSearchService {
 
   async searchEpisodes(option: SearchAutoCompleteOption): Promise<Episode[]> {
     let results: Episode[] = [];
-    if (option.type === 'episode') {
-      if (option.id) {
-        try {
-          const episode = await this.episodeService.getEpisodeById(option.id);
-          if (episode.isVisible) {
-            results = [episode];
-          }
-        } catch {
-          results = [];
-        }
-      }
-    } else if (option.type === 'category') {
+    if (option.type === 'category') {
       if (option.id) {
         results = await this.episodesWithTaxonomy('categories', option.id);
       }

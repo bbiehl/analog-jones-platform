@@ -9,7 +9,7 @@ describe('ExploreSearchStore', () => {
   let store: InstanceType<typeof ExploreSearchStore>;
 
   const mockOptions: SearchAutoCompleteOption[] = [
-    { type: 'episode', value: 'Hello World' },
+    { type: 'category', value: 'Hello World', id: 'c0' },
     { type: 'genre', value: 'Rock' },
     { type: 'tag', value: 'Live' },
     { type: 'category', value: 'Nerd News', id: 'c1' },

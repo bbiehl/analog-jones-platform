@@ -92,9 +92,7 @@ describe('Explorer', () => {
   it('should render the heading and description', () => {
     const host = fixture.nativeElement as HTMLElement;
     expect(host.querySelector('h1')?.textContent).toContain('Explorer');
-    expect(host.querySelector('p')?.textContent).toContain(
-      'Search for episodes, genres, and tags.',
-    );
+    expect(host.querySelector('p')?.textContent).toContain('Search genres and tags.');
   });
 
   describe('search input', () => {
@@ -190,8 +188,7 @@ describe('Explorer', () => {
   describe('autocomplete panel', () => {
     beforeEach(async () => {
       mockStore.autoCompleteOptions.set([
-        { type: 'episode', value: 'Episode One' },
-        { type: 'episode', value: 'Episode Two' },
+        { type: 'category', value: 'Nerd News', id: 'c1' },
         { type: 'genre', value: 'Jazz' },
         { type: 'tag', value: 'synth' },
       ]);
@@ -206,9 +203,7 @@ describe('Explorer', () => {
       expect(await autocomplete.isOpen()).toBe(true);
       const options = await autocomplete.getOptions();
       const optionTexts = await Promise.all(options.map((o) => o.getText()));
-      expect(optionTexts).toEqual(
-        expect.arrayContaining(['Episode One', 'Episode Two', 'Jazz', 'synth']),
-      );
+      expect(optionTexts).toEqual(expect.arrayContaining(['Nerd News', 'Jazz', 'synth']));
 
       const host = fixture.nativeElement as HTMLElement;
       const groupLabels = Array.from(
@@ -221,7 +216,8 @@ describe('Explorer', () => {
         document.querySelectorAll('.cdk-overlay-container mat-optgroup'),
       ).map((el) => (el as HTMLElement).getAttribute('label'));
       const visible = new Set([...groupLabels, ...overlayGroupLabels]);
-      expect(visible.has('Episodes')).toBe(true);
+      expect(visible.has('Episodes')).toBe(false);
+      expect(visible.has('Categories')).toBe(true);
       expect(visible.has('Genres')).toBe(true);
       expect(visible.has('Tags')).toBe(true);
       // Reference host to quiet unused-var lint.
@@ -310,7 +306,6 @@ describe('Explorer', () => {
   describe('discovery empty state', () => {
     beforeEach(async () => {
       mockStore.autoCompleteOptions.set([
-        { type: 'episode', value: 'Episode One' },
         { type: 'category', value: 'Nerd News', id: 'c1' },
         { type: 'genre', value: 'Jazz' },
         { type: 'tag', value: 'synth' },
@@ -319,13 +314,12 @@ describe('Explorer', () => {
       await fixture.whenStable();
     });
 
-    it('should render category, genre, and tag chips but not episode chips when idle', () => {
+    it('should render category, genre, and tag chips when idle', () => {
       const host = fixture.nativeElement as HTMLElement;
       const chipLabels = Array.from(host.querySelectorAll('.chip')).map((c) =>
         c.textContent?.trim(),
       );
       expect(chipLabels).toEqual(expect.arrayContaining(['Nerd News', 'Jazz', 'synth']));
-      expect(chipLabels).not.toContain('Episode One');
     });
 
     it('should call store.selectSearchOption when a chip is clicked', () => {

@@ -1,15 +1,15 @@
 <section class="page-frame pt-6">
   <h1 class="text-3xl font-bold mb-4">Explorer</h1>
-  <p class="mb-6">Search for episodes, genres, and tags.</p>
+  <p class="mb-6">Search genres and tags.</p>
 
   <mat-form-field class="w-full max-w-xl" appearance="outline">
-    <mat-label>Search episodes, genres, tags</mat-label>
+    <mat-label>Search genres and tags</mat-label>
     <input
       matInput
       type="text"
       [formControl]="searchControl"
       [matAutocomplete]="auto"
-      aria-label="Search for episodes, genres, and tags"
+      aria-label="Search genres and tags"
     />
     @if (optionsLoading() || resultsLoading()) {
       <mat-spinner matSuffix diameter="20" />

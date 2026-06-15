@@ -49,7 +49,6 @@ describe('ExploreSearchService', () => {
 
   let mockEpisodeService: {
     getVisibleEpisodes: ReturnType<typeof vi.fn>;
-    getEpisodeById: ReturnType<typeof vi.fn>;
   };
   let mockCategoryService: { getAllCategories: ReturnType<typeof vi.fn> };
   let mockGenreService: { getAllGenres: ReturnType<typeof vi.fn> };
@@ -58,7 +57,6 @@ describe('ExploreSearchService', () => {
   beforeEach(() => {
     mockEpisodeService = {
       getVisibleEpisodes: vi.fn().mockResolvedValue(episodes),
-      getEpisodeById: vi.fn(),
     };
     mockCategoryService = { getAllCategories: vi.fn().mockResolvedValue(categories) };
     mockGenreService = { getAllGenres: vi.fn().mockResolvedValue(genres) };
@@ -86,12 +84,10 @@ describe('ExploreSearchService', () => {
   });
 
   describe('getAutoCompleteOptions', () => {
-    it('should combine episodes, allowed categories, genres, and tags into typed options', async () => {
+    it('should combine allowed categories, genres, and tags into typed options', async () => {
       const options = await service.getAutoCompleteOptions();
 
       expect(options).toEqual([
-        { type: 'episode', value: 'Hello World', id: 'e1' },
-        { type: 'episode', value: 'Second', id: 'e2' },
         { type: 'category', value: 'Nerd News', id: 'c1' },
         { type: 'category', value: 'Interviews', id: 'c2' },
         { type: 'genre', value: 'Rock', id: 'g1' },
@@ -109,17 +105,16 @@ describe('ExploreSearchService', () => {
       expect(categoryOptions.some((o) => o.value === 'Misc')).toBe(false);
     });
 
-    it('should call all four sources in parallel', async () => {
+    it('should call the three option sources in parallel without fetching episodes', async () => {
       await service.getAutoCompleteOptions();
 
-      expect(mockEpisodeService.getVisibleEpisodes).toHaveBeenCalledTimes(1);
+      expect(mockEpisodeService.getVisibleEpisodes).not.toHaveBeenCalled();
       expect(mockCategoryService.getAllCategories).toHaveBeenCalledTimes(1);
       expect(mockGenreService.getAllGenres).toHaveBeenCalledTimes(1);
       expect(mockTagService.getAllTags).toHaveBeenCalledTimes(1);
     });
 
     it('should return empty array when all sources are empty', async () => {
-      mockEpisodeService.getVisibleEpisodes.mockResolvedValueOnce([]);
       mockCategoryService.getAllCategories.mockResolvedValueOnce([]);
       mockGenreService.getAllGenres.mockResolvedValueOnce([]);
       mockTagService.getAllTags.mockResolvedValueOnce([]);
@@ -131,38 +126,6 @@ describe('ExploreSearchService', () => {
   });
 
   describe('searchEpisodes', () => {
-    it('should look up episode by id when type is episode', async () => {
-      mockEpisodeService.getEpisodeById.mockResolvedValueOnce(episodes[0]);
-
-      const result = await service.searchEpisodes({
-        type: 'episode',
-        value: 'Hello World',
-        id: 'e1',
-      });
-
-      expect(mockEpisodeService.getEpisodeById).toHaveBeenCalledWith('e1');
-      expect(result).toEqual([episodes[0]]);
-    });
-
-    it('should return empty array when episode option has no id', async () => {
-      const result = await service.searchEpisodes({ type: 'episode', value: 'Hello World' });
-
-      expect(mockEpisodeService.getEpisodeById).not.toHaveBeenCalled();
-      expect(result).toEqual([]);
-    });
-
-    it('should return empty array when episode lookup throws (not found)', async () => {
-      mockEpisodeService.getEpisodeById.mockRejectedValueOnce(new Error('not found'));
-
-      const result = await service.searchEpisodes({
-        type: 'episode',
-        value: 'Hello World',
-        id: 'missing',
-      });
-
-      expect(result).toEqual([]);
-    });
-
     it('should filter visible episodes by embedded category id', async () => {
       const match = makeEpisode('e1', 'Hello World', { categories: [categories[0]] });
       mockEpisodeService.getVisibleEpisodes.mockResolvedValueOnce([
