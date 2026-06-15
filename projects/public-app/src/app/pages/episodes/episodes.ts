@@ -1,12 +1,14 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { Episode, EpisodeStore } from '@aj/core';
 import { EpisodeGrid } from '../../episode/episode-grid/episode-grid';
 
 @Component({
   selector: 'app-episodes',
-  imports: [ReactiveFormsModule, EpisodeGrid],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, EpisodeGrid],
   templateUrl: './episodes.html',
   styleUrl: './episodes.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

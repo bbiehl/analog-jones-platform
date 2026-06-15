@@ -4,17 +4,17 @@
     <p class="mb-6">Browse all available episodes, newest first.</p>
   </header>
 
-  <div class="search">
-    <label class="sr-only" for="episode-search">Search episodes by title</label>
+  <mat-form-field class="w-full max-w-xl" appearance="outline">
+    <mat-label>Search episodes by title</mat-label>
     <input
-      id="episode-search"
+      matInput
       type="search"
-      class="search-input"
-      placeholder="Search by title"
       autocomplete="off"
+      placeholder="Search by title"
+      aria-label="Search episodes by title"
       [formControl]="searchControl"
     />
-  </div>
+  </mat-form-field>
 
   @if (loading()) {
     <app-episode-grid [loading]="true" ariaLabel="Loading episodes" />
