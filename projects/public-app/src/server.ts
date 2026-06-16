@@ -187,7 +187,7 @@ app.use((req, res, next) => {
       if (
         req.method === 'GET' &&
         response.status === 200 &&
-        /^\/(episodes(\/[^/]+)?)?\/?$/.test(req.path)
+        /^\/(explorer|episodes(\/[^/]+)?)?\/?$/.test(req.path)
       ) {
         res.setHeader(
           'Cache-Control',
