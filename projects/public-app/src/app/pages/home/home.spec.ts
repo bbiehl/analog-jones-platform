@@ -12,8 +12,6 @@ import { Home } from './home';
 
 interface MockStore {
   episodes: WritableSignal<Episode[]>;
-  currentEpisode: WritableSignal<Episode | null>;
-  recentEpisodes: WritableSignal<Episode[]>;
   selectedEpisode: WritableSignal<Episode | null>;
   totalVisible: WritableSignal<number>;
   loading: WritableSignal<boolean>;
@@ -55,8 +53,6 @@ async function setup(initial: Partial<MockStore> = {}): Promise<{
 }> {
   const store: MockStore = {
     episodes: signal<Episode[]>([]),
-    currentEpisode: signal<Episode | null>(null),
-    recentEpisodes: signal<Episode[]>([]),
     selectedEpisode: signal<Episode | null>(null),
     totalVisible: signal(0),
     loading: signal(false),

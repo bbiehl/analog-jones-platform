@@ -159,29 +159,4 @@ describe('UserService', () => {
       await expect(service.getUserDoc('uid1')).rejects.toThrow('permission-denied');
     });
   });
-
-  describe('getAllUsers', () => {
-    it('should query users ordered by name and map docs to AppUser objects', async () => {
-      ops.getDocs.mockResolvedValueOnce({
-        docs: [
-          { id: 'u1', data: () => ({ email: 'a@x.com', name: 'A', role: 'admin' }) },
-          { id: 'u2', data: () => ({ email: 'b@x.com', name: 'B', role: 'member' }) },
-        ],
-      });
-
-      const result = await service.getAllUsers();
-
-      expect(ops.collection).toHaveBeenCalledWith(firestore, 'users');
-      expect(ops.orderBy).toHaveBeenCalledWith('name');
-      expect(result).toEqual([
-        { id: 'u1', email: 'a@x.com', name: 'A', role: 'admin' },
-        { id: 'u2', email: 'b@x.com', name: 'B', role: 'member' },
-      ]);
-    });
-
-    it('should return [] when there are no users', async () => {
-      ops.getDocs.mockResolvedValueOnce({ docs: [] });
-      expect(await service.getAllUsers()).toEqual([]);
-    });
-  });
 });

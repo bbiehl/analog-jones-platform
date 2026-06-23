@@ -81,48 +81,6 @@ export class EpisodeService {
     await this.ops.updateDoc(this.ops.doc(this.firestore, 'episodes', id), { isVisible });
   }
 
-  async getCurrentEpisode(): Promise<Episode | null> {
-    const q = this.ops.query(
-      this.ops.collection(this.firestore, 'episodes'),
-      this.ops.where('isVisible', '==', true),
-      this.ops.orderBy('episodeDate', 'desc'),
-      this.ops.limit(1),
-    );
-    const snapshot = await this.ops.getDocs(q);
-    if (snapshot.empty) {
-      return null;
-    }
-    return this.toEpisode(snapshot.docs[0]);
-  }
-
-  async getRecentEpisodes(): Promise<Episode[]> {
-    const q = this.ops.query(
-      this.ops.collection(this.firestore, 'episodes'),
-      this.ops.where('isVisible', '==', true),
-      this.ops.orderBy('episodeDate', 'desc'),
-      this.ops.limit(5),
-    );
-    const snapshot = await this.ops.getDocs(q);
-    return snapshot.docs.map((d) => this.toEpisode(d));
-  }
-
-  async getVisibleEpisodes(searchTerm?: string): Promise<Episode[]> {
-    const q = this.ops.query(
-      this.ops.collection(this.firestore, 'episodes'),
-      this.ops.where('isVisible', '==', true),
-      this.ops.orderBy('episodeDate', 'desc'),
-    );
-    const snapshot = await this.ops.getDocs(q);
-    let episodes = snapshot.docs.map((d) => this.toEpisode(d));
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      episodes = episodes.filter((e) => e.title.toLowerCase().includes(term));
-    }
-
-    return episodes;
-  }
-
   /**
    * Visible episodes for the archive list view (`/episodes`), transfer-cached so
    * the server-rendered route serializes the full list instead of a loading

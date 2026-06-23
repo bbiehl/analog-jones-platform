@@ -47,9 +47,6 @@ describe('EpisodeStore', () => {
   const mockEpisodeService = {
     getHomeEpisodes: vi.fn().mockResolvedValue(mockHomeBundle),
     getAllEpisodes: vi.fn().mockResolvedValue(mockEpisodes),
-    getCurrentEpisode: vi.fn().mockResolvedValue(mockEpisodes[0]),
-    getRecentEpisodes: vi.fn().mockResolvedValue(mockEpisodes),
-    getVisibleEpisodes: vi.fn().mockResolvedValue([mockEpisodes[0]]),
     getVisibleEpisodeList: vi.fn().mockResolvedValue([mockEpisodes[0]]),
     getEpisodeById: vi.fn().mockResolvedValue(mockSelectedEpisode),
     toggleEpisodeVisibility: vi.fn().mockResolvedValue(undefined),
@@ -67,9 +64,6 @@ describe('EpisodeStore', () => {
     // Re-set default resolved values after clearAllMocks
     mockEpisodeService.getHomeEpisodes.mockResolvedValue(mockHomeBundle);
     mockEpisodeService.getAllEpisodes.mockResolvedValue(mockEpisodes);
-    mockEpisodeService.getCurrentEpisode.mockResolvedValue(mockEpisodes[0]);
-    mockEpisodeService.getRecentEpisodes.mockResolvedValue(mockEpisodes);
-    mockEpisodeService.getVisibleEpisodes.mockResolvedValue([mockEpisodes[0]]);
     mockEpisodeService.getVisibleEpisodeList.mockResolvedValue([mockEpisodes[0]]);
     mockEpisodeService.getEpisodeById.mockResolvedValue(mockSelectedEpisode);
     mockEpisodeService.toggleEpisodeVisibility.mockResolvedValue(undefined);
@@ -81,14 +75,6 @@ describe('EpisodeStore', () => {
   describe('initial state', () => {
     it('should have empty episodes', () => {
       expect(store.episodes()).toEqual([]);
-    });
-
-    it('should have null currentEpisode', () => {
-      expect(store.currentEpisode()).toBeNull();
-    });
-
-    it('should have empty recentEpisodes', () => {
-      expect(store.recentEpisodes()).toEqual([]);
     });
 
     it('should have null selectedEpisode', () => {
@@ -157,46 +143,6 @@ describe('EpisodeStore', () => {
 
       expect(store.error()).toBe('home failed');
       expect(store.loading()).toBe(false);
-    });
-  });
-
-  describe('loadCurrentEpisode', () => {
-    it('should load current episode from service', async () => {
-      await store.loadCurrentEpisode();
-
-      expect(mockEpisodeService.getCurrentEpisode).toHaveBeenCalled();
-      expect(store.currentEpisode()).toEqual(mockEpisodes[0]);
-      expect(store.loading()).toBe(false);
-    });
-
-    it('should set error on failure', async () => {
-      mockEpisodeService.getCurrentEpisode.mockRejectedValueOnce(new Error('Fetch failed'));
-
-      await store.loadCurrentEpisode();
-
-      expect(store.error()).toBe('Fetch failed');
-      expect(store.loading()).toBe(false);
-      expect(store.currentEpisode()).toBeNull();
-    });
-  });
-
-  describe('loadRecentEpisodes', () => {
-    it('should load recent episodes from service', async () => {
-      await store.loadRecentEpisodes();
-
-      expect(mockEpisodeService.getRecentEpisodes).toHaveBeenCalled();
-      expect(store.recentEpisodes()).toEqual(mockEpisodes);
-      expect(store.loading()).toBe(false);
-    });
-
-    it('should set error on failure', async () => {
-      mockEpisodeService.getRecentEpisodes.mockRejectedValueOnce(new Error('Fetch failed'));
-
-      await store.loadRecentEpisodes();
-
-      expect(store.error()).toBe('Fetch failed');
-      expect(store.loading()).toBe(false);
-      expect(store.recentEpisodes()).toEqual([]);
     });
   });
 
