@@ -12,7 +12,7 @@ Angular 21 multi-project workspace powering two SSR apps on Cloud Run (public-ap
 
 - `projects/public-app` — public-facing SSR site
 - `projects/admin-app` — internal admin SSR app
-- `projects/core` — shared Angular library exposing all domain services/stores via `@aj/core` (subfolders: `category`, `episode`, `genre`, `tag`, `user`, `junction`, `shared`, `styles`)
+- `projects/core` — shared Angular library exposing all domain services/stores via `@aj/core` (subfolders: `category`, `episode`, `genre`, `tag`, `user`, `shared`, `styles`)
 
 ## Getting started
 
