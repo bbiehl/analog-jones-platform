@@ -5,8 +5,6 @@ import { EpisodeService } from './episode.service';
 
 interface EpisodeState {
   episodes: Episode[];
-  currentEpisode: Episode | null;
-  recentEpisodes: Episode[];
   selectedEpisode: Episode | null;
   totalVisible: number;
   loading: boolean;
@@ -15,8 +13,6 @@ interface EpisodeState {
 
 const initialState: EpisodeState = {
   episodes: [],
-  currentEpisode: null,
-  recentEpisodes: [],
   selectedEpisode: null,
   totalVisible: 0,
   loading: false,
@@ -64,26 +60,6 @@ export const EpisodeStore = signalStore(
           patchState(store, { episodes, loading: false });
         } catch (e) {
           if (token !== episodesToken) return;
-          patchState(store, { loading: false, error: (e as Error).message });
-        }
-      },
-
-      async loadCurrentEpisode() {
-        patchState(store, { loading: true, error: null });
-        try {
-          const currentEpisode = await episodeService.getCurrentEpisode();
-          patchState(store, { currentEpisode, loading: false });
-        } catch (e) {
-          patchState(store, { loading: false, error: (e as Error).message });
-        }
-      },
-
-      async loadRecentEpisodes() {
-        patchState(store, { loading: true, error: null });
-        try {
-          const recentEpisodes = await episodeService.getRecentEpisodes();
-          patchState(store, { recentEpisodes, loading: false });
-        } catch (e) {
           patchState(store, { loading: false, error: (e as Error).message });
         }
       },
