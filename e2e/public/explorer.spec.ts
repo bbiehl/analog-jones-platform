@@ -43,12 +43,15 @@ test.describe('Explorer search', () => {
     let matched = false;
     for (let i = 0; i < optionCount; i++) {
       await explorer.options.nth(i).click();
-      if (
-        await explorer.resultCards
-          .first()
-          .isVisible()
-          .catch(() => false)
-      ) {
+      // Selecting an option kicks off an async search + render, so wait for the
+      // results to appear rather than snapshotting visibility in the same tick
+      // (a non-retrying isVisible() here races the render and flakes on CI).
+      const appeared = await explorer.resultCards
+        .first()
+        .waitFor({ state: 'visible', timeout: 3000 })
+        .then(() => true)
+        .catch(() => false);
+      if (appeared) {
         matched = true;
         break;
       }
