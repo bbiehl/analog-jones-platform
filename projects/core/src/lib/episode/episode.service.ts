@@ -130,6 +130,23 @@ export class EpisodeService {
     });
   }
 
+  /**
+   * Open the Firestore WebChannel up front (browser) so the first
+   * user-triggered read — typically the episode-detail resolver on tap —
+   * reuses a warm connection instead of paying the cold ~600ms+ handshake.
+   * Deliberately NOT transfer-cached: the point is the network round-trip that
+   * establishes the channel, not the (discarded) data. A `limit(1)` read keeps
+   * it to a single document.
+   */
+  async warmConnection(): Promise<void> {
+    const q = this.ops.query(
+      this.ops.collection(this.firestore, 'episodes'),
+      this.ops.where('isVisible', '==', true),
+      this.ops.limit(1),
+    );
+    await this.ops.getDocs(q);
+  }
+
   async getEpisodeById(id: string): Promise<Episode> {
     const snap = await this.ops.getDoc(this.ops.doc(this.firestore, 'episodes', id));
     if (!snap.exists()) {

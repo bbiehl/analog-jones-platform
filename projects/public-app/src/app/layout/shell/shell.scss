@@ -16,6 +16,16 @@ mat-toolbar {
   border-bottom: 1px solid #2a2a3d;
 }
 
+// Pinned to the very top so an in-flight navigation shows motion without
+// shifting page layout (no reserved space when idle).
+.nav-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
 mat-sidenav {
   background: #0b0b12;
   border-left: 1px solid #2a2a3d;
