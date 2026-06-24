@@ -2,10 +2,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnDestroy,
+  PLATFORM_ID,
   computed,
   effect,
   inject,
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
@@ -36,6 +38,7 @@ export class EpisodeDetail implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly episodeStore = inject(EpisodeStore);
   private readonly relatedStore = inject(RelatedEpisodeStore);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   protected readonly id = toSignal(this.route.paramMap.pipe(map((p) => p.get('id'))), {
     initialValue: null,
@@ -67,7 +70,12 @@ export class EpisodeDetail implements OnDestroy {
       this.relatedStore.clearRelatedEpisodes();
     });
 
+    // Related episodes load in the browser only. Picking them scans the full
+    // visible archive; running that on the server would put the whole archive
+    // into the detail page's cold SSR render and transfer-state. The server
+    // renders the scroller skeleton instead and the client fills it after paint.
     effect(() => {
+      if (!this.isBrowser) return;
       const id = this.id();
       const ep = this.episode();
       if (id && ep && ep.id === id && ep.isVisible) {

@@ -1,10 +1,11 @@
 import { inject } from '@angular/core';
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
-import { Episode } from './episode.model';
+import { Episode, EpisodeListItem } from './episode.model';
 import { EpisodeService } from './episode.service';
 
 interface EpisodeState {
   episodes: Episode[];
+  listItems: EpisodeListItem[];
   selectedEpisode: Episode | null;
   totalVisible: number;
   loading: boolean;
@@ -13,6 +14,7 @@ interface EpisodeState {
 
 const initialState: EpisodeState = {
   episodes: [],
+  listItems: [],
   selectedEpisode: null,
   totalVisible: 0,
   loading: false,
@@ -31,6 +33,9 @@ export const EpisodeStore = signalStore(
     // Without this, a slow `loadHomeData` could land after `loadVisibleEpisodes`
     // and overwrite the full archive with the home page's truncated set.
     let episodesToken = 0;
+    // Separate token for the archive's slim `listItems` slice — it writes a
+    // different field than `episodes`, so it races independently.
+    let listItemsToken = 0;
 
     return {
       async loadHomeData() {
@@ -64,15 +69,15 @@ export const EpisodeStore = signalStore(
         }
       },
 
-      async loadVisibleEpisodes() {
-        const token = ++episodesToken;
+      async loadEpisodeListItems() {
+        const token = ++listItemsToken;
         patchState(store, { loading: true, error: null });
         try {
-          const episodes = await episodeService.getVisibleEpisodeList();
-          if (token !== episodesToken) return;
-          patchState(store, { episodes, loading: false });
+          const listItems = await episodeService.getEpisodeListItems();
+          if (token !== listItemsToken) return;
+          patchState(store, { listItems, loading: false });
         } catch (e) {
-          if (token !== episodesToken) return;
+          if (token !== listItemsToken) return;
           patchState(store, { loading: false, error: (e as Error).message });
         }
       },

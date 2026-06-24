@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, DeferBlockState, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Timestamp } from 'firebase/firestore';
 
@@ -42,11 +42,23 @@ describe('EpisodeGrid', () => {
     }
   }
 
+  // Cards live in per-card `@defer (hydrate on viewport)` blocks: server-rendered
+  // in prod, but dehydrated in the test environment. Force them to their complete
+  // state so the card markup is queryable.
+  async function renderCards() {
+    fixture.detectChanges();
+    const blocks = await fixture.getDeferBlocks();
+    for (const block of blocks) {
+      await block.render(DeferBlockState.Complete);
+    }
+    fixture.detectChanges();
+  }
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  it('renders one .card per episode', () => {
+  it('renders one .card per episode', async () => {
     setInputs({
       episodes: [
         makeEpisode({ id: 'a', title: 'A' }),
@@ -54,7 +66,7 @@ describe('EpisodeGrid', () => {
         makeEpisode({ id: 'c', title: 'C' }),
       ],
     });
-    fixture.detectChanges();
+    await renderCards();
     const cards = fixture.nativeElement.querySelectorAll('.card:not(.card--skeleton)');
     expect(cards.length).toBe(3);
   });
@@ -78,23 +90,23 @@ describe('EpisodeGrid', () => {
     expect(fixture.nativeElement.querySelector('.grid-heading').textContent).toContain('Action');
   });
 
-  it('routerPrefix flows into per-item href (default /episodes)', () => {
+  it('routerPrefix flows into per-item href (default /episodes)', async () => {
     setInputs({ episodes: [makeEpisode({ id: 'ep-42' })] });
-    fixture.detectChanges();
+    await renderCards();
     const anchor: HTMLAnchorElement = fixture.nativeElement.querySelector('.card a');
     expect(anchor.getAttribute('href')).toBe('/episodes/ep-42');
   });
 
-  it('routerPrefix flows into per-item href (custom)', () => {
+  it('routerPrefix flows into per-item href (custom)', async () => {
     setInputs({ episodes: [makeEpisode({ id: 'ep-7' })], routerPrefix: '/archive' });
-    fixture.detectChanges();
+    await renderCards();
     const anchor: HTMLAnchorElement = fixture.nativeElement.querySelector('.card a');
     expect(anchor.getAttribute('href')).toBe('/archive/ep-7');
   });
 
-  it('gives the card link an accessible name from the episode title', () => {
+  it('gives the card link an accessible name from the episode title', async () => {
     setInputs({ episodes: [makeEpisode({ title: 'Tape 99' })] });
-    fixture.detectChanges();
+    await renderCards();
     const anchor: HTMLAnchorElement = fixture.nativeElement.querySelector('.card a');
     expect(anchor.getAttribute('aria-label')).toBe('Tape 99');
   });

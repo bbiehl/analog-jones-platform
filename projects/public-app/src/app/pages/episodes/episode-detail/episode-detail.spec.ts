@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { PLATFORM_ID, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
@@ -229,6 +229,30 @@ describe('EpisodeDetail', () => {
 
     it('does not load related episodes when no episode is selected', async () => {
       await createComponent('ep123456ABC');
+      expect(mockRelatedEpisodeStore.loadRelatedEpisodes).not.toHaveBeenCalled();
+    });
+
+    it('does not load related episodes on the server (keeps the archive scan off the SSR path)', async () => {
+      const paramMap$ = of(convertToParamMap({ id: 'ep123456ABC' }));
+      selectedEpisode.set(makeEpisode({ id: 'ep123456ABC', isVisible: true }));
+
+      TestBed.configureTestingModule({
+        imports: [EpisodeDetail],
+        providers: [
+          provideRouter([]),
+          { provide: PLATFORM_ID, useValue: 'server' },
+          { provide: EpisodeStore, useValue: mockEpisodeStore },
+          { provide: RelatedEpisodeStore, useValue: mockRelatedEpisodeStore },
+          { provide: ActivatedRoute, useValue: { paramMap: paramMap$, data: of({}) } },
+        ],
+      });
+
+      await TestBed.compileComponents();
+      fixture = TestBed.createComponent(EpisodeDetail);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
       expect(mockRelatedEpisodeStore.loadRelatedEpisodes).not.toHaveBeenCalled();
     });
   });

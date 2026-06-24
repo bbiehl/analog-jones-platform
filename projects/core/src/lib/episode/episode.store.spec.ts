@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Timestamp } from 'firebase/firestore';
 import { EpisodeStore } from './episode.store';
 import { EpisodeService } from './episode.service';
-import { Episode } from './episode.model';
+import { Episode, EpisodeListItem } from './episode.model';
 
 describe('EpisodeStore', () => {
   let store: InstanceType<typeof EpisodeStore>;
@@ -35,6 +35,11 @@ describe('EpisodeStore', () => {
     },
   ];
 
+  const mockListItems: EpisodeListItem[] = [
+    { id: 'ep1', title: 'Episode One', episodeDate: Timestamp.fromDate(new Date('2026-01-01')) },
+    { id: 'ep2', title: 'Episode Two', episodeDate: Timestamp.fromDate(new Date('2026-02-01')) },
+  ];
+
   // selectedEpisode is now a plain Episode (taxonomy is embedded).
   const mockSelectedEpisode: Episode = mockEpisodes[0];
 
@@ -47,7 +52,7 @@ describe('EpisodeStore', () => {
   const mockEpisodeService = {
     getHomeEpisodes: vi.fn().mockResolvedValue(mockHomeBundle),
     getAllEpisodes: vi.fn().mockResolvedValue(mockEpisodes),
-    getVisibleEpisodeList: vi.fn().mockResolvedValue([mockEpisodes[0]]),
+    getEpisodeListItems: vi.fn().mockResolvedValue([mockListItems[0]]),
     getEpisodeById: vi.fn().mockResolvedValue(mockSelectedEpisode),
     toggleEpisodeVisibility: vi.fn().mockResolvedValue(undefined),
     createEpisode: vi.fn().mockResolvedValue('new-id'),
@@ -64,7 +69,7 @@ describe('EpisodeStore', () => {
     // Re-set default resolved values after clearAllMocks
     mockEpisodeService.getHomeEpisodes.mockResolvedValue(mockHomeBundle);
     mockEpisodeService.getAllEpisodes.mockResolvedValue(mockEpisodes);
-    mockEpisodeService.getVisibleEpisodeList.mockResolvedValue([mockEpisodes[0]]);
+    mockEpisodeService.getEpisodeListItems.mockResolvedValue([mockListItems[0]]);
     mockEpisodeService.getEpisodeById.mockResolvedValue(mockSelectedEpisode);
     mockEpisodeService.toggleEpisodeVisibility.mockResolvedValue(undefined);
     mockEpisodeService.createEpisode.mockResolvedValue('new-id');
@@ -146,44 +151,91 @@ describe('EpisodeStore', () => {
     });
   });
 
-  describe('loadVisibleEpisodes', () => {
-    it('should load the visible episode list', async () => {
-      await store.loadVisibleEpisodes();
-
-      expect(mockEpisodeService.getVisibleEpisodeList).toHaveBeenCalled();
-      expect(store.episodes()).toEqual([mockEpisodes[0]]);
-      expect(store.loading()).toBe(false);
-    });
-
-    it('should set error on failure', async () => {
-      mockEpisodeService.getVisibleEpisodeList.mockRejectedValueOnce(new Error('Search failed'));
-
-      await store.loadVisibleEpisodes();
-
-      expect(store.error()).toBe('Search failed');
-      expect(store.loading()).toBe(false);
-    });
-
-    it('should not let a slower loadHomeData overwrite a later archive load', async () => {
-      // Start home load, leave it pending; then start the archive load.
+  describe('episodes-slice race condition', () => {
+    it('should not let a slower loadHomeData overwrite a later loadEpisodes', async () => {
+      // loadHomeData and loadEpisodes share `episodesToken`; whichever STARTED
+      // last must win regardless of resolution order.
       let resolveHome!: (v: typeof mockHomeBundle) => void;
       mockEpisodeService.getHomeEpisodes.mockImplementationOnce(
         () => new Promise((r) => (resolveHome = r)),
       );
-      const archiveList = [mockEpisodes[0], mockEpisodes[1]];
-      mockEpisodeService.getVisibleEpisodeList.mockResolvedValueOnce(archiveList);
+      const fullList = [mockEpisodes[0], mockEpisodes[1]];
+      mockEpisodeService.getAllEpisodes.mockResolvedValueOnce(fullList);
 
       const homeCall = store.loadHomeData(); // started first
-      const archiveCall = store.loadVisibleEpisodes(); // started later — should win
-      await archiveCall;
+      const listCall = store.loadEpisodes(); // started later — should win
+      await listCall;
 
-      expect(store.episodes()).toEqual(archiveList);
+      expect(store.episodes()).toEqual(fullList);
 
-      // Home resolves last but is superseded — must not clobber the archive.
+      // Home resolves last but is superseded — must not clobber the list.
       resolveHome(mockHomeBundle);
       await homeCall;
 
-      expect(store.episodes()).toEqual(archiveList);
+      expect(store.episodes()).toEqual(fullList);
+      expect(store.loading()).toBe(false);
+    });
+  });
+
+  describe('loadEpisodeListItems', () => {
+    it('should load the slim list items into the listItems slice', async () => {
+      await store.loadEpisodeListItems();
+
+      expect(mockEpisodeService.getEpisodeListItems).toHaveBeenCalled();
+      expect(store.listItems()).toEqual([mockListItems[0]]);
+      expect(store.episodes()).toEqual([]);
+      expect(store.loading()).toBe(false);
+    });
+
+    it('should set error on failure', async () => {
+      mockEpisodeService.getEpisodeListItems.mockRejectedValueOnce(new Error('List failed'));
+
+      await store.loadEpisodeListItems();
+
+      expect(store.error()).toBe('List failed');
+      expect(store.loading()).toBe(false);
+      expect(store.listItems()).toEqual([]);
+    });
+
+    it('should let the later load win when two run concurrently', async () => {
+      // First call left pending; a second call starts and should supersede it.
+      let resolveFirst!: (v: EpisodeListItem[]) => void;
+      mockEpisodeService.getEpisodeListItems.mockImplementationOnce(
+        () => new Promise((r) => (resolveFirst = r)),
+      );
+      mockEpisodeService.getEpisodeListItems.mockResolvedValueOnce([mockListItems[1]]);
+
+      const firstCall = store.loadEpisodeListItems(); // started first
+      const secondCall = store.loadEpisodeListItems(); // started later — should win
+      await secondCall;
+
+      expect(store.listItems()).toEqual([mockListItems[1]]);
+
+      // First resolves last but is superseded — must not clobber the winner.
+      resolveFirst([mockListItems[0]]);
+      await firstCall;
+
+      expect(store.listItems()).toEqual([mockListItems[1]]);
+      expect(store.loading()).toBe(false);
+    });
+
+    it('should not surface an error from a superseded load that rejects late', async () => {
+      // First call rejects, but only after a later call has already won; the
+      // stale rejection must not overwrite the winner's state with an error.
+      let rejectFirst!: (e: Error) => void;
+      mockEpisodeService.getEpisodeListItems.mockImplementationOnce(
+        () => new Promise((_resolve, reject) => (rejectFirst = reject)),
+      );
+      mockEpisodeService.getEpisodeListItems.mockResolvedValueOnce([mockListItems[1]]);
+
+      const firstCall = store.loadEpisodeListItems();
+      await store.loadEpisodeListItems(); // supersedes the first
+
+      rejectFirst(new Error('stale failure'));
+      await firstCall;
+
+      expect(store.error()).toBeNull();
+      expect(store.listItems()).toEqual([mockListItems[1]]);
       expect(store.loading()).toBe(false);
     });
   });
