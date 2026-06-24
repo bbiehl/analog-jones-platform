@@ -24,7 +24,7 @@
     </div>
   </section>
 
-  @if (relatedLoading() || (loading() && !episodeMatchesRoute())) {
+  @if (!relatedLoaded() || relatedLoading() || (loading() && !episodeMatchesRoute())) {
     <app-episode-scroller-skeleton />
   } @else if (episodeMatchesRoute() && relatedEpisodes().length) {
     <app-episode-scroller

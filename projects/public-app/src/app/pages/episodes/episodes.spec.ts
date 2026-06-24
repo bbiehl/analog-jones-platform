@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, DeferBlockState, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { Timestamp } from 'firebase/firestore';
@@ -30,21 +30,33 @@ describe('Episodes', () => {
   const error = signal<string | null>(null);
 
   const mockStore = {
-    episodes,
+    listItems: episodes,
     loading,
     error,
-    loadVisibleEpisodes: vi.fn().mockResolvedValue(undefined),
+    loadEpisodeListItems: vi.fn().mockResolvedValue(undefined),
   };
 
   function cards(): NodeListOf<Element> {
     return fixture.nativeElement.querySelectorAll('.episode-grid [role="listitem"]');
   }
 
+  // Grid cards render inside per-card `@defer (hydrate on viewport)` blocks, which
+  // are dehydrated in the test environment. Force them to complete so the card
+  // markup is queryable.
+  async function renderCards(): Promise<void> {
+    fixture.detectChanges();
+    const blocks = await fixture.getDeferBlocks();
+    for (const block of blocks) {
+      await block.render(DeferBlockState.Complete);
+    }
+    fixture.detectChanges();
+  }
+
   beforeEach(async () => {
     episodes.set([]);
     loading.set(false);
     error.set(null);
-    mockStore.loadVisibleEpisodes.mockClear();
+    mockStore.loadEpisodeListItems.mockClear();
 
     await TestBed.configureTestingModule({
       imports: [Episodes],
@@ -61,8 +73,8 @@ describe('Episodes', () => {
     expect(component).toBeTruthy();
   });
 
-  it('loads visible episodes on init', () => {
-    expect(mockStore.loadVisibleEpisodes).toHaveBeenCalled();
+  it('loads the slim episode list on init', () => {
+    expect(mockStore.loadEpisodeListItems).toHaveBeenCalled();
   });
 
   it('renders the page heading and intro copy', () => {
@@ -96,12 +108,12 @@ describe('Episodes', () => {
       expect(cards().length).toBe(0);
     });
 
-    it('keeps showing episodes and suppresses a stale error when data is present', () => {
+    it('keeps showing episodes and suppresses a stale error when data is present', async () => {
       // A late error from another page's shared-store op must not blank a
       // populated archive grid.
       episodes.set([makeEpisode('e1', 'A')]);
       error.set('Something went wrong');
-      fixture.detectChanges();
+      await renderCards();
 
       expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
       expect(cards().length).toBe(1);
@@ -128,14 +140,16 @@ describe('Episodes', () => {
       fixture.detectChanges();
     });
 
-    it('renders one card per episode in store order', () => {
+    it('renders one card per episode in store order', async () => {
+      await renderCards();
       const names = Array.from(cards()).map(
         (el) => el.querySelector('.name')?.textContent?.trim() ?? '',
       );
       expect(names).toEqual(['Aliens', 'Predator', 'The Thing']);
     });
 
-    it('links each card to its detail route', () => {
+    it('links each card to its detail route', async () => {
+      await renderCards();
       const link = cards()[0].querySelector('a');
       expect(link?.getAttribute('href')).toContain('/episodes/e1');
     });
@@ -158,9 +172,9 @@ describe('Episodes', () => {
       fixture.detectChanges();
     });
 
-    it('narrows the rendered cards case-insensitively', () => {
+    it('narrows the rendered cards case-insensitively', async () => {
       component['searchControl'].setValue('alien');
-      fixture.detectChanges();
+      await renderCards();
 
       const names = Array.from(cards()).map(
         (el) => el.querySelector('.name')?.textContent?.trim() ?? '',
@@ -177,13 +191,13 @@ describe('Episodes', () => {
       expect(fixture.nativeElement.textContent).not.toContain('No episodes found.');
     });
 
-    it('restores the full list when the search is cleared', () => {
+    it('restores the full list when the search is cleared', async () => {
       component['searchControl'].setValue('predator');
-      fixture.detectChanges();
+      await renderCards();
       expect(cards().length).toBe(1);
 
       component['searchControl'].setValue('');
-      fixture.detectChanges();
+      await renderCards();
       expect(cards().length).toBe(3);
     });
   });

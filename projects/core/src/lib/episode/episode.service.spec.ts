@@ -192,6 +192,55 @@ describe('EpisodeService', () => {
     });
   });
 
+  describe('getEpisodeListItems', () => {
+    it('should query visible episodes ordered by episodeDate desc', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [{ id: 'ep1', data: () => ({ title: 'A', isVisible: true }) }],
+      });
+
+      const result = await service.getEpisodeListItems();
+
+      expect(ops.where).toHaveBeenCalledWith('isVisible', '==', true);
+      expect(ops.orderBy).toHaveBeenCalledWith('episodeDate', 'desc');
+      expect(result.map((e) => e.id)).toEqual(['ep1']);
+    });
+
+    it('should project to id/title/episodeDate only, dropping taxonomy and intelligence', async () => {
+      const episodeDate = { __ts: 1 } as unknown;
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [
+          {
+            id: 'ep1',
+            data: () => ({
+              title: 'Heavy',
+              isVisible: true,
+              episodeDate,
+              links: { spotify: 's' },
+              categories: [{ id: 'c1', name: 'History', slug: 'history' }],
+              genres: [{ id: 'g1', name: 'Action', slug: 'action' }],
+              tags: [{ id: 't1', name: 'Featured', slug: 'featured' }],
+              intelligence: 'a very long markdown summary that should not be inlined into SSR',
+            }),
+          },
+        ],
+      });
+
+      const [item] = await service.getEpisodeListItems();
+
+      expect(item).toEqual({ id: 'ep1', title: 'Heavy', episodeDate });
+    });
+
+    it('should default a missing title to an empty string', async () => {
+      ops.getDocs.mockResolvedValueOnce({
+        docs: [{ id: 'ep1', data: () => ({ isVisible: true }) }],
+      });
+
+      const [item] = await service.getEpisodeListItems();
+
+      expect(item.title).toBe('');
+    });
+  });
+
   describe('getEpisodeById', () => {
     it('should throw when the snapshot does not exist', async () => {
       ops.getDoc.mockResolvedValueOnce({ exists: () => false });

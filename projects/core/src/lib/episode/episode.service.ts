@@ -4,7 +4,7 @@ import { CategoryService } from '../category/category.service';
 import { GenreService } from '../genre/genre.service';
 import { TagService } from '../tag/tag.service';
 import { TransferCacheService } from '../shared/transfer-state.helpers';
-import { Episode } from './episode.model';
+import { Episode, EpisodeListItem } from './episode.model';
 
 export class EpisodeNotFoundError extends Error {
   constructor(id: string) {
@@ -100,6 +100,33 @@ export class EpisodeService {
       );
       const snapshot = await this.ops.getDocs(q);
       return snapshot.docs.map((d) => ({ ...this.toEpisode(d), intelligence: null }));
+    });
+  }
+
+  /**
+   * Slim visible-episode list for the archive view (`/episodes`), transfer-cached
+   * under its own key. The grid only renders id/title/episodeDate, so projecting
+   * to those fields keeps the denormalized taxonomy arrays (and `intelligence`)
+   * out of the SSR transfer-state payload — a much smaller blob to download,
+   * parse, and hydrate on mobile. Callers needing taxonomy use
+   * `getVisibleEpisodeList`.
+   */
+  async getEpisodeListItems(): Promise<EpisodeListItem[]> {
+    return this.transferCache.cached('episodes.listItems', async () => {
+      const q = this.ops.query(
+        this.ops.collection(this.firestore, 'episodes'),
+        this.ops.where('isVisible', '==', true),
+        this.ops.orderBy('episodeDate', 'desc'),
+      );
+      const snapshot = await this.ops.getDocs(q);
+      return snapshot.docs.map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          title: (data['title'] as string) ?? '',
+          episodeDate: data['episodeDate'] as EpisodeListItem['episodeDate'],
+        };
+      });
     });
   }
 

@@ -3,7 +3,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { Episode, EpisodeStore } from '@aj/core';
+import { EpisodeListItem, EpisodeStore } from '@aj/core';
 import { EpisodeGrid } from '../../episode/episode-grid/episode-grid';
 
 @Component({
@@ -21,9 +21,9 @@ export class Episodes implements OnInit {
 
   protected readonly loading = this.store.loading;
   protected readonly error = this.store.error;
-  protected readonly episodes = computed(() => this.store.episodes());
+  protected readonly episodes = computed(() => this.store.listItems());
 
-  protected readonly filtered = computed<Episode[]>(() => {
+  protected readonly filtered = computed<EpisodeListItem[]>(() => {
     const term = this.searchTerm().trim().toLowerCase();
     const episodes = this.episodes();
     if (!term) return episodes;
@@ -34,6 +34,6 @@ export class Episodes implements OnInit {
   protected readonly hasSearch = computed(() => this.searchTerm().trim().length > 0);
 
   ngOnInit(): void {
-    this.store.loadVisibleEpisodes();
+    this.store.loadEpisodeListItems();
   }
 }

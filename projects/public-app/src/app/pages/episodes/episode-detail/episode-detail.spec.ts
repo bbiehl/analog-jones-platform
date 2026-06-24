@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { PLATFORM_ID, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
@@ -33,6 +33,7 @@ describe('EpisodeDetail', () => {
   let error: ReturnType<typeof signal<string | null>>;
   let relatedEpisodes: ReturnType<typeof signal<Episode[]>>;
   let relatedLoading: ReturnType<typeof signal<boolean>>;
+  let relatedLoaded: ReturnType<typeof signal<boolean>>;
 
   let mockEpisodeStore: {
     selectedEpisode: () => Episode | null;
@@ -45,6 +46,7 @@ describe('EpisodeDetail', () => {
   let mockRelatedEpisodeStore: {
     relatedEpisodes: () => Episode[];
     loading: () => boolean;
+    loaded: () => boolean;
     error: () => string | null;
     loadRelatedEpisodes: ReturnType<typeof vi.fn>;
     clearRelatedEpisodes: ReturnType<typeof vi.fn>;
@@ -76,6 +78,7 @@ describe('EpisodeDetail', () => {
     error = signal<string | null>(null);
     relatedEpisodes = signal<Episode[]>([]);
     relatedLoading = signal<boolean>(false);
+    relatedLoaded = signal<boolean>(false);
 
     mockEpisodeStore = {
       selectedEpisode: () => selectedEpisode(),
@@ -88,6 +91,7 @@ describe('EpisodeDetail', () => {
     mockRelatedEpisodeStore = {
       relatedEpisodes: () => relatedEpisodes(),
       loading: () => relatedLoading(),
+      loaded: () => relatedLoaded(),
       error: () => null,
       loadRelatedEpisodes: vi.fn().mockResolvedValue(undefined),
       clearRelatedEpisodes: vi.fn(),
@@ -144,9 +148,23 @@ describe('EpisodeDetail', () => {
       expect(fixture.debugElement.query(By.css('.no-crossrefs'))).toBeFalsy();
     });
 
+    it('shows the scroller skeleton until related episodes have loaded (server/initial state)', async () => {
+      // Related is browser-only and unresolved here (loaded=false). The view must
+      // show the skeleton, NOT prematurely assert "no related episodes exist".
+      selectedEpisode.set(makeEpisode());
+      relatedEpisodes.set([]);
+      relatedLoaded.set(false);
+      await createComponent('ep1');
+
+      expect(fixture.debugElement.query(By.css('app-episode-scroller-skeleton'))).toBeTruthy();
+      expect(fixture.debugElement.query(By.css('.no-crossrefs'))).toBeFalsy();
+      expect(fixture.debugElement.query(By.css('app-episode-scroller'))).toBeFalsy();
+    });
+
     it('renders the scroller when related episodes are available', async () => {
       selectedEpisode.set(makeEpisode());
       relatedEpisodes.set([makeEpisode({ id: 'ep2' }), makeEpisode({ id: 'ep3' })]);
+      relatedLoaded.set(true);
       await createComponent('ep1');
 
       expect(fixture.debugElement.query(By.css('app-episode-scroller'))).toBeTruthy();
@@ -155,6 +173,7 @@ describe('EpisodeDetail', () => {
 
     it('renders the no-crossrefs fallback when episode loaded but no related episodes', async () => {
       selectedEpisode.set(makeEpisode());
+      relatedLoaded.set(true);
       await createComponent('ep1');
 
       const card = fixture.debugElement.query(By.css('.no-crossrefs-card'));
@@ -190,6 +209,7 @@ describe('EpisodeDetail', () => {
     it('hides stale related episodes when the loaded episode id does not match the route id', async () => {
       selectedEpisode.set(makeEpisode({ id: 'previous' }));
       relatedEpisodes.set([makeEpisode({ id: 'ep2' })]);
+      relatedLoaded.set(true);
       await createComponent('current');
 
       expect(fixture.debugElement.query(By.css('app-episode-scroller'))).toBeFalsy();
@@ -229,6 +249,30 @@ describe('EpisodeDetail', () => {
 
     it('does not load related episodes when no episode is selected', async () => {
       await createComponent('ep123456ABC');
+      expect(mockRelatedEpisodeStore.loadRelatedEpisodes).not.toHaveBeenCalled();
+    });
+
+    it('does not load related episodes on the server (keeps the archive scan off the SSR path)', async () => {
+      const paramMap$ = of(convertToParamMap({ id: 'ep123456ABC' }));
+      selectedEpisode.set(makeEpisode({ id: 'ep123456ABC', isVisible: true }));
+
+      TestBed.configureTestingModule({
+        imports: [EpisodeDetail],
+        providers: [
+          provideRouter([]),
+          { provide: PLATFORM_ID, useValue: 'server' },
+          { provide: EpisodeStore, useValue: mockEpisodeStore },
+          { provide: RelatedEpisodeStore, useValue: mockRelatedEpisodeStore },
+          { provide: ActivatedRoute, useValue: { paramMap: paramMap$, data: of({}) } },
+        ],
+      });
+
+      await TestBed.compileComponents();
+      fixture = TestBed.createComponent(EpisodeDetail);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
       expect(mockRelatedEpisodeStore.loadRelatedEpisodes).not.toHaveBeenCalled();
     });
   });

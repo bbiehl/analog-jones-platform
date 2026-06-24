@@ -52,6 +52,7 @@ describe('RelatedEpisodeStore', () => {
   it('should have correct initial state', () => {
     expect(store.relatedEpisodes()).toEqual([]);
     expect(store.loading()).toBe(false);
+    expect(store.loaded()).toBe(false);
     expect(store.error()).toBeNull();
   });
 
@@ -62,7 +63,16 @@ describe('RelatedEpisodeStore', () => {
       expect(mockService.getRelatedEpisodes).toHaveBeenCalledWith(episode);
       expect(store.relatedEpisodes()).toEqual(mockRelated);
       expect(store.loading()).toBe(false);
+      expect(store.loaded()).toBe(true);
       expect(store.error()).toBeNull();
+    });
+
+    it('should mark loaded=true even when the service throws', async () => {
+      mockService.getRelatedEpisodes.mockRejectedValueOnce(new Error('Network error'));
+
+      await store.loadRelatedEpisodes(episode);
+
+      expect(store.loaded()).toBe(true);
     });
 
     it('should set loading true during the request and reset it after', async () => {
@@ -126,13 +136,15 @@ describe('RelatedEpisodeStore', () => {
   });
 
   describe('clearRelatedEpisodes', () => {
-    it('should empty relatedEpisodes', async () => {
+    it('should empty relatedEpisodes and reset loaded', async () => {
       await store.loadRelatedEpisodes(episode);
       expect(store.relatedEpisodes()).toEqual(mockRelated);
+      expect(store.loaded()).toBe(true);
 
       store.clearRelatedEpisodes();
 
       expect(store.relatedEpisodes()).toEqual([]);
+      expect(store.loaded()).toBe(false);
     });
 
     it('should leave error and loading untouched', async () => {

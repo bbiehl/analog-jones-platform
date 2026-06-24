@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, DeferBlockState, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { WritableSignal, signal } from '@angular/core';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
@@ -287,6 +287,13 @@ describe('Explorer', () => {
       mockStore.results.set([makeEpisode('e1', 'First'), makeEpisode('e2', 'Second')]);
       fixture.detectChanges();
       await fixture.whenStable();
+
+      // Grid cards render in per-card `@defer (hydrate on viewport)` blocks;
+      // force them complete so the card titles are present in the DOM.
+      for (const block of await fixture.getDeferBlocks()) {
+        await block.render(DeferBlockState.Complete);
+      }
+      fixture.detectChanges();
 
       const host = fixture.nativeElement as HTMLElement;
       const grid = host.querySelector('app-episode-grid');

@@ -20,3 +20,14 @@ export interface Episode {
   genres: Genre[];
   tags: Tag[];
 }
+
+/**
+ * Minimal episode shape for the archive list view (`/episodes`). The grid only
+ * renders title + date, so the list loader projects to these three fields to keep
+ * the unbounded taxonomy arrays out of the server-rendered transfer-state payload.
+ */
+export interface EpisodeListItem {
+  id: string;
+  title: string;
+  episodeDate: Timestamp;
+}

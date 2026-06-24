@@ -10,14 +10,31 @@
 } @else {
   <div class="episode-grid" role="list" [attr.aria-label]="ariaLabel()">
     @for (ep of episodes(); track ep.id) {
-      <article class="card" role="listitem">
-        <a [routerLink]="[routerPrefix(), ep.id]" [attr.aria-label]="ep.title">
-          <div class="meta">
-            <span>{{ toDate(ep) | date: 'MMM dd · yyyy' | uppercase }}</span>
-          </div>
-          <div class="name">{{ ep.title }}</div>
-        </a>
-      </article>
+      <!--
+        Cards are server-rendered (full SSR HTML for SEO + no layout shift), but
+        hydration is deferred until each card scrolls into view. On a cold mobile
+        load this keeps the archive's per-card JS off the critical path; offscreen
+        cards never hydrate until needed.
+
+        `on immediate` is the regular (client-render) trigger; `hydrate on viewport`
+        is the SSR-hydration trigger. The two paths are independent: SSR'd cards
+        ignore `on immediate` and hydrate on viewport, while grids created purely
+        on the client (explorer search results, the archive's own title filter —
+        no dehydrated DOM to hydrate) use `on immediate` and render right away.
+        Without an explicit regular trigger, a client-created block would fall back
+        to the default `on idle` and show a blank grid (there is no @placeholder)
+        until idle fires.
+      -->
+      @defer (on immediate; hydrate on viewport) {
+        <article class="card" role="listitem">
+          <a [routerLink]="[routerPrefix(), ep.id]" [attr.aria-label]="ep.title">
+            <div class="meta">
+              <span>{{ toDate(ep) | date: 'MMM dd · yyyy' | uppercase }}</span>
+            </div>
+            <div class="name">{{ ep.title }}</div>
+          </a>
+        </article>
+      }
     }
   </div>
 }
