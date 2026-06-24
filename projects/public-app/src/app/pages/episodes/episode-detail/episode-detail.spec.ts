@@ -33,6 +33,7 @@ describe('EpisodeDetail', () => {
   let error: ReturnType<typeof signal<string | null>>;
   let relatedEpisodes: ReturnType<typeof signal<Episode[]>>;
   let relatedLoading: ReturnType<typeof signal<boolean>>;
+  let relatedLoaded: ReturnType<typeof signal<boolean>>;
 
   let mockEpisodeStore: {
     selectedEpisode: () => Episode | null;
@@ -45,6 +46,7 @@ describe('EpisodeDetail', () => {
   let mockRelatedEpisodeStore: {
     relatedEpisodes: () => Episode[];
     loading: () => boolean;
+    loaded: () => boolean;
     error: () => string | null;
     loadRelatedEpisodes: ReturnType<typeof vi.fn>;
     clearRelatedEpisodes: ReturnType<typeof vi.fn>;
@@ -76,6 +78,7 @@ describe('EpisodeDetail', () => {
     error = signal<string | null>(null);
     relatedEpisodes = signal<Episode[]>([]);
     relatedLoading = signal<boolean>(false);
+    relatedLoaded = signal<boolean>(false);
 
     mockEpisodeStore = {
       selectedEpisode: () => selectedEpisode(),
@@ -88,6 +91,7 @@ describe('EpisodeDetail', () => {
     mockRelatedEpisodeStore = {
       relatedEpisodes: () => relatedEpisodes(),
       loading: () => relatedLoading(),
+      loaded: () => relatedLoaded(),
       error: () => null,
       loadRelatedEpisodes: vi.fn().mockResolvedValue(undefined),
       clearRelatedEpisodes: vi.fn(),
@@ -144,9 +148,23 @@ describe('EpisodeDetail', () => {
       expect(fixture.debugElement.query(By.css('.no-crossrefs'))).toBeFalsy();
     });
 
+    it('shows the scroller skeleton until related episodes have loaded (server/initial state)', async () => {
+      // Related is browser-only and unresolved here (loaded=false). The view must
+      // show the skeleton, NOT prematurely assert "no related episodes exist".
+      selectedEpisode.set(makeEpisode());
+      relatedEpisodes.set([]);
+      relatedLoaded.set(false);
+      await createComponent('ep1');
+
+      expect(fixture.debugElement.query(By.css('app-episode-scroller-skeleton'))).toBeTruthy();
+      expect(fixture.debugElement.query(By.css('.no-crossrefs'))).toBeFalsy();
+      expect(fixture.debugElement.query(By.css('app-episode-scroller'))).toBeFalsy();
+    });
+
     it('renders the scroller when related episodes are available', async () => {
       selectedEpisode.set(makeEpisode());
       relatedEpisodes.set([makeEpisode({ id: 'ep2' }), makeEpisode({ id: 'ep3' })]);
+      relatedLoaded.set(true);
       await createComponent('ep1');
 
       expect(fixture.debugElement.query(By.css('app-episode-scroller'))).toBeTruthy();
@@ -155,6 +173,7 @@ describe('EpisodeDetail', () => {
 
     it('renders the no-crossrefs fallback when episode loaded but no related episodes', async () => {
       selectedEpisode.set(makeEpisode());
+      relatedLoaded.set(true);
       await createComponent('ep1');
 
       const card = fixture.debugElement.query(By.css('.no-crossrefs-card'));
@@ -190,6 +209,7 @@ describe('EpisodeDetail', () => {
     it('hides stale related episodes when the loaded episode id does not match the route id', async () => {
       selectedEpisode.set(makeEpisode({ id: 'previous' }));
       relatedEpisodes.set([makeEpisode({ id: 'ep2' })]);
+      relatedLoaded.set(true);
       await createComponent('current');
 
       expect(fixture.debugElement.query(By.css('app-episode-scroller'))).toBeFalsy();

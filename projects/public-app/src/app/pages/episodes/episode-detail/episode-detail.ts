@@ -54,6 +54,7 @@ export class EpisodeDetail implements OnDestroy {
   protected readonly loading = computed(() => this.episodeStore.loading());
   protected readonly relatedEpisodes = computed(() => this.relatedStore.relatedEpisodes());
   protected readonly relatedLoading = computed(() => this.relatedStore.loading());
+  protected readonly relatedLoaded = computed(() => this.relatedStore.loaded());
   protected readonly episodeMatchesRoute = computed(() => {
     const id = this.id();
     const ep = this.episode();
