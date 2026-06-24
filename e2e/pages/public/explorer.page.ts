@@ -7,6 +7,9 @@ export class ExplorerPage {
   readonly clearButton: Locator;
   readonly autocompletePanel: Locator;
   readonly options: Locator;
+  /** The results grid (role="list" labelled "Episodes matching …") and its cards. */
+  readonly resultsGrid: Locator;
+  readonly resultCards: Locator;
 
   constructor(private readonly page: Page) {
     this.heading = page.getByRole('heading', { level: 1, name: 'Explorer' });
@@ -18,6 +21,13 @@ export class ExplorerPage {
     // mat-autocomplete renders its panel as role="listbox" in a CDK overlay.
     this.autocompletePanel = page.getByRole('listbox');
     this.options = this.autocompletePanel.getByRole('option');
+    this.resultsGrid = page.getByRole('list', { name: /episodes matching/i });
+    this.resultCards = this.resultsGrid.getByRole('listitem');
+  }
+
+  /** Title of the first result card (from its link's accessible name). */
+  async firstResultTitle(): Promise<string> {
+    return (await this.resultCards.first().getByRole('link').getAttribute('aria-label')) ?? '';
   }
 
   async goto(): Promise<void> {

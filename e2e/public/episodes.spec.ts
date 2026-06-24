@@ -30,4 +30,30 @@ test.describe('Episodes browse', () => {
     await page.mouse.wheel(0, 4000);
     await expect(episodes.episodeItems.first()).toBeVisible();
   });
+
+  test('title search filters the grid and the matching cards still render content', async ({
+    page,
+  }) => {
+    const episodes = new EpisodesPage(page);
+    await episodes.goto();
+    await expect(episodes.gridItems.first()).toBeVisible();
+
+    // Derive a search token from a real rendered card so the test is seed-robust.
+    const firstTitle = await episodes.firstCardTitle();
+    const token = firstTitle.split(/\s+/).find((w) => w.length >= 4) ?? firstTitle.split(/\s+/)[0];
+    expect(token.length).toBeGreaterThan(0);
+
+    await episodes.search(token);
+
+    // Filtering re-runs the client-side `@for`, recreating each card's
+    // `@defer (on immediate; …)` block. The filtered cards must render their
+    // titles — a blank/empty grid here would mean the client-render path broke.
+    await expect(episodes.gridItems.first()).toBeVisible();
+    const titles = await episodes.cardTitles();
+    expect(titles.length).toBeGreaterThan(0);
+    for (const t of titles) {
+      expect(t.trim().length).toBeGreaterThan(0);
+      expect(t.toLowerCase()).toContain(token.toLowerCase());
+    }
+  });
 });
