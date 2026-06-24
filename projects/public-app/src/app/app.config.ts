@@ -38,7 +38,13 @@ export const appConfig: ApplicationConfig = {
     // forget; bootstrap must not block on the network read.
     provideAppInitializer(() => {
       if (isPlatformBrowser(inject(PLATFORM_ID))) {
-        inject(EpisodeService).warmConnection();
+        // Swallow failures: the read's result is discarded (it only opens the
+        // channel), and an unhandled rejection on a flaky connection would be
+        // routed to the global ErrorHandler — noise on exactly the networks
+        // this warm-up targets.
+        inject(EpisodeService)
+          .warmConnection()
+          .catch(() => {});
       }
     }),
   ],

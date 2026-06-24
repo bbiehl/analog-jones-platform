@@ -71,15 +71,22 @@ export class Shell {
         this.isMobile.set(result.matches);
       });
 
+    // Track the in-flight navigation id so a superseded navigation's terminal
+    // event (e.g. NavigationCancel when the user taps a second link) can't hide
+    // the bar while the newer navigation is still resolving.
+    let currentNavId: number | null = null;
     this.router.events.pipe(takeUntilDestroyed()).subscribe((event) => {
       if (event instanceof NavigationStart) {
+        currentNavId = event.id;
         this.navigating.set(true);
       } else if (
         event instanceof NavigationEnd ||
         event instanceof NavigationCancel ||
         event instanceof NavigationError
       ) {
-        this.navigating.set(false);
+        if (event.id === currentNavId) {
+          this.navigating.set(false);
+        }
       }
     });
   }
