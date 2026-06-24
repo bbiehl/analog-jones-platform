@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
@@ -94,6 +94,21 @@ describe('Shell', () => {
       const copyright = footer.querySelector('p');
       expect(copyright.textContent).toContain(String(new Date().getFullYear()));
       expect(copyright.textContent).toContain('Analog Jones');
+    });
+
+    it('should show the navigation progress bar while a route navigation is in flight', async () => {
+      const router = TestBed.inject(Router);
+
+      expect(fixture.nativeElement.querySelector('mat-progress-bar.nav-progress')).toBeNull();
+
+      const navigation = router.navigateByUrl('/anywhere');
+      fixture.detectChanges();
+      // NavigationStart fires synchronously when navigation begins.
+      expect(fixture.nativeElement.querySelector('mat-progress-bar.nav-progress')).toBeTruthy();
+
+      await navigation;
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('mat-progress-bar.nav-progress')).toBeNull();
     });
 
     it('should switch to mobile layout when the breakpoint matches', async () => {

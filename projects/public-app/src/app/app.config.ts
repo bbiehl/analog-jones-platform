@@ -1,7 +1,14 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import {
+  ApplicationConfig,
+  inject,
+  PLATFORM_ID,
+  provideAppInitializer,
+  provideBrowserGlobalErrorListeners,
+} from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { provideRouter, TitleStrategy, withInMemoryScrolling } from '@angular/router';
 import { provideClientHydration, withIncrementalHydration } from '@angular/platform-browser';
-import { FIRESTORE } from '@aj/core';
+import { EpisodeService, FIRESTORE } from '@aj/core';
 import { SeoTitleStrategy } from './seo/seo-title.strategy';
 import { routes } from './app.routes';
 import { firestore } from './firebase';
@@ -23,5 +30,22 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(withIncrementalHydration()),
     { provide: TitleStrategy, useClass: SeoTitleStrategy },
     { provide: FIRESTORE, useValue: firestore },
+    // Browser only: open the Firestore WebChannel during hydration so the
+    // user's first in-app episode tap reuses a warm channel (~50ms) instead of
+    // waiting on a fresh ~600ms+ handshake (multiple seconds on lossy mobile).
+    // Must be a guaranteed network read — list/detail routes hydrate their data
+    // from transfer-state and never open a channel on their own. Fire and
+    // forget; bootstrap must not block on the network read.
+    provideAppInitializer(() => {
+      if (isPlatformBrowser(inject(PLATFORM_ID))) {
+        // Swallow failures: the read's result is discarded (it only opens the
+        // channel), and an unhandled rejection on a flaky connection would be
+        // routed to the global ErrorHandler — noise on exactly the networks
+        // this warm-up targets.
+        inject(EpisodeService)
+          .warmConnection()
+          .catch(() => {});
+      }
+    }),
   ],
 };

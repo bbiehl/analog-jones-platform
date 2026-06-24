@@ -192,6 +192,18 @@ describe('EpisodeService', () => {
     });
   });
 
+  describe('warmConnection', () => {
+    it('should issue a single-document visible-episode read to open the channel', async () => {
+      ops.getDocs.mockResolvedValueOnce({ docs: [] });
+
+      await service.warmConnection();
+
+      expect(ops.where).toHaveBeenCalledWith('isVisible', '==', true);
+      expect(ops.limit).toHaveBeenCalledWith(1);
+      expect(ops.getDocs).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('getEpisodeListItems', () => {
     it('should query visible episodes ordered by episodeDate desc', async () => {
       ops.getDocs.mockResolvedValueOnce({

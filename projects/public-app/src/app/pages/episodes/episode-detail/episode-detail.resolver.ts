@@ -50,7 +50,10 @@ export const episodeDetailResolver: ResolveFn<Episode | null> = async (route) =>
         if (!ep.isVisible) throw new EpisodeNotFoundError(id);
         return ep;
       },
-      { memoize: false },
+      // Memoize on the browser (the default) so revisiting an episode in the
+      // same session is instant and skips the Firestore round-trip. Episode
+      // content is immutable within a browsing session; a fresh load picks up
+      // any edits.
     );
   } catch (err) {
     if (err instanceof EpisodeNotFoundError) {

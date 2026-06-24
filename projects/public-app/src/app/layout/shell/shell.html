@@ -24,6 +24,10 @@
   }
 </mat-toolbar>
 
+@if (navigating()) {
+  <mat-progress-bar mode="indeterminate" class="nav-progress" aria-label="Loading page" />
+}
+
 <mat-sidenav-container class="sidenav-container">
   @if (isMobile()) {
     <mat-sidenav
