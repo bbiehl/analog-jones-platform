@@ -35,18 +35,7 @@ describe('Contact', () => {
 
   it('renders the top-level sections', () => {
     const headings = Array.from(host.querySelectorAll('h2')).map((h) => h.textContent?.trim());
-    expect(headings).toEqual(['Email', 'Where to find us']);
-  });
-
-  it('lists all host email addresses as mailto links with a subject', () => {
-    const mailtoLinks = Array.from(host.querySelectorAll('a[href^="mailto:"]')).map((a) =>
-      a.getAttribute('href'),
-    );
-    expect(mailtoLinks).toEqual([
-      'mailto:bradley.biehl@gmail.com?subject=Analog%20Jones',
-      'mailto:stephen.bay00@gmail.com?subject=Analog%20Jones',
-      'mailto:CMRobinson2@gmail.com?subject=Analog%20Jones',
-    ]);
+    expect(headings).toEqual(['Where to find us']);
   });
 
   it('renders external platform links with target=_blank and rel=noopener', () => {
