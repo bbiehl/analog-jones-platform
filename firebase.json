@@ -2,6 +2,21 @@
   "hosting": {
     "public": "firebase-public",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "redirects": [
+      { "source": "/contact-us", "destination": "/contact", "type": 301 },
+      { "source": "/privacy-policy", "destination": "/privacy", "type": 301 },
+      { "source": "/terms-of-use", "destination": "/terms", "type": 301 },
+
+      { "source": "/episodes/interviews", "destination": "/episodes", "type": 301 },
+      { "source": "/episodes/interviews/**", "destination": "/episodes", "type": 301 },
+      { "source": "/episodes/movie-reviews", "destination": "/episodes", "type": 301 },
+      { "source": "/episodes/movie-reviews/**", "destination": "/episodes", "type": 301 },
+      { "source": "/episodes/nerd-news", "destination": "/episodes", "type": 301 },
+      { "source": "/episodes/nerd-news/**", "destination": "/episodes", "type": 301 },
+
+      { "source": "/tags", "destination": "/explorer", "type": 301 },
+      { "source": "/tags/**", "destination": "/explorer", "type": 301 }
+    ],
     "rewrites": [
       {
         "source": "**",
