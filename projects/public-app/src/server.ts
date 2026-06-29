@@ -4,6 +4,7 @@ import {
   isMainModule,
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
+import compression from 'compression';
 import express from 'express';
 import { collection, getDocs, orderBy, query, where } from 'firebase/firestore';
 import { join } from 'node:path';
@@ -15,6 +16,12 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
 const angularApp = new AngularNodeAppEngine({ trustProxyHeaders: true });
+
+// Compress every response (brotli/gzip, negotiated via Accept-Encoding) — the
+// SSR HTML, the SEO text/XML/JSON routes, and the static JS/CSS bundles all ship
+// uncompressed otherwise (Lighthouse: "No compression applied"). Registered first
+// so it wraps every downstream handler.
+app.use(compression());
 
 const SITE_DESCRIPTION =
   'A film podcast digging through cult, action, anime, and oddball cinema — one tape at a time.';
