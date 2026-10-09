@@ -74,7 +74,7 @@ With gstack, `/land-and-deploy` merges the PR, waits for CI, and afterwards veri
 
 `pnpm release` (`scripts/deploy.mjs`):
 
-1. Cuts a dated release branch `Release_YYYY-MM-DD.V` from the latest `origin/main` (auto-incrementing `V` for same-day re-cuts) and pushes it as an immutable deploy record.
+1. Cuts a dated release branch `Release_YYYY-MM-DD.V` from the latest `origin/main` (auto-incrementing `V` for same-day re-cuts) and pushes it as an immutable deploy record. It also tags that commit `v<VERSION>` (from the `VERSION` file on `origin/main`); an existing tag is never moved, and a tag problem never blocks the deploy.
 2. Builds + deploys **admin-app then public-app sequentially** to Cloud Run via `gcloud run deploy --source` from a throwaway git worktree pinned to the `origin/main` commit (so it ships `origin/main` verbatim without touching the local checkout). Per-service caps mirror the old config: public `--max-instances 10 --memory 512Mi`, admin `--max-instances 3 --memory 256Mi`. Only `APP` is updated via `--update-env-vars`, so other env vars survive.
 3. Deploys Firebase Hosting (the CDN rewrite → `public-app`).
 4. Deploys rules **only if** `firestore.rules`, `firestore.indexes.json`, or `storage.rules` changed since the previous release branch, then runs the write-defense probe once.

@@ -209,6 +209,37 @@ const todaysVersions = existing
 const version = todaysVersions.length ? Math.max(...todaysVersions) + 1 : 1;
 const branch = `Release_${date}.${version}`;
 
+// Version tag for this release: v<VERSION>, read from origin/main (what we are
+// about to ship), not the local checkout. The tag is a convenience record
+// alongside the release branch, so any problem here is reported and skipped —
+// it never aborts a deploy. An existing tag is never moved.
+let tag = null;
+let createTag = false;
+let tagReason;
+try {
+  const releaseVersion = capture('git', ['show', 'origin/main:VERSION']);
+  if (!/^\d+(\.\d+){2,3}$/.test(releaseVersion)) {
+    tagReason = `VERSION on origin/main is not a version ("${releaseVersion}")`;
+  } else {
+    tag = `v${releaseVersion}`;
+    const mainSha = capture('git', ['rev-parse', 'origin/main']);
+    // `git ls-remote --tags origin <ref>` → "<sha>\trefs/tags/<tag>", or empty.
+    const taggedSha = capture('git', ['ls-remote', '--tags', 'origin', `refs/tags/${tag}`]).split(
+      '\t',
+    )[0];
+    if (!taggedSha) {
+      createTag = true;
+      tagReason = 'new';
+    } else if (taggedSha === mainSha) {
+      tagReason = 'already on this commit — redeploy';
+    } else {
+      tagReason = `already on ${taggedSha.slice(0, 8)} — main moved without a version bump, tag left in place`;
+    }
+  }
+} catch {
+  tagReason = 'could not read VERSION from origin/main';
+}
+
 // --- 3. Detect rules changes vs. the previous release branch -----------------
 
 // Most-recent prior release by name (Release_<date>.<v> sorts lexically by date
@@ -256,6 +287,7 @@ console.log('──────────────────────�
 console.log(`  Project:        ${PROJECT}`);
 console.log(`  Region:         ${REGION}`);
 console.log(`  Release branch: ${branch}  (cut from origin/main)`);
+console.log(`  Version tag:    ${tag ?? 'none'}  (${tagReason})`);
 console.log(
   `  Deploy order:   ${DEPLOY_ORDER.map((r) => `${r.app} [${r.service}]`).join('  →  ')}`,
 );
@@ -282,6 +314,15 @@ try {
   fail(`could not push ${branch}: ${err.message}`);
 }
 console.log(`Pushed ${branch}.`);
+
+if (createTag) {
+  try {
+    capture('git', ['push', 'origin', `origin/main:refs/tags/${tag}`]);
+    console.log(`Pushed tag ${tag}.`);
+  } catch (err) {
+    console.warn(`Could not push tag ${tag} (continuing with the deploy): ${err.message}`);
+  }
+}
 
 // --- 6. Deploy each service to Cloud Run sequentially ------------------------
 // Build + deploy from a throwaway worktree pinned to the exact commit we just
