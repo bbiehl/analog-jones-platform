@@ -6,11 +6,11 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Added
 
-- The footer now credits Willawave, with a link to willawave.ai.
+- The footer now credits WillaWave, with a link to willawave.ai.
 
 ### Changed
 
-- The GitHub link on the Contact page points to the project's new home under the Willawave organization.
+- The GitHub link on the Contact page points to the project's new home under the WillaWave organization.
 
 ## [1.0.0.0] - 2026-10-09
 
