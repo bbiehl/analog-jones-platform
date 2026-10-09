@@ -2,6 +2,16 @@
 
 All notable changes to this project are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions are `MAJOR.MINOR.PATCH.MICRO` (the `VERSION` file is the source of truth).
 
+## [1.0.0.2] - 2026-10-09
+
+### Added
+
+- `llms.txt` now opens with an About section describing the podcast, its hosts, the archive, and what each episode page contains, so AI assistants can describe the site accurately.
+
+### Changed
+
+- The one-line site summary in `llms.txt` now leads with the VHS focus.
+
 ## [1.0.0.1] - 2026-10-09
 
 ### Added
