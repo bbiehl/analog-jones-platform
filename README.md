@@ -119,4 +119,4 @@ The defense against a malicious clone of this repo is:
 
 ## Further reading
 
-See `.claude/CLAUDE.md` for architecture notes, testing conventions, and Angular coding rules.
+See `CLAUDE.md` for architecture notes, testing conventions, and Angular coding rules.
