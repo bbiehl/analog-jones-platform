@@ -2,6 +2,16 @@
 
 All notable changes to this project are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions are `MAJOR.MINOR.PATCH.MICRO` (the `VERSION` file is the source of truth).
 
+## [1.0.0.1] - 2026-10-09
+
+### Added
+
+- The footer now credits Willawave, with a link to willawave.ai.
+
+### Changed
+
+- The GitHub link on the Contact page points to the project's new home under the Willawave organization.
+
 ## [1.0.0.0] - 2026-10-09
 
 The baseline: the site as it stands on the day versioning was introduced.
