@@ -55,6 +55,6 @@ describe('Contact', () => {
     expect(hrefs.some((h) => h?.includes('open.spotify.com'))).toBe(true);
     expect(hrefs.some((h) => h?.includes('youtube.com'))).toBe(true);
     expect(hrefs.some((h) => h?.includes('facebook.com'))).toBe(true);
-    expect(hrefs.some((h) => h?.includes('github.com'))).toBe(true);
+    expect(hrefs.some((h) => h?.includes('github.com/willawave/analog-jones-platform'))).toBe(true);
   });
 });
