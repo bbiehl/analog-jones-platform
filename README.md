@@ -68,11 +68,13 @@ Both apps run on Cloud Run (one root `Dockerfile` builds both; the runtime `APP`
 pnpm release          # or `pnpm release --yes` to skip the confirmation prompt
 ```
 
+With gstack, `/land-and-deploy` merges the PR, waits for CI, and afterwards verifies the Cloud Run revision and https://analogjonestof.com. It does not run the deploy itself: `pnpm release --yes` is still the step that ships, run right after the merge. Its settings live in the root `CLAUDE.md` under "Deploy Configuration".
+
 > Named `release`, not `deploy`, because `pnpm deploy` is a reserved pnpm built-in (it would error with `ERR_PNPM_NOTHING_TO_DEPLOY`).
 
 `pnpm release` (`scripts/deploy.mjs`):
 
-1. Cuts a dated release branch `Release_YYYY-MM-DD.V` from the latest `origin/main` (auto-incrementing `V` for same-day re-cuts) and pushes it as an immutable deploy record.
+1. Cuts a dated release branch `Release_YYYY-MM-DD.V` from the latest `origin/main` (auto-incrementing `V` for same-day re-cuts) and pushes it as an immutable deploy record. It also tags that commit `v<VERSION>` (from the `VERSION` file on `origin/main`); an existing tag is never moved, and a tag problem never blocks the deploy.
 2. Builds + deploys **admin-app then public-app sequentially** to Cloud Run via `gcloud run deploy --source` from a throwaway git worktree pinned to the `origin/main` commit (so it ships `origin/main` verbatim without touching the local checkout). Per-service caps mirror the old config: public `--max-instances 10 --memory 512Mi`, admin `--max-instances 3 --memory 256Mi`. Only `APP` is updated via `--update-env-vars`, so other env vars survive.
 3. Deploys Firebase Hosting (the CDN rewrite → `public-app`).
 4. Deploys rules **only if** `firestore.rules`, `firestore.indexes.json`, or `storage.rules` changed since the previous release branch, then runs the write-defense probe once.
@@ -117,4 +119,4 @@ The defense against a malicious clone of this repo is:
 
 ## Further reading
 
-See `.claude/CLAUDE.md` for architecture notes, testing conventions, and Angular coding rules.
+See `CLAUDE.md` for architecture notes, testing conventions, and Angular coding rules.

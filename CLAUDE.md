@@ -128,3 +128,27 @@ Key routing rules:
 - Save progress → invoke /context-save
 - Resume context → invoke /context-restore
 - Author a backlog-ready spec/issue → invoke /spec
+
+## Versioning
+
+- The root `VERSION` file is the source of truth, in `MAJOR.MINOR.PATCH.MICRO` form. `package.json` mirrors it as the 3-part translation (`1.2.3.4` → `1.2.3`); `projects/core/package.json` does not carry the release version.
+- `/ship` bumps `VERSION` and adds the `CHANGELOG.md` entry on every PR. Do not hand-edit either; use `gstack-version-bump`.
+- `CHANGELOG.md` entries are `## [X.Y.Z.W] - YYYY-MM-DD` with `### Added` / `Changed` / `Fixed` / `Removed`, written for site visitors and the hosts, not as a commit log.
+- `pnpm release` tags the deployed commit `v<VERSION>` in addition to cutting the `Release_` branch.
+
+## Deploy Configuration (configured by /setup-deploy)
+
+- Platform: Cloud Run + Firebase Hosting (custom script, `scripts/deploy.mjs`)
+- Production URL: https://analogjonestof.com
+- Deploy workflow: none (GitHub Actions only builds and tests)
+- Deploy status command: `gcloud run services describe public-app --project analog-jones-v2 --region us-central1 --format='value(status.latestReadyRevisionName,status.conditions[0].status)'`
+- Merge method: squash
+- Project type: web app
+- Post-deploy health check: https://analogjonestof.com/
+
+### Custom deploy hooks
+
+- Pre-merge: none
+- Deploy trigger: manual. `/land-and-deploy` only merges and verifies; it never runs a deploy command. After the merge, run `pnpm release --yes` from a checkout with active `gcloud` and `firebase` logins, then let the status command and health check confirm the new revision.
+- Deploy status: `gcloud run services describe public-app --project analog-jones-v2 --region us-central1 --format='value(status.latestReadyRevisionName,status.conditions[0].status)'`
+- Health check: https://analogjonestof.com/
