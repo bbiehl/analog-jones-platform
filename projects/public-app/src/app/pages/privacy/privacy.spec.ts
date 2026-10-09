@@ -44,6 +44,7 @@ describe('Privacy', () => {
       'Analytics, maybe someday',
       'Hosting and standard server logs',
       'Cookies',
+      'Fonts and icons',
       'Third-party platforms',
       'Changes to this policy',
       'Questions',

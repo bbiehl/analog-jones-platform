@@ -1,5 +1,22 @@
 @use '../../core/src/lib/styles/theme-public.scss' as theme;
 @use 'tailwindcss';
+// Fonts ship with the app from @fontsource (latin subset, one stylesheet per
+// weight in use) — no requests to Google Fonts. Barlow Condensed 800 and
+// Orbitron 700 are the exception: they are preloaded from index.html, which
+// needs a stable path, so they stay as files in public/fonts (below).
+@use '@fontsource/inter/latin-400' as inter-400;
+@use '@fontsource/inter/latin-500' as inter-500;
+@use '@fontsource/inter/latin-600' as inter-600;
+@use '@fontsource/inter/latin-700' as inter-700;
+@use '@fontsource/jetbrains-mono/latin-400' as jetbrains-mono-400;
+@use '@fontsource/jetbrains-mono/latin-500' as jetbrains-mono-500;
+@use '@fontsource/jetbrains-mono/latin-700' as jetbrains-mono-700;
+@use '@fontsource/barlow-condensed/latin-600' as barlow-condensed-600;
+@use '@fontsource/barlow-condensed/latin-700' as barlow-condensed-700;
+@use '@fontsource/orbitron/latin-400' as orbitron-400;
+@use '@fontsource/orbitron/latin-500' as orbitron-500;
+@use '@fontsource/orbitron/latin-600' as orbitron-600;
+@use '@fontsource/orbitron/latin-900' as orbitron-900;
 
 @font-face {
   font-family: 'Barlow Condensed';

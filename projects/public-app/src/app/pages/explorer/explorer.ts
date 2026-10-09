@@ -14,7 +14,6 @@ import {
 } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { EpisodeGrid } from '../../episode/episode-grid/episode-grid';
@@ -40,7 +39,6 @@ const GROUP_ORDER: { type: SearchAutoCompleteOption['type']; label: string }[] =
     MatInputModule,
     MatAutocompleteModule,
     MatButtonModule,
-    MatIconModule,
     MatProgressSpinnerModule,
     EpisodeGrid,
   ],

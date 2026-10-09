@@ -2,6 +2,17 @@
 
 All notable changes to this project are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions are `MAJOR.MINOR.PATCH.MICRO` (the `VERSION` file is the source of truth).
 
+## [1.0.1.0] - 2026-10-09
+
+### Changed
+
+- Fonts and icons are now served from analogjonestof.com itself. Loading a page no longer sends a request to Google Fonts.
+- The Privacy Policy has a new "Fonts and icons" section saying so.
+
+### Removed
+
+- The Material Icons font. The menu and clear-search icons are drawn inline instead.
+
 ## [1.0.0.3] - 2026-10-09
 
 ### Fixed
