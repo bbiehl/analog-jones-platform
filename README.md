@@ -68,6 +68,8 @@ Both apps run on Cloud Run (one root `Dockerfile` builds both; the runtime `APP`
 pnpm release          # or `pnpm release --yes` to skip the confirmation prompt
 ```
 
+With gstack, `/land-and-deploy` merges the PR, waits for CI, and afterwards verifies the Cloud Run revision and https://analogjonestof.com. It does not run the deploy itself: `pnpm release --yes` is still the step that ships, run right after the merge. Its settings live in the root `CLAUDE.md` under "Deploy Configuration".
+
 > Named `release`, not `deploy`, because `pnpm deploy` is a reserved pnpm built-in (it would error with `ERR_PNPM_NOTHING_TO_DEPLOY`).
 
 `pnpm release` (`scripts/deploy.mjs`):
