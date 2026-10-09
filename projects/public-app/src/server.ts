@@ -24,7 +24,7 @@ const angularApp = new AngularNodeAppEngine({ trustProxyHeaders: true });
 app.use(compression());
 
 const SITE_DESCRIPTION =
-  'A film podcast digging through cult, action, anime, and oddball cinema — one tape at a time.';
+  'A VHS-focused film podcast exploring cult classics, genre movies, forgotten films, and the strange corners of cinema — one tape at a time.';
 
 interface EpisodeDoc {
   title?: string;
@@ -93,6 +93,28 @@ app.get('/llms.txt', async (_req, res, next) => {
     const body = `# Analog Jones and the Temple of Film
 
 > ${SITE_DESCRIPTION}
+
+## About
+
+Analog Jones and the Temple of Film is a long-running movie podcast and
+digital archive dedicated to VHS-era film culture.
+
+Hosts Steve, Chris, and Brad explore cult classics, horror, action,
+science fiction, animation, exploitation films, forgotten movies,
+franchises, and video-store oddities.
+
+The website serves as a digital film museum built from more than 300
+podcast episodes. Visitors can browse the archive, discover movies,
+explore franchises and genres, and read insights extracted from years
+of conversations about film.
+
+Each episode may include:
+- Episode overview
+- Key takeaways
+- Memorable quotes
+- Film and production insights
+- Podcast listening links
+- Related movies and resources
 
 ## Pages
 - [Home](${CANONICAL_ORIGIN}/)
