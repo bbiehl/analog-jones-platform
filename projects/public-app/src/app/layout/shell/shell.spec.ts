@@ -96,10 +96,10 @@ describe('Shell', () => {
       expect(copyright.textContent).toContain('Analog Jones');
     });
 
-    it('should credit Willawave in the footer with an external link', () => {
+    it('should credit WillaWave in the footer with an external link', () => {
       const credit = fixture.nativeElement.querySelector('footer a[href="https://willawave.ai/"]');
       expect(credit).toBeTruthy();
-      expect(credit.textContent).toContain('Willawave');
+      expect(credit.textContent).toContain('WillaWave');
       expect(credit.getAttribute('target')).toBe('_blank');
       expect(credit.getAttribute('rel')).toBe('noopener');
       expect(credit.closest('p').textContent).toContain('Site by');
