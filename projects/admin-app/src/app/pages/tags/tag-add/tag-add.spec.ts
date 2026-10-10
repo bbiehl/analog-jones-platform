@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatInputHarness } from '@angular/material/input/testing';
@@ -23,11 +22,7 @@ describe('TagAdd', () => {
 
     await TestBed.configureTestingModule({
       imports: [TagAdd],
-      providers: [
-        provideRouter([]),
-        provideNoopAnimations(),
-        { provide: TagStore, useValue: mockTagStore },
-      ],
+      providers: [provideRouter([]), { provide: TagStore, useValue: mockTagStore }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TagAdd);

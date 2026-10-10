@@ -2,14 +2,14 @@
 
 ## Architecture
 
-Angular v21 multi-project workspace with pnpm. Two apps:
+Angular v22 multi-project workspace with pnpm. Two apps:
 
 - `public-app` (`projects/public-app/`) — SSR via Express + `@angular/ssr`
 - `admin-app` (`projects/admin-app/`) — SSR via Express + `@angular/ssr`
 
 ### Key Stack
 
-- **Angular 21** with strict TypeScript (ES2022 target, TS ~5.9)
+- **Angular 22** with strict TypeScript (ES2022 target, TS ~6.0)
 - **Tailwind CSS v4** via PostCSS (per-project `.postcssrc.json`)
 - **Angular Material + CDK** for UI components
 - **@ngrx/signals** for state management
@@ -26,7 +26,7 @@ Subfolders under `projects/core/src/lib/`:
 
 - `category/`, `episode/`, `genre/`, `tag/`, `user/` — each with `<domain>.model.ts`, `<domain>.service.ts`, `<domain>.store.ts` (+ specs)
 - Taxonomy is **embedded denormalized** on the `Episode` document (`categories`/`genres`/`tags` arrays), not stored in junction collections. The `category`/`genre`/`tag` services own propagating name/slug edits and add/remove across episodes; there is no `junction/` folder.
-- `shared/` — cross-cutting infra only: `firebase.token.ts` (injection tokens `AUTH`, `FIRESTORE`, and the `*_OPS` SDK-wrapper tokens) and `transfer-state.helpers.ts`
+- `shared/` — cross-cutting infra only: `firebase.token.ts` (injection tokens `FIRESTORE`, `FIRESTORE_OPS`), `firebase-auth.token.ts` (`AUTH`, `AUTH_OPS`) and `transfer-state.helpers.ts`. The auth tokens live in their own file so public-app, which has no auth, does not bundle the `firebase/auth` SDK; keep `firebase/auth` imports out of files public-app loads.
 - `styles/` — `theme.scss`, `theme-public.scss` (consumed via Sass `@use`, not exported from `public-api.ts`)
 
 Each domain follows the same pattern:
@@ -54,7 +54,7 @@ Connects to emulators when `environment.useEmulators` is true.
 - `FIRESTORE_OPS` — `collection`, `doc`, `query`, `orderBy`, `where`, `limit`, `getDoc`, `getDocs`, `addDoc`, `updateDoc`, `writeBatch`
 - `AUTH_OPS` — `GoogleAuthProvider`, `signInWithPopup`, `signOut`, `onAuthStateChanged`
 
-Both are defined in `projects/core/src/lib/shared/firebase.token.ts` with default factories that return the real implementations, so app code is unaffected. Tests override them via `TestBed.configureTestingModule({ providers: [{ provide: <TOKEN>, useValue: ... }] })` to actually exercise service methods. When a service needs an SDK function not yet on the relevant `*Ops` interface, extend both the interface and the default factory together — both must list every op the service uses.
+They are defined in `projects/core/src/lib/shared/firebase.token.ts` and `firebase-auth.token.ts` respectively, with default factories that return the real implementations, so app code is unaffected. Tests override them via `TestBed.configureTestingModule({ providers: [{ provide: <TOKEN>, useValue: ... }] })` to actually exercise service methods. When a service needs an SDK function not yet on the relevant `*Ops` interface, extend both the interface and the default factory together — both must list every op the service uses.
 
 ### Shell Layout
 
@@ -150,5 +150,6 @@ Key routing rules:
 
 - Pre-merge: none
 - Deploy trigger: manual. `/land-and-deploy` only merges and verifies; it never runs a deploy command. After the merge, run `pnpm release --yes` from a checkout with active `gcloud` and `firebase` logins, then let the status command and health check confirm the new revision.
+- Rollback: `pnpm rollback --list` shows each service's serving and recent revisions (note them before a release). `pnpm rollback --public <revision> --admin <revision>` shifts Cloud Run traffic and then redeploys Hosting to clear the CDN; shifting traffic alone leaves cached HTML pointing at JS chunks the older revision does not have. `--dry-run` prints the commands. A rolled-back service stays pinned to that revision; do not unpin it by hand (that would route traffic back to the release just rolled back). The next `pnpm release` moves traffic to the revision it deploys. Firestore rules and indexes are not rolled back: if the bad release changed them, check out the previous `Release_` branch and run `pnpm deploy:rules`, then run `pnpm deploy:rules` from `main` after the fix release (the release only deploys rules that changed since the previous release branch). Script tests: `pnpm test:scripts`.
 - Deploy status: `gcloud run services describe public-app --project analog-jones-v2 --region us-central1 --format='value(status.latestReadyRevisionName,status.conditions[0].status)'`
 - Health check: https://analogjonestof.com/

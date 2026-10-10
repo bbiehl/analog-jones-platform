@@ -25,17 +25,16 @@ Write unit tests for the file(s) the user provides using Vitest for Angular.
 ## Mocking
 
 - **Do NOT use `vi.mock()`.** This is an Angular toolchain constraint, not a project convention. `@angular/build`'s unit-test builder injects a `vitest-mock-patch` to integrate Vitest with Angular's compilation pipeline; that patch and `vi.mock()`'s module-hoisting/interception mechanism step on each other and produce flaky failures (passes locally, fails in CI, or vice versa). Mock via TestBed providers / injection tokens instead.
-- Mock Firebase by providing fake values for the `AUTH`, `AUTH_OPS`, `FIRESTORE`, `FIRESTORE_OPS`, `STORAGE`, and `STORAGE_OPS` injection tokens (imported from `@aj/core`) in `TestBed.configureTestingModule({ providers: [...] })`.
+- Mock Firebase by providing fake values for the `AUTH`, `AUTH_OPS`, `FIRESTORE`, and `FIRESTORE_OPS` injection tokens (imported from `@aj/core`) in `TestBed.configureTestingModule({ providers: [...] })`.
 - Mock other services with `{ provide: SomeService, useValue: { method: vi.fn() } }`.
 - Use `vi.fn()` / `vi.spyOn()` for individual functions.
 - Use `vi.stubGlobal()` for browser APIs unavailable in jsdom (e.g. `OffscreenCanvas`, `createImageBitmap`); reset with `vi.unstubAllGlobals()` in `afterEach` if needed.
 
 ### Static SDK functions go through `*_OPS` tokens
 
-Services do not call `firebase/firestore`, `firebase/storage`, or `firebase/auth` static functions directly. They inject one of the `*_OPS` tokens defined in `projects/core/src/lib/shared/firebase.token.ts`:
+Services do not call `firebase/firestore` or `firebase/auth` static functions directly. They inject one of the `*_OPS` tokens defined in `projects/core/src/lib/shared/firebase.token.ts` (Firestore) and `firebase-auth.token.ts` (Auth):
 
 - **`FIRESTORE_OPS`** — for any service that reads/writes Firestore. Inject alongside `FIRESTORE`.
-- **`STORAGE_OPS`** — for storage uploads/downloads. Inject alongside `STORAGE`.
 - **`AUTH_OPS`** — for sign-in/sign-out/auth state. Inject alongside `AUTH`.
 
 Each token has a default factory that returns the real SDK implementations, so app code is unaffected. Tests override them with `vi.fn()` stubs to actually exercise the service. Without this indirection, the static imports cannot be intercepted (because `vi.mock()` is banned) and specs degenerate into shape-assertions that don't run any service code.

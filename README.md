@@ -1,6 +1,6 @@
 # Analog Jones Platform
 
-Angular 21 multi-project workspace powering two SSR apps on Cloud Run (public-app fronted by the Firebase Hosting CDN), backed by Firestore, Firebase Auth, and Cloud Storage.
+Angular 22 multi-project workspace powering two SSR apps on Cloud Run (public-app fronted by the Firebase Hosting CDN), backed by Firestore, Firebase Auth, and Cloud Storage.
 
 ## Prerequisites
 
@@ -40,6 +40,7 @@ pnpm emulators:stop   # kill processes on emulator ports
 pnpm build:core      # required before either app build (apps consume @aj/core from dist/)
 pnpm build:public    # chains build:core automatically
 pnpm build:admin     # chains build:core automatically
+pnpm check:public-bundle   # after build:public + build:admin: fails if firebase/auth is in the public-app bundle
 ```
 
 SSR servers can be run locally from the build output:
@@ -57,6 +58,7 @@ pnpm test:public
 pnpm test:admin
 pnpm test:core        # runs the @aj/core library spec target
 pnpm test:rules       # Firestore security rules, run against the firestore emulator
+pnpm test:scripts     # release scripts (rollback), run against fake gcloud/pnpm/git
 pnpm e2e              # Playwright
 ```
 
@@ -75,9 +77,11 @@ With gstack, `/land-and-deploy` merges the PR, waits for CI, and afterwards veri
 `pnpm release` (`scripts/deploy.mjs`):
 
 1. Cuts a dated release branch `Release_YYYY-MM-DD.V` from the latest `origin/main` (auto-incrementing `V` for same-day re-cuts) and pushes it as an immutable deploy record. It also tags that commit `v<VERSION>` (from the `VERSION` file on `origin/main`); an existing tag is never moved, and a tag problem never blocks the deploy.
-2. Builds + deploys **admin-app then public-app sequentially** to Cloud Run via `gcloud run deploy --source` from a throwaway git worktree pinned to the `origin/main` commit (so it ships `origin/main` verbatim without touching the local checkout). Per-service caps mirror the old config: public `--max-instances 10 --memory 512Mi`, admin `--max-instances 3 --memory 256Mi`. Only `APP` is updated via `--update-env-vars`, so other env vars survive.
+2. Builds + deploys **admin-app then public-app sequentially** to Cloud Run via `gcloud run deploy --source` from a throwaway git worktree pinned to the `origin/main` commit (so it ships `origin/main` verbatim without touching the local checkout). Per-service caps mirror the old config: public `--max-instances 10 --memory 512Mi`, admin `--max-instances 3 --memory 256Mi`. Only `APP` is updated via `--update-env-vars`, so other env vars survive. After each service deploys, `gcloud run services update-traffic <service> --to-latest` routes traffic to the new revision, which also unpins a service that was rolled back.
 3. Deploys Firebase Hosting (the CDN rewrite → `public-app`).
-4. Deploys rules **only if** `firestore.rules`, `firestore.indexes.json`, or `storage.rules` changed since the previous release branch, then runs the write-defense probe once.
+4. Deploys rules **only if** `firestore.rules` or `firestore.indexes.json` changed since the previous release branch, then runs the write-defense probe once.
+
+`--yes` (`-y`) is the only flag. Any other flag aborts the release before anything runs; there is no dry-run mode.
 
 **Prerequisites:** an active `gcloud auth login` account with Cloud Run Admin + Cloud Build Editor on `analog-jones-v2`, and `pnpm exec firebase login` with an account that can deploy Firestore/Storage rules and Hosting.
 
@@ -86,6 +90,15 @@ To deploy only Firestore/Storage rules and indexes without a full release:
 ```bash
 pnpm deploy:rules
 ```
+
+To roll back a release (`scripts/rollback.mjs`), pin one or both Cloud Run services to an earlier revision:
+
+```bash
+pnpm rollback --list                                   # serving + recent revisions per service
+pnpm rollback --public <revision> --admin <revision>   # either flag alone also works
+```
+
+Add `--dry-run` to print the commands without running them, or `--yes` to skip the confirmation prompt. When public-app is among the targets, the script also redeploys Firebase Hosting to clear the CDN; an admin-only rollback leaves Hosting alone. A rolled-back service stays pinned to that revision until the next `pnpm release`. Firestore rules and indexes are not rolled back. The full procedure is in the root `CLAUDE.md` under "Custom deploy hooks".
 
 ## Operational checks
 
@@ -111,7 +124,7 @@ The defense against a malicious clone of this repo is:
 
 ## Tech stack
 
-- Angular 21 (SSR via `@angular/ssr` + Express)
+- Angular 22 (SSR via `@angular/ssr` + Express)
 - Tailwind CSS v4, Angular Material + CDK
 - `@ngrx/signals` for state management
 - Firebase modular SDK (Auth, Firestore, Storage)

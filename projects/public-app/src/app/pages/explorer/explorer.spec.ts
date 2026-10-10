@@ -1,7 +1,6 @@
 import { ComponentFixture, DeferBlockState, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { WritableSignal, signal } from '@angular/core';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatInputHarness } from '@angular/material/input/testing';
@@ -67,11 +66,7 @@ describe('Explorer', () => {
 
     await TestBed.configureTestingModule({
       imports: [Explorer],
-      providers: [
-        provideRouter([]),
-        provideNoopAnimations(),
-        { provide: ExploreSearchStore, useValue: mockStore },
-      ],
+      providers: [provideRouter([]), { provide: ExploreSearchStore, useValue: mockStore }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Explorer);

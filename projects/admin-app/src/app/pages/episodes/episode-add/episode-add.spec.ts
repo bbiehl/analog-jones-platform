@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatButtonHarness } from '@angular/material/button/testing';
@@ -45,7 +44,6 @@ describe('EpisodeAdd', () => {
       imports: [EpisodeAdd],
       providers: [
         provideRouter([]),
-        provideNoopAnimations(),
         { provide: EpisodeStore, useValue: mockEpisodeStore },
         { provide: CategoryStore, useValue: mockCategoryStore },
         { provide: GenreStore, useValue: mockGenreStore },

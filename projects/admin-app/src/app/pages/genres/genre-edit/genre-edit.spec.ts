@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router, ActivatedRoute } from '@angular/router';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatInputHarness } from '@angular/material/input/testing';
@@ -30,7 +29,6 @@ describe('GenreEdit', () => {
       imports: [GenreEdit],
       providers: [
         provideRouter([]),
-        provideNoopAnimations(),
         { provide: GenreStore, useValue: mockGenreStore },
         {
           provide: ActivatedRoute,

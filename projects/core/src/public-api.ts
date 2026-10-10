@@ -29,4 +29,5 @@ export * from './lib/user/user.store';
 
 // Shared infra
 export * from './lib/shared/firebase.token';
+export * from './lib/shared/firebase-auth.token';
 export * from './lib/shared/transfer-state.helpers';

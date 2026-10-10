@@ -8,7 +8,7 @@ Shared Angular library for the analog-jones platform. Exposes domain models, ser
 projects/core/src/
   lib/
     category/  episode/  genre/  tag/  user/   # domain folders
-    shared/                                    # firebase.token, transfer-state.helpers
+    shared/                                    # firebase.token, firebase-auth.token, transfer-state.helpers
     styles/                                    # theme.scss / theme-public.scss
   public-api.ts
   test-setup.ts
