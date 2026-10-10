@@ -2,6 +2,22 @@
 
 All notable changes to this project are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions are `MAJOR.MINOR.PATCH.MICRO` (the `VERSION` file is the source of truth).
 
+## [1.0.2.0] - 2026-10-10
+
+### Added
+
+- A rollback command for the hosts' release tooling. If a release goes wrong, `pnpm rollback` puts the site back on an earlier version and clears the cached pages, so visitors do not end up on a page that loads but never responds.
+
+### Changed
+
+- Pages on analogjonestof.com load with less code. The site no longer downloads sign-in code that only the admin site uses, which takes about 78 kB off the first visit.
+- The site now runs on Angular 22. Nothing should look or behave differently.
+- A release now moves visitors to the new version by itself, including after a rollback.
+
+### Fixed
+
+- The release command stops when given an option it does not recognise, instead of ignoring it and releasing anyway.
+
 ## [1.0.1.0] - 2026-10-09
 
 ### Changed
