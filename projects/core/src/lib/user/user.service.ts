@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
-import { User } from 'firebase/auth';
-import { AUTH, AUTH_OPS, FIRESTORE, FIRESTORE_OPS } from '../shared/firebase.token';
+import type { User } from 'firebase/auth';
+import { AUTH, AUTH_OPS } from '../shared/firebase-auth.token';
+import { FIRESTORE, FIRESTORE_OPS } from '../shared/firebase.token';
 import { AppUser } from './user.model';
 
 @Injectable({ providedIn: 'root' })

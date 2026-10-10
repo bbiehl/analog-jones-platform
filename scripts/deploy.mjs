@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Automated Cloud Run deploy orchestrator. Replaces the old App Hosting flow:
 // cut a dated release branch from main, deploy admin then public sequentially to
-// Cloud Run, then deploy rules once (only if they changed) and run the
-// write-defense probe.
+// Cloud Run (routing traffic to each new revision, which also unpins a service
+// rolled back with `pnpm rollback`), redeploy Firebase Hosting, then deploy rules
+// once (only if they changed) and run the write-defense probe.
 //
 // Why Cloud Run, not App Hosting: the Firebase App Hosting Angular adapter
 // (v17.2.17, the latest published) cannot serve Angular 21 `outputMode:"server"`
@@ -26,6 +27,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
+import { parseArgs } from 'node:util';
 
 const PROJECT = 'analog-jones-v2';
 const REGION = 'us-central1';
@@ -52,8 +54,6 @@ const RULES_FILES = ['firestore.rules', 'firestore.indexes.json'];
 // a few times, with backoff, before giving up.
 const RULES_DEPLOY_ATTEMPTS = 3;
 
-const autoYes = process.argv.slice(2).some((arg) => arg === '--yes' || arg === '-y');
-
 function fail(message) {
   console.error(`\nDeploy aborted — ${message}`);
   process.exit(1);
@@ -64,6 +64,15 @@ function fail(message) {
 const failFrom = (err) => fail(err instanceof Error ? err.message : String(err));
 process.on('unhandledRejection', failFrom);
 process.on('uncaughtException', failFrom);
+
+// Strict: an unknown flag aborts here, before anything runs. There is no dry-run
+// mode, so `pnpm release --dry-run --yes` must not start a real release.
+const { values: flags } = parseArgs({
+  options: { yes: { type: 'boolean', short: 'y' } },
+  strict: true,
+  allowPositionals: false,
+});
+const autoYes = flags.yes ?? false;
 
 // Capture stdout from a command. Returns trimmed stdout; throws on non-zero exit.
 function capture(cmd, args) {
@@ -365,6 +374,29 @@ try {
       fail(
         `Cloud Run deploy for ${app} (${service}) exited ${code}. ` +
           `The ${branch} branch is pushed; re-run after investigating, or deploy manually.`,
+      );
+    }
+    // A service rolled back with `pnpm rollback` is pinned to a named revision,
+    // so the revision just deployed would get no traffic. Route to latest here:
+    // a no-op for an unpinned service, and after a rollback it moves traffic
+    // straight from the rolled-back revision to this one.
+    const trafficCode = run('gcloud', [
+      'run',
+      'services',
+      'update-traffic',
+      service,
+      '--to-latest',
+      '--region',
+      REGION,
+      '--project',
+      PROJECT,
+      '--quiet',
+    ]);
+    if (trafficCode !== 0) {
+      fail(
+        `${app} (${service}) deployed, but routing traffic to the new revision exited ` +
+          `${trafficCode}. Later steps did not run (remaining services, Hosting, rules, ` +
+          `probe). Re-run \`pnpm release\` once resolved.`,
       );
     }
     console.log(`✔ ${app} deployed.`);

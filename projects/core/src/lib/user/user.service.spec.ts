@@ -1,13 +1,7 @@
 /// <reference types="vitest/globals" />
 import { TestBed } from '@angular/core/testing';
-import {
-  AUTH,
-  AUTH_OPS,
-  AuthOps,
-  FIRESTORE,
-  FIRESTORE_OPS,
-  FirestoreOps,
-} from '../shared/firebase.token';
+import { AUTH, AUTH_OPS, AuthOps } from '../shared/firebase-auth.token';
+import { FIRESTORE, FIRESTORE_OPS, FirestoreOps } from '../shared/firebase.token';
 import { UserService } from './user.service';
 import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';

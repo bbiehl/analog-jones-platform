@@ -53,6 +53,14 @@ jobs:
       - name: Build apps
         run: pnpm build:public && pnpm build:admin
 
+      # public-app has no auth; fail if the firebase/auth SDK is bundled into it.
+      - name: Check public-app bundle
+        run: pnpm check:public-bundle
+
+      # Release scripts (rollback) run against fake gcloud/pnpm executables.
+      - name: Test release scripts
+        run: pnpm test:scripts
+
   unit-test:
     runs-on: ubuntu-latest
     timeout-minutes: 15

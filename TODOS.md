@@ -28,4 +28,28 @@ Surfaced by adversarial review (Codex) during the `fix/explorer-server-render` s
   **Priority:** P3
   The cache-header regex matches on `req.path` (query excluded), but Firebase Hosting's CDN keys on the full URL, so `/<route>?x=<random>` is a distinct cache key. Each miss runs a full SSR render plus the route's Firestore reads (3 collection reads for `/explorer` via `getAutoCompleteOptions()`). Fix: canonicalize/ignore query strings for cacheable HTML routes at the edge, or strip unknown query params before render.
 
+## release tooling
+
+Surfaced by the pre-landing reviews (red team, Claude adversarial, Codex) during the Angular 22 ship on `chore/angular-22`. All are in `scripts/deploy.mjs` / `scripts/rollback.mjs`; none blocks a normal release.
+
+- **Failed releases leave their temporary worktree behind**
+  **Priority:** P2
+  `fail()` calls `process.exit(1)` inside the `try` in `scripts/deploy.mjs` step 6, and `process.exit` skips `finally`, so a failed deploy or traffic step leaves an `aj-release-*` directory and a stale `git worktree` entry. The exit code of `git worktree add` is also ignored, so a failed add goes on to `gcloud run deploy --source <empty dir>`. Fix: throw inside the loop and call `fail()` after the `try/finally` (or clean up in a `process.on('exit')` hook), and check the `worktree add` exit code.
+
+- **Release publishes Hosting config and rules from the local checkout**
+  **Priority:** P2
+  Cloud Run is built from a clean worktree of `origin/main`, but `firebase deploy --only hosting` and `pnpm deploy:rules` run in the current folder, so they publish whatever `firebase.json`, `firebase-public/`, `firestore.rules` and `firestore.indexes.json` are there, committed or not, while rules-change detection looks at `origin/main`. `scripts/rollback.mjs` guards its own Hosting step against uncommitted, untracked and ignored files but not against a branch whose committed `firebase.json` differs from the release. Fix: run the Hosting and rules deploys from the release worktree, or abort in pre-flight when those paths differ from `origin/main`.
+
+- **Release promotes "latest", not the revision it built**
+  **Priority:** P3
+  `scripts/deploy.mjs` runs `gcloud run services update-traffic <service> --to-latest` after each deploy. If two releases, or a release and a rollback, overlap, it can promote a revision this release did not build or overwrite a fresh pin. It also resets any manual traffic split without saying so. Fix: read the revision name the deploy created and promote that one, and print each service's serving state (pinned or not) in the release plan.
+
+- **Rollback never checks that the CDN was actually cleared**
+  **Priority:** P3
+  `scripts/rollback.mjs` assumes a Hosting redeploy with unchanged content still clears cached Cloud Run HTML (`s-maxage=300`, `stale-while-revalidate=86400` in `projects/public-app/src/server.ts`). Firebase docs say a redeploy clears "all your cached content" but do not say so for rewrites. Fix: after the redeploy, fetch `/` through the CDN and confirm the script chunks it references return 200. The same window exists in every forward release between the Cloud Run step and the Hosting step.
+
+- **Node version floor is not pinned**
+  **Priority:** P4
+  Angular 22.2 needs Node `^22.22.3 || ^24.15.0 || >=26`. `Dockerfile` (`node:22-slim`) and CI (`node-version: 22`) float and resolve high enough today. A stale cached base image would fail inside Cloud Build after the release branch and tag are pushed. Fix: pin the floor in the Dockerfile and CI and add `engines` to `package.json`.
+
 ## Completed
